@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+env/
+venv/
+.venv/
+
+# Editor directories
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+# Model and training artifacts (do not commit large models / results)
+Neural Conception Module/Training_results/
+*.pt
+*.pth
+
+# Logs and temp
+*.log
+tmp/
