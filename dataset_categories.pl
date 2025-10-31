@@ -1,0 +1,15 @@
+object_category("plane").
+object_category("ship").
+object_category("storage_tank").
+object_category("baseball_diamond").
+object_category("tennis_court"). 
+object_category("basketball_court").        
+object_category("Ground_Track_Field").
+object_category("harbor").
+object_category("Bridge").
+object_category("large_vehicle").
+object_category("small_vehicle").
+object_category("helicopter").
+object_category("roundabout").
+object_category("soccer_ball_field").
+object_category("swimming_pool").
