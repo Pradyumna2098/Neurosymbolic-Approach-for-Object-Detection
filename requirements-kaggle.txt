@@ -1,0 +1,6 @@
+# Kaggle GPU runtimes provide CUDA 12.1. Use the PyTorch wheels from the official index.
+--extra-index-url https://download.pytorch.org/whl/cu121
+-r requirements/common.txt
+
+torch==2.2.2+cu121
+torchvision==0.17.2+cu121

@@ -1,0 +1,8 @@
+# Sample configuration for executing the neurosymbolic pipeline on Kaggle.
+raw_predictions_dir: /kaggle/working/predictions1
+nms_predictions_dir: /kaggle/working/predictions_nms
+refined_predictions_dir: /kaggle/working/predictions_refined
+ground_truth_dir: /kaggle/working/yolo/labels/val
+rules_file: /kaggle/working/rules.pl
+report_file: /kaggle/working/explainability_report.csv
+nms_iou_threshold: 0.6

@@ -1,0 +1,14 @@
+# Sample configuration for running training on a local workstation.
+data_yaml: /path/to/dataset/dota.yaml
+model_name: yolo11n-obb.pt
+trained_model_name: local_dota_experiment
+test_image_dir: /path/to/project/data/images/test
+visualization_dir: /path/to/project/artifacts/viz_results
+model_weights_dir: /path/to/project/artifacts/runs/obb/local_dota_experiment/weights
+zip_source_dir: /path/to/project/artifacts
+zip_output_path: /path/to/project/artifacts/final_results.zip
+imgsz: 1024
+epochs: 50
+batch: 8
+workers: 4
+conf_threshold: 0.25

@@ -1,0 +1,13 @@
+# Sample configuration for building the knowledge graph on Kaggle.
+model_path: /kaggle/working/runs/detect/dota_experiment_aabb11_1024/weights/best.pt
+knowledge_graph_dir: /kaggle/working/knowledge_graph
+data_splits:
+  train: /kaggle/working/yolo/images/train
+  val: /kaggle/working/yolo/images/val
+confidence_threshold: 0.3
+slice_height: 1024
+slice_width: 1024
+overlap_height: 0.2
+overlap_width: 0.2
+facts_filename: facts.pl
+graph_filename: knowledge_graph_visuals.png
