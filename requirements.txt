@@ -1,8 +1,6 @@
-torch
-torchvision
-torchmetrics
-pyswip
-sahi
-numpy
-pandas
-pyyaml
+# Base dependencies shared across CPU and GPU environments
+-r requirements/common.txt
+
+# Default to the CPU-only PyTorch runtime. Override with GPU builds if desired.
+torch==2.2.2
+torchvision==0.17.2
