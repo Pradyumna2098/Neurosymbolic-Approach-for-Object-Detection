@@ -1,0 +1,9 @@
+# Sample configuration for running SAHI predictions on Kaggle.
+model_path: /kaggle/working/runs/detect/dota_experiment_aabb11_1024/weights/best.pt
+test_images_dir: /kaggle/working/yolo/images/val
+output_predictions_dir: /kaggle/working/predictions
+confidence_threshold: 0.01
+slice_height: 1024
+slice_width: 1024
+overlap_height: 0.2
+overlap_width: 0.2

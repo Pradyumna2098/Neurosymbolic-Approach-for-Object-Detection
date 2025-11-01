@@ -1,0 +1,14 @@
+# Sample configuration for running training on Kaggle.
+data_yaml: /kaggle/input/dota15c/dota.yaml
+model_name: yolo11n-obb.pt
+trained_model_name: dota_experiment_v11_1024
+test_image_dir: /kaggle/working/yolo/images/test
+visualization_dir: /kaggle/working/yolo/viz_results
+model_weights_dir: /kaggle/working/runs/obb/dota_experiment_v11_1024/weights
+zip_source_dir: /kaggle/working/yolo
+zip_output_path: /kaggle/working/yolo/final_results.zip
+imgsz: 1024
+epochs: 50
+batch: 8
+workers: 0
+conf_threshold: 0.3
