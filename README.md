@@ -27,7 +27,10 @@ pip install -r requirements.txt
   - Train a YOLOv11 OBB detector (`training.py`).
   - Optionally generate high-resolution sliced predictions with SAHI (`sahi_yolo_prediction.py`).
 - **Symbolic stage**
-  - Clean YOLO predictions with NMS, apply Prolog-based confidence modifiers, and evaluate mAP (`nsai_pipeline.py`).
+  - Clean YOLO predictions with NMS (`python -m pipeline.preprocess`).
+  - Apply Prolog-based confidence modifiers (`python -m pipeline.symbolic`).
+  - Evaluate each prediction set with TorchMetrics mAP (`python -m pipeline.eval`).
+  - Chain all three stages via `python -m pipeline.run_pipeline` or the legacy `nsai_pipeline.py` wrapper.
 - **Knowledge-graph stage**
   - Build weighted co-occurrence and spatial-relation graphs from predictions and emit Prolog facts/visualisations (`weighted_kg_sahi.py`).
 
@@ -46,15 +49,24 @@ Outputs are written into the locations defined in the YAML configuration files (
   ```
   The script validates that input paths exist and creates missing output folders. GPU acceleration is used automatically when `torch.cuda.is_available()` returns `True`.
 
-### `nsai_pipeline.py` (`nsai pipeline.py`) — symbolic reasoning workflow
-- Stage 1 performs class-wise NMS over YOLO prediction `.txt` files, Stage 2 applies Prolog-defined confidence modifiers, and Stage 3 reports TorchMetrics mAP for each variant of the predictions.
-- **Customising paths**: point the script at a YAML file such as `configs/pipeline_kaggle.yaml`, or override flags like `--raw-predictions-dir` and `--rules-file`. Output directories are created automatically.
+### `pipeline` package — symbolic reasoning workflow
+- The symbolic pipeline now lives in a dedicated package:
+  - `python -m pipeline.preprocess` executes Stage 1 (class-wise NMS over YOLO `.txt` files).
+  - `python -m pipeline.symbolic` executes Stage 2 (Prolog-defined confidence modifiers plus explainability report).
+  - `python -m pipeline.eval` executes Stage 3 (TorchMetrics mAP comparison across prediction sets).
+  - `python -m pipeline.run_pipeline` orchestrates all three stages sequentially. The historical `nsai_pipeline.py` script remains as a thin wrapper around this runner for backwards compatibility.
+- **Customising paths**: point any stage at a YAML file such as `configs/pipeline_kaggle.yaml`, or override flags like `--raw-predictions-dir` and `--rules-file`. Output directories are created automatically where applicable.
 - **Dependencies**: requires `swi-prolog` at runtime for `pyswip`. Install via apt on Linux or use the Kaggle image where it is available.
-- **Running**:
+- **Running individual stages**:
   ```bash
-  python "nsai pipeline.py" --config configs/pipeline_local.yaml
+  python -m pipeline.preprocess --config configs/pipeline_local.yaml
+  python -m pipeline.symbolic --config configs/pipeline_local.yaml
+  python -m pipeline.eval --config configs/pipeline_local.yaml
   ```
-  (On shells that dislike spaces in filenames, quote or escape the path.)
+- **Running the full pipeline**:
+  ```bash
+  python -m pipeline.run_pipeline --config configs/pipeline_local.yaml
+  ```
 
 ### `sahi_yolo_prediction.py` (`sahi yolo prediction.py`) — sliced inference helper
 - Loads a trained YOLO checkpoint with SAHI to generate dense predictions over large images, emitting YOLO-format `.txt` files ready for the symbolic pipeline.
