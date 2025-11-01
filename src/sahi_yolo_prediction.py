@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 from pathlib import Path
+from typing import Any, Dict, Iterable, Mapping, Sequence
 
 import torch
 from sahi import AutoDetectionModel
@@ -19,11 +21,22 @@ from config_utils import (
     load_config_file,
 )
 
+LOGGER = logging.getLogger(__name__)
+
 DEFAULT_CONFIG_PATH = Path("configs/prediction_kaggle.yaml")
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run SAHI sliced predictions with YOLO.")
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run SAHI sliced predictions with YOLO.",
+        epilog=(
+            "Example:\n"
+            "  python -m src.sahi_yolo_prediction --config configs/prediction.yaml \\\n"
+            "      --model-path weights/best.pt --test-images-dir data/test \\\n"
+            "      --output-predictions-dir predictions"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument("--config", type=Path, help="Path to a YAML configuration file.")
     parser.add_argument("--model-path", dest="model_path", help="Path to the trained YOLO weights.")
     parser.add_argument("--test-images-dir", dest="test_images_dir", help="Directory of images to predict on.")
@@ -33,10 +46,23 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--slice-width", dest="slice_width", type=int, help="Slice width for SAHI.")
     parser.add_argument("--overlap-height", dest="overlap_height", type=float, help="Slice overlap height ratio.")
     parser.add_argument("--overlap-width", dest="overlap_width", type=float, help="Slice overlap width ratio.")
-    return parser.parse_args()
+    parser.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"],
+        help="Python logging level to use for console output.",
+    )
+    return parser.parse_args(argv)
 
 
-def load_configuration(args: argparse.Namespace) -> dict:
+def configure_logging(log_level: str) -> None:
+    logging.basicConfig(
+        level=getattr(logging, log_level.upper(), logging.INFO),
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+
+
+def load_configuration(args: argparse.Namespace) -> Dict[str, Any]:
     config = {
         "confidence_threshold": 0.01,
         "slice_height": 1024,
@@ -86,17 +112,9 @@ def load_configuration(args: argparse.Namespace) -> dict:
     return config
 
 
-def main() -> None:
-    args = parse_args()
-    try:
-        config = load_configuration(args)
-    except ConfigError as exc:
-        print(f"Configuration error: {exc}", file=sys.stderr)
-        sys.exit(1)
-
+def load_detection_model(config: Mapping[str, Any]) -> AutoDetectionModel:
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    print(f"Using device: {device}")
-
+    LOGGER.info("Using device: %s", device)
     try:
         detection_model = AutoDetectionModel.from_pretrained(
             model_type="yolov8",
@@ -104,24 +122,30 @@ def main() -> None:
             confidence_threshold=float(config["confidence_threshold"]),
             device=device,
         )
-        print("YOLO model loaded successfully.")
     except Exception as exc:  # pragma: no cover - defensive programming
-        print(f"ERROR loading model: {exc}", file=sys.stderr)
-        sys.exit(1)
+        raise RuntimeError(f"Unable to load YOLO model: {exc}") from exc
+    LOGGER.info("YOLO model loaded successfully from %s", config["model_path"])
+    return detection_model
 
-    image_files = [p for p in sorted(config["test_images_dir"].iterdir()) if p.suffix.lower() in {".jpg", ".jpeg", ".png"}]
+
+def collect_image_files(image_dir: Path) -> Iterable[Path]:
+    return [p for p in sorted(image_dir.iterdir()) if p.suffix.lower() in {".jpg", ".jpeg", ".png"}]
+
+
+def run_prediction_pipeline(config: Mapping[str, Any]) -> int:
+    detection_model = load_detection_model(config)
+
+    image_files = list(collect_image_files(config["test_images_dir"]))
     if not image_files:
-        print(
-            f"No images found in '{config['test_images_dir']}'. Ensure the directory contains .jpg/.jpeg/.png files.",
-            file=sys.stderr,
+        raise FileNotFoundError(
+            f"No images found in '{config['test_images_dir']}'. Ensure the directory contains .jpg/.jpeg/.png files."
         )
-        sys.exit(1)
 
-    print("🚀 Starting prediction generation...")
-    print(f"   All prediction files will be saved to: {config['output_predictions_dir']}")
+    LOGGER.info("Starting prediction generation for %d images.", len(image_files))
+    LOGGER.info("All prediction files will be saved to %s", config["output_predictions_dir"])
 
     for index, image_path in enumerate(image_files, start=1):
-        print(f"  Processing image {index}/{len(image_files)}: {image_path.name}", end="\r")
+        LOGGER.info("Processing image %d/%d: %s", index, len(image_files), image_path.name)
         output_filepath = config["output_predictions_dir"] / (image_path.stem + ".txt")
 
         try:
@@ -138,7 +162,7 @@ def main() -> None:
                 verbose=0,
             )
         except Exception as exc:  # pragma: no cover - defensive programming
-            print(f"\nError processing image {image_path.name}: {exc}", file=sys.stderr)
+            LOGGER.exception("Error processing image %s: %s", image_path.name, exc)
             continue
 
         img_h, img_w = result.image_height, result.image_width
@@ -160,8 +184,33 @@ def main() -> None:
                     f"{pred.category.id} {x_center_norm:.6f} {y_center_norm:.6f} {width_norm:.6f} {height_norm:.6f} {pred.score.value:.6f}\n"
                 )
 
-    print("\nPrediction generation complete. All files saved to the output directory.")
+    LOGGER.info("Prediction generation complete. Files saved to %s", config["output_predictions_dir"])
+    return len(image_files)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = parse_args(argv)
+    configure_logging(args.log_level)
+
+    try:
+        config = load_configuration(args)
+        processed = run_prediction_pipeline(config)
+    except ConfigError as exc:
+        LOGGER.error("Configuration error: %s", exc)
+        return 1
+    except FileNotFoundError as exc:
+        LOGGER.error(str(exc))
+        return 1
+    except RuntimeError as exc:
+        LOGGER.error(str(exc))
+        return 1
+    except Exception:  # pragma: no cover - defensive programming
+        LOGGER.exception("Unexpected error while generating predictions")
+        return 1
+
+    LOGGER.info("Successfully processed %d images.", processed)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
