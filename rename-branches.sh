@@ -36,7 +36,7 @@ echo "Verifying new branches exist on remote..."
 missing=()
 for old in "${!MAP[@]}"; do
   new="${MAP[$old]}"
-  if git ls-remote --heads "$REMOTE" "$new" | grep -q "refs/heads/$new\$"; then
+  if git ls-remote --heads "$REMOTE" "$new" | grep -q "^[[:xdigit:]]*[[:space:]]refs/heads/$new\$"; then
     echo "OK: $new exists on $REMOTE"
   else
     echo "MISSING: $new does NOT exist on $REMOTE"
@@ -44,7 +44,7 @@ for old in "${!MAP[@]}"; do
   fi
 done
 
-if [ ${#missing[@]:-0} -ne 0 ]; then
+if [ ${#missing[@]} -ne 0 ]; then
   echo
   echo "Error: the following new branches are missing on $REMOTE:"
   for b in "${missing[@]}"; do echo " - $b"; done
