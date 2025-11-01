@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import math
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Tuple
+from typing import Any, Dict, Iterable, Mapping, Sequence, Tuple
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -22,6 +23,8 @@ from config_utils import (
     expand_path,
     load_config_file,
 )
+
+LOGGER = logging.getLogger(__name__)
 
 DEFAULT_CONFIG_PATH = Path("configs/knowledge_graph_kaggle.yaml")
 
@@ -48,8 +51,16 @@ ALLOWED_ADJACENT_TO = {
 }
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Generate a weighted knowledge graph from SAHI predictions.")
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Generate a weighted knowledge graph from SAHI predictions.",
+        epilog=(
+            "Example:\n"
+            "  python -m src.weighted_kg_sahi --config configs/knowledge_graph.yaml \\\n"
+            "      --model-path weights/best.pt --knowledge-graph-dir outputs/kg"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument("--config", type=Path, help="Path to a YAML configuration file.")
     parser.add_argument("--model-path", dest="model_path", help="Path to trained YOLO weights.")
     parser.add_argument("--knowledge-graph-dir", dest="knowledge_graph_dir", help="Directory for KG artefacts.")
@@ -59,7 +70,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--slice-width", dest="slice_width", type=int, help="Slice width for SAHI.")
     parser.add_argument("--overlap-height", dest="overlap_height", type=float, help="Slice overlap height ratio.")
     parser.add_argument("--overlap-width", dest="overlap_width", type=float, help="Slice overlap width ratio.")
-    return parser.parse_args()
+    parser.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"],
+        help="Python logging level to use for console output.",
+    )
+    return parser.parse_args(argv)
+
+
+def configure_logging(log_level: str) -> None:
+    logging.basicConfig(
+        level=getattr(logging, log_level.upper(), logging.INFO),
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
 
 
 def load_configuration(args: argparse.Namespace) -> Dict[str, Any]:
@@ -164,7 +188,7 @@ def get_bbox_diag(bbox: Iterable[float]) -> float:
 
 def load_detection_model(config: Mapping[str, Any]) -> AutoDetectionModel:
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    print(f"Using device: {device}")
+    LOGGER.info("Using device: %s", device)
     try:
         detection_model = AutoDetectionModel.from_pretrained(
             model_type="yolov8",
@@ -173,7 +197,8 @@ def load_detection_model(config: Mapping[str, Any]) -> AutoDetectionModel:
             device=device,
         )
     except Exception as exc:  # pragma: no cover - defensive programming
-        raise ConfigError(f"Error loading model: {exc}") from exc
+        raise RuntimeError(f"Error loading model: {exc}") from exc
+    LOGGER.info("Loaded YOLO model from %s", config["model_path"])
     return detection_model
 
 
@@ -191,11 +216,11 @@ def process_dataset(
     for split, img_dir in data_splits.items():
         image_files = [p for p in sorted(img_dir.iterdir()) if p.suffix.lower() in {".jpg", ".jpeg", ".png"}]
         if not image_files:
-            print(f"Warning: Directory for split '{split}' does not contain any images: {img_dir}")
+            LOGGER.warning("Directory for split '%s' does not contain any images: %s", split, img_dir)
             continue
-        print(f"Processing split: {split} ({len(image_files)} images)")
+        LOGGER.info("Processing split %s with %d images", split, len(image_files))
         for index, image_path in enumerate(image_files, start=1):
-            print(f"  Processing image {index}/{len(image_files)}: {image_path.name}", end="\r")
+            LOGGER.debug("Processing image %d/%d (%s)", index, len(image_files), image_path.name)
             try:
                 result = get_sliced_prediction(
                     str(image_path),
@@ -207,7 +232,7 @@ def process_dataset(
                     verbose=0,
                 )
             except Exception as exc:  # pragma: no cover - defensive programming
-                print(f"\nError processing image {image_path.name}: {exc}")
+                LOGGER.exception("Error processing image %s: %s", image_path.name, exc)
                 continue
 
             objects = [(o.category.name, o.score.value, o.bbox.to_voc_bbox()) for o in result.object_prediction_list]
@@ -238,7 +263,7 @@ def process_dataset(
                                 or abs(y1a - y2b) <= eps
                             ):
                                 add_relation(relation_counts, "adjacent_to", subject, object_)
-        print()
+        LOGGER.debug("Finished processing split %s", split)
     return relation_counts
 
 
@@ -269,7 +294,7 @@ def visualise_graph(relation_counts: Mapping[Tuple[str, str, str], int], graph_p
         G.add_edge(subj, obj, relation=rel, weight=count)
 
     if not relation_counts:
-        print("No relations were generated; skipping visualisation.")
+        LOGGER.warning("No relations were generated; skipping visualisation.")
         return
 
     fig, axes = plt.subplots(len(relation_types), 1, figsize=(25, 20 * len(relation_types)))
@@ -322,32 +347,34 @@ def visualise_graph(relation_counts: Mapping[Tuple[str, str, str], int], graph_p
     plt.tight_layout(pad=5.0)
     plt.savefig(graph_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
+    LOGGER.info("Knowledge graph visualisation saved to %s", graph_path)
 
 
-def main() -> None:
-    args = parse_args()
+def main(argv: Sequence[str] | None = None) -> int:
+    args = parse_args(argv)
+    configure_logging(args.log_level)
+
     try:
         config = load_configuration(args)
-    except ConfigError as exc:
-        print(f"Configuration error: {exc}", file=sys.stderr)
-        sys.exit(1)
-
-    try:
         detection_model = load_detection_model(config)
+        relation_counts = process_dataset(detection_model, config["data_splits"], config)
+        if not relation_counts:
+            LOGGER.warning("No relations were extracted from the provided datasets.")
+        write_prolog_facts(relation_counts, config["facts_path"])
+        LOGGER.info("Prolog facts written to %s", config["facts_path"])
+        visualise_graph(relation_counts, config["graph_image_path"])
     except ConfigError as exc:
-        print(exc, file=sys.stderr)
-        sys.exit(1)
+        LOGGER.error("Configuration error: %s", exc)
+        return 1
+    except RuntimeError as exc:
+        LOGGER.error(str(exc))
+        return 1
+    except Exception:  # pragma: no cover - defensive programming
+        LOGGER.exception("Unexpected error while generating knowledge graph")
+        return 1
 
-    relation_counts = process_dataset(detection_model, config["data_splits"], config)
-    if not relation_counts:
-        print("No relations were extracted from the provided datasets.")
-
-    write_prolog_facts(relation_counts, config["facts_path"])
-    print(f"Prolog facts written to: {config['facts_path']}")
-
-    visualise_graph(relation_counts, config["graph_image_path"])
-    print(f"KG visualisations saved to: {config['graph_image_path']}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
