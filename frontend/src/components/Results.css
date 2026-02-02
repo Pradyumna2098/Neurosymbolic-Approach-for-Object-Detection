@@ -1,0 +1,228 @@
+.results {
+  width: 100%;
+}
+
+.results h2 {
+  margin: 0 0 2rem 0;
+  color: #333;
+}
+
+.error-message {
+  padding: 1rem;
+  background-color: #ffebee;
+  color: #c62828;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.empty-state-container {
+  background: white;
+  border-radius: 8px;
+  padding: 3rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.empty-state {
+  color: #999;
+  font-style: italic;
+  margin: 0;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 968px) {
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.results-sidebar, .results-content {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.results-sidebar h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.result-card {
+  padding: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.result-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+.result-card.selected {
+  border-color: #667eea;
+  background-color: #f5f7ff;
+}
+
+.result-id {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.result-time {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.results-content {
+  min-height: 400px;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.results-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.status-badge.completed {
+  background-color: #4caf50;
+  color: white;
+}
+
+.metrics-section {
+  margin-bottom: 2rem;
+}
+
+.metrics-section h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.metric-card {
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.metric-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.chart-container {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.logs-section {
+  margin-top: 2rem;
+}
+
+.logs-section h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.logs-container {
+  background-color: #1e1e1e;
+  border-radius: 6px;
+  padding: 1rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.log-entry {
+  display: flex;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: #d4d4d4;
+}
+
+.log-index {
+  color: #858585;
+  min-width: 30px;
+  text-align: right;
+}
+
+.log-message {
+  flex: 1;
+}
+
+.error-section {
+  margin-top: 2rem;
+}
+
+.error-section h4 {
+  margin: 0 0 1rem 0;
+  color: #c62828;
+}
+
+.error-text {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  font-size: 1.1rem;
+}

@@ -1,0 +1,109 @@
+{
+  "dashboard": {
+    "title": "Neurosymbolic Pipeline Monitoring",
+    "uid": "neurosymbolic-pipeline",
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "5s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Training Requests",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(train_requests_total[5m])",
+            "legendFormat": "Training Requests/sec"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Training Duration",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(train_duration_seconds_bucket[5m]))",
+            "legendFormat": "p95 Duration"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(train_duration_seconds_bucket[5m]))",
+            "legendFormat": "p50 Duration"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Pipeline Errors",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "rate(pipeline_errors_total[5m])",
+            "legendFormat": "Errors/sec"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Stage Durations",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(preprocessing_duration_seconds_bucket[5m]))",
+            "legendFormat": "Preprocessing"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(inference_duration_seconds_bucket[5m]))",
+            "legendFormat": "Inference"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(evaluation_duration_seconds_bucket[5m]))",
+            "legendFormat": "Evaluation"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Prediction Requests",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "prediction_requests_total",
+            "legendFormat": "Total Predictions"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Total Errors",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 16},
+        "targets": [
+          {
+            "expr": "pipeline_errors_total",
+            "legendFormat": "Total Errors"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": null, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 10, "color": "red"}
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}

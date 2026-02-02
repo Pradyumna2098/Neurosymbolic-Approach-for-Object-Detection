@@ -23,3 +23,25 @@ Neural Conception Module/Training_results/
 # Logs and temp
 *.log
 tmp/
+
+# Node modules and build artifacts
+node_modules/
+frontend/build/
+frontend/dist/
+*.lock
+package-lock.json
+yarn.lock
+
+# Docker volumes
+.volumes/
+
+# Test coverage
+.coverage
+htmlcov/
+coverage/
+.pytest_cache/
+
+# Monitoring data
+monitoring/data/
+prometheus-data/
+grafana-data/

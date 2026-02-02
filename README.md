@@ -1,104 +1,354 @@
 # Neurosymbolic Approach for Object Detection
 
-This repository contains the end-to-end pipeline that combines YOLO-based neural detectors with symbolic reasoning and a knowledge-graph (KG) layer for explainability and downstream analytics.  The workflow is organised around four entry points that can be executed independently or chained together depending on the experiment you want to run.
+[![CI Pipeline](https://github.com/Pradyumna2098/Neurosymbolic-Approach-for-Object-Detection/workflows/CI%20Pipeline/badge.svg)](https://github.com/Pradyumna2098/Neurosymbolic-Approach-for-Object-Detection/actions)
 
-## Environment setup
-- **Python**: tested with Python 3.10+. PyTorch/Ultralytics currently publish wheels for 3.8–3.11, so stay within that range.
-- **GPU**: a CUDA-capable NVIDIA GPU is strongly recommended for the training and SAHI slicing stages. The scripts fall back to CPU inference, but training without a GPU will be prohibitively slow.
-- **Dependencies**: create a virtual environment and install the pinned packages.
+A production-ready mono-repository combining YOLO-based neural detectors with symbolic reasoning and a knowledge-graph layer for explainability and downstream analytics. This repository includes a complete backend API, frontend dashboard, ML pipeline, and monitoring infrastructure.
 
-```bash
-python -m venv .venv
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
-pip install --upgrade pip
-pip install -r requirements.txt
+## 🏗️ Repository Structure
+
+This is a **mono-repository** organized into distinct subprojects:
+
+```
+.
+├── backend/              # FastAPI backend for pipeline APIs
+│   ├── app/             # Application code
+│   ├── tests/           # Backend tests
+│   ├── Dockerfile       # Backend containerization
+│   └── requirements.txt # Backend dependencies
+│
+├── frontend/            # React-based visualization dashboard
+│   ├── src/            # React components and app logic
+│   ├── public/         # Static assets
+│   ├── Dockerfile      # Frontend containerization
+│   └── package.json    # Frontend dependencies
+│
+├── pipeline/            # Core AI/ML pipeline
+│   ├── preprocess.py   # Stage 1: Data preprocessing & NMS
+│   ├── symbolic.py     # Stage 2: Symbolic reasoning
+│   ├── eval.py         # Stage 3: Model evaluation
+│   └── run_pipeline.py # Pipeline orchestrator
+│
+├── shared/              # Shared configurations (YAML files)
+│   └── *.yaml          # Configuration files for different environments
+│
+├── monitoring/          # Prometheus & Grafana monitoring
+│   ├── prometheus.yml         # Prometheus configuration
+│   ├── grafana-dashboard.json # Pre-configured dashboard
+│   └── grafana-datasource.yml # Grafana data source config
+│
+├── tests/               # Comprehensive test suite
+│   ├── backend/        # Backend API tests
+│   ├── frontend/       # Frontend component tests
+│   └── pipeline/       # Pipeline unit tests
+│
+├── docker-compose.yml   # Complete stack orchestration
+├── instructions.md      # Development guidelines & best practices
+└── README.md           # This file
 ```
 
-> **Note**: Kaggle notebooks have the required system packages pre-installed. For local Linux setups you may additionally need `sudo apt-get install swig swi-prolog` before installing `pyswip`.
+## ✨ Key Features
 
-## Dataset preparation
-1. Prepare the DOTA-style dataset in YOLO format with matching `images/` and `labels/` folders for each split you plan to use (e.g. `train`, `val`, `test`).
-2. Update the dataset YAML (for example, `dota.yaml`) so that it references the absolute paths for your machine.
-3. Ensure the working directories referenced in your configuration files exist. Sample Kaggle and local YAML files live in `configs/` – copy the closest one and tweak the paths for your environment.
-4. Validate that ground-truth labels use YOLO normalised coordinates; the symbolic pipeline expects `.txt` predictions/labels in that format.
+- **🎯 Neurosymbolic AI Pipeline**: Combines deep learning with symbolic reasoning for explainable object detection
+- **🚀 RESTful API**: FastAPI backend for training, inference, and results retrieval
+- **📊 Interactive Dashboard**: React-based UI for real-time monitoring and visualization
+- **📈 Monitoring & Metrics**: Prometheus metrics collection with Grafana dashboards
+- **🐳 Containerized**: Full Docker support with docker-compose orchestration
+- **✅ Comprehensive Testing**: Unit and integration tests across all components
+- **🔄 CI/CD**: Automated linting, testing, and Docker builds via GitHub Actions
 
-## Workflow at a glance
-- **Neural stage**
-  - Train a YOLOv11 OBB detector (`training.py`).
-  - Optionally generate high-resolution sliced predictions with SAHI (`sahi_yolo_prediction.py`).
-- **Symbolic stage**
-  - Clean YOLO predictions with NMS (`python -m pipeline.preprocess`).
-  - Apply Prolog-based confidence modifiers (`python -m pipeline.symbolic`).
-  - Evaluate each prediction set with TorchMetrics mAP (`python -m pipeline.eval`).
-  - Chain all three stages via `python -m pipeline.run_pipeline` or the legacy `nsai_pipeline.py` wrapper.
-- **Knowledge-graph stage**
-  - Build weighted co-occurrence and spatial-relation graphs from predictions and emit Prolog facts/visualisations (`weighted_kg_sahi.py`).
+## 🚀 Quick Start
 
-Outputs are written into the locations defined in the YAML configuration files (for example `/kaggle/working/yolo/viz_results`, `/kaggle/working/predictions_refined`, and `/kaggle/working/knowledge_graph`). Adjust these paths when running outside Kaggle.
+### Prerequisites
 
-## Entry points
+- **Docker & Docker Compose**: For containerized deployment
+- **Python 3.10+**: For local development
+- **Node.js 18+**: For frontend development
+- **CUDA-capable GPU**: Strongly recommended for training (optional for inference)
 
-### `training.py` — neural training & inference
-- Trains a YOLOv11-OBB model and runs inference over a held-out image set, saving annotated renders plus a JSON dump of detections.
-- **Customising paths**: provide a YAML file (see `configs/training_*.yaml`) via `--config` or override specific values with CLI flags like `--data-yaml`, `--test-image-dir`, and `--zip-source-dir`.
-- **Running**:
-  ```bash
-  python training.py --config configs/training_kaggle.yaml
-  # or override one-off values
-  python training.py --config configs/training_local.yaml --epochs 100 --conf-threshold 0.2
-  ```
-  The script validates that input paths exist and creates missing output folders. GPU acceleration is used automatically when `torch.cuda.is_available()` returns `True`.
+### Option 1: Docker Compose (Recommended)
 
-### `pipeline` package — symbolic reasoning workflow
-- The symbolic pipeline now lives in a dedicated package:
-  - `python -m pipeline.preprocess` executes Stage 1 (class-wise NMS over YOLO `.txt` files).
-  - `python -m pipeline.symbolic` executes Stage 2 (Prolog-defined confidence modifiers plus explainability report).
-  - `python -m pipeline.eval` executes Stage 3 (TorchMetrics mAP comparison across prediction sets).
-  - `python -m pipeline.run_pipeline` orchestrates all three stages sequentially. The historical `nsai_pipeline.py` script remains as a thin wrapper around this runner for backwards compatibility.
-- **Customising paths**: point any stage at a YAML file such as `configs/pipeline_kaggle.yaml`, or override flags like `--raw-predictions-dir` and `--rules-file`. Output directories are created automatically where applicable.
-- **Dependencies**: requires `swi-prolog` at runtime for `pyswip`. Install via apt on Linux or use the Kaggle image where it is available.
-- **Running individual stages**:
-  ```bash
-  python -m pipeline.preprocess --config configs/pipeline_local.yaml
-  python -m pipeline.symbolic --config configs/pipeline_local.yaml
-  python -m pipeline.eval --config configs/pipeline_local.yaml
-  ```
-- **Running the full pipeline**:
-  ```bash
-  python -m pipeline.run_pipeline --config configs/pipeline_local.yaml
-  ```
+Run the entire stack with a single command:
 
-### `sahi_yolo_prediction.py` (`sahi yolo prediction.py`) — sliced inference helper
-- Loads a trained YOLO checkpoint with SAHI to generate dense predictions over large images, emitting YOLO-format `.txt` files ready for the symbolic pipeline.
-- **Customising paths**: use a YAML config (see `configs/prediction_*.yaml`) or pass flags like `--model-path`, `--test-images-dir`, and `--output-predictions-dir`.
-- **Running**:
-  ```bash
-  python "sahi yolo prediction.py" --config configs/prediction_kaggle.yaml
-  ```
-  GPU usage is automatic when `torch.cuda.is_available()` reports a device.
+```bash
+# Clone the repository
+git clone https://github.com/Pradyumna2098/Neurosymbolic-Approach-for-Object-Detection.git
+cd Neurosymbolic-Approach-for-Object-Detection
 
-### `weighted_kg_sahi.py` (`weighted kg +sahi.py`) — knowledge-graph construction
-- Runs SAHI inference over configured dataset splits, extracts spatial relations, and aggregates them into a weighted directed graph.
-- Emits:
-  - Prolog facts at the configured `facts_filename` within `knowledge_graph_dir`.
-  - Visualisations at the configured `graph_filename`.
-- **Customising paths**: select a config file like `configs/knowledge_graph_kaggle.yaml` or override the CLI flags (`--model-path`, `--knowledge-graph-dir`, `--data-split train=/path/to/images/train`, etc.). Relation filter sets (`ALLOWED_*`) remain editable in the script if you need domain-specific tweaks.
-- **Running**:
-  ```bash
-  python "weighted kg +sahi.py" --config configs/knowledge_graph_local.yaml
-  ```
+# Start all services
+docker-compose up -d
 
-## Troubleshooting
-- **Missing folders (e.g. `/kaggle/working/...`)**: create the directories manually or update the relevant configuration values before running. Every entry point creates its output folders, but parent directories must already exist.
-- **Kaggle-specific default paths**: when running locally, replace `/kaggle/input/...` and `/kaggle/working/...` references inside the config files with your local dataset and scratch directories.
-- **Prolog not found**: install SWI-Prolog (e.g. `sudo apt-get install swi-prolog`) before running `nsai_pipeline.py`.
-- **GPU not detected**: verify that NVIDIA drivers and CUDA runtime compatible with your PyTorch version are installed. The scripts fall back to CPU, but performance will degrade significantly.
-- **Package install failures**: upgrade `pip` and ensure build tools such as `build-essential`, `cmake`, and Python headers are present when compiling packages like `pyswip`.
+# Access the services:
+# - Frontend: http://localhost:3000
+# - Backend API: http://localhost:8000
+# - API Docs: http://localhost:8000/docs
+# - Prometheus: http://localhost:9090
+# - Grafana: http://localhost:3001 (admin/admin)
+```
 
-## Outputs and artefact locations
-- YOLO training runs: `runs/obb/<experiment_name>/` inside the working directory used by Ultralytics.
-- Visualisations and JSON predictions: `visualization_dir` defined in your training config.
-- Symbolic reports: `refined_predictions_dir` and the configured `report_file` in the pipeline config.
-- Knowledge graph artefacts: the configured `knowledge_graph_dir`.
+### Option 2: Local Development
 
-Adjust the directory constants if you wish to persist results outside the transient Kaggle filesystem.
+#### Backend Setup
+
+```bash
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# Install system dependencies (Ubuntu/Debian)
+sudo apt-get install swi-prolog
+
+# Install Python dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+pip install -r backend/requirements.txt
+
+# Run the backend
+cd backend
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+#### Frontend Setup
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+
+# Frontend will be available at http://localhost:3000
+```
+
+#### Pipeline Setup
+
+```bash
+# Install dependencies (if not already installed)
+pip install -r requirements.txt
+
+# Run individual pipeline stages
+python -m pipeline.preprocess --config shared/pipeline_local.yaml
+python -m pipeline.symbolic --config shared/pipeline_local.yaml
+python -m pipeline.eval --config shared/pipeline_local.yaml
+
+# Or run the full pipeline
+python -m pipeline.run_pipeline --config shared/pipeline_local.yaml
+```
+
+## 📚 Documentation
+
+### For Developers
+
+- **[instructions.md](instructions.md)**: Comprehensive guide covering:
+  - Python best practices (PEP 8, docstrings, type hints)
+  - ML lifecycle guidelines (reproducibility, versioning)
+  - SDLC principles (Git workflow, commit conventions)
+  - Code review standards
+
+### API Documentation
+
+- **Interactive API Docs**: Visit `http://localhost:8000/docs` when backend is running
+- **OpenAPI Spec**: Available at `http://localhost:8000/openapi.json`
+
+### Key API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | API health check |
+| `/train` | POST | Start a training job |
+| `/results/{job_id}` | GET | Get job results and metrics |
+| `/results` | GET | List all jobs |
+| `/metrics` | GET | Prometheus metrics |
+
+## 🧪 Testing
+
+### Run All Tests
+
+```bash
+# Backend tests
+pytest tests/backend/ -v --cov=backend
+
+# Pipeline tests
+pytest tests/pipeline/ -v --cov=pipeline
+
+# Frontend tests
+cd frontend && npm test
+```
+
+### Test Coverage
+
+We aim for **80%+ code coverage** across all components. Coverage reports are generated automatically in CI/CD.
+
+## 🔍 Monitoring
+
+### Prometheus Metrics
+
+The backend exposes the following metrics at `/metrics`:
+
+- `train_requests_total`: Total training requests
+- `train_duration_seconds`: Training duration histogram
+- `prediction_requests_total`: Total prediction requests
+- `pipeline_errors_total`: Pipeline error counter
+- `preprocessing_duration_seconds`: Preprocessing time
+- `inference_duration_seconds`: Inference time
+- `evaluation_duration_seconds`: Evaluation time
+
+### Grafana Dashboard
+
+Access Grafana at `http://localhost:3001` (default credentials: admin/admin)
+
+Pre-configured dashboard includes:
+- Training request rate
+- Duration percentiles (p50, p95)
+- Error rate tracking
+- Stage-wise performance metrics
+
+## 🔄 CI/CD Pipeline
+
+Our GitHub Actions workflows automatically:
+
+1. **Linting**: Enforce PEP 8 (Python) and Prettier (JavaScript)
+2. **Testing**: Run all test suites with coverage reporting
+3. **Docker Builds**: Build and validate Docker images
+4. **Security**: Dependency vulnerability scanning
+
+Workflows trigger on:
+- Push to `main`, `master`, or `develop`
+- Pull requests to these branches
+
+## 📦 Dataset Preparation
+
+1. Prepare DOTA-style dataset in YOLO format with `images/` and `labels/` folders
+2. Update dataset YAML files in `shared/` directory with your paths
+3. Ensure labels use YOLO normalized coordinates
+
+Example config structure:
+```yaml
+train: /path/to/train/images
+val: /path/to/val/images
+test: /path/to/test/images
+nc: 15  # number of classes
+names: ['plane', 'ship', 'storage-tank', ...]
+```
+
+## 🛠️ Technology Stack
+
+### Backend
+- **FastAPI**: Modern Python web framework
+- **Pydantic**: Data validation
+- **Prometheus Client**: Metrics collection
+- **Uvicorn**: ASGI server
+
+### Frontend
+- **React 18**: UI library
+- **Recharts**: Data visualization
+- **Axios**: HTTP client
+
+### ML Pipeline
+- **PyTorch**: Deep learning framework
+- **Ultralytics YOLOv11**: Object detection
+- **SAHI**: Sliced inference
+- **PySwip**: Prolog integration
+- **TorchMetrics**: Evaluation metrics
+
+### Monitoring
+- **Prometheus**: Metrics collection
+- **Grafana**: Visualization
+
+### DevOps
+- **Docker & Docker Compose**: Containerization
+- **GitHub Actions**: CI/CD
+- **Nginx**: Frontend web server
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. **Read** [instructions.md](instructions.md) for coding standards
+2. **Create** a feature branch: `git checkout -b feature/your-feature`
+3. **Make** changes following our guidelines
+4. **Test** your changes: Ensure all tests pass
+5. **Commit** using conventional commits: `feat: add new feature`
+6. **Push** and create a Pull Request
+
+### Code Review Checklist
+
+Before requesting review, ensure:
+- [ ] Code follows PEP 8 and project style
+- [ ] All functions have docstrings
+- [ ] Tests are written and passing (80%+ coverage)
+- [ ] Documentation is updated
+- [ ] CI/CD pipeline passes
+- [ ] No sensitive data in commits
+
+## 📊 Workflow Overview
+
+### Neural Stage
+1. Train YOLOv11 OBB detector (`training.py`)
+2. Generate high-resolution predictions with SAHI (`src/sahi_yolo_prediction.py`)
+
+### Symbolic Stage
+1. Clean predictions with NMS (`pipeline.preprocess`)
+2. Apply Prolog-based confidence modifiers (`pipeline.symbolic`)
+3. Evaluate with TorchMetrics mAP (`pipeline.eval`)
+
+### Knowledge Graph Stage
+Build weighted co-occurrence and spatial-relation graphs (`src/weighted_kg_sahi.py`)
+
+## 🔧 Configuration
+
+Configuration files in `shared/` directory support both Kaggle and local environments:
+
+- `training_*.yaml`: Training configuration
+- `pipeline_*.yaml`: Pipeline configuration
+- `prediction_*.yaml`: SAHI prediction configuration
+- `knowledge_graph_*.yaml`: KG construction configuration
+
+Adjust paths in these files for your environment.
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**Missing folders**: Create required directories or update config paths
+```bash
+mkdir -p /path/to/output/dir
+```
+
+**Prolog not found**: Install SWI-Prolog
+```bash
+# Ubuntu/Debian
+sudo apt-get install swi-prolog
+
+# macOS
+brew install swi-prolog
+```
+
+**GPU not detected**: Verify CUDA installation
+```bash
+python -c "import torch; print(torch.cuda.is_available())"
+```
+
+**Port already in use**: Change ports in `docker-compose.yml`
+
+## 📄 License
+
+See [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+This project builds upon:
+- **Ultralytics YOLO**: Object detection framework
+- **SAHI**: Sliced inference library
+- **FastAPI**: Web framework
+- **React**: Frontend library
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/Pradyumna2098/Neurosymbolic-Approach-for-Object-Detection/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Pradyumna2098/Neurosymbolic-Approach-for-Object-Detection/discussions)
+
+---
+
+**Built with ❤️ for Explainable AI**
