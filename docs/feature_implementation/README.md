@@ -50,22 +50,73 @@ Step-by-step implementation guide for developers, including:
 **Status:** Implementation Guide Complete ✅  
 **Stage:** Ready for Development
 
+### 3. Backend API Architecture (`backend_api_architecture.md`)
+
+Complete backend API architecture specification for prediction automation, including:
+
+- **API Design Justification**: REST vs gRPC analysis and technology selection
+- **Technology Stack**: FastAPI, Celery, Redis, PostgreSQL, MinIO/S3
+- **System Architecture**: High-level component architecture and data flow
+- **API Endpoints Specification**: Complete endpoint documentation:
+  - File upload endpoint (multipart/form-data)
+  - Inference trigger endpoint (async job creation)
+  - Job status polling endpoint (real-time updates)
+  - Results retrieval endpoints (text predictions and visualizations)
+  - Prometheus metrics endpoint (/metrics)
+- **Request/Response Formats**: JSON schemas, validation rules, error codes
+- **Workflow Documentation**: End-to-end flows for all operations
+- **Prometheus Integration**: Metrics collection strategy and instrumentation
+- **Error Handling Strategy**: Client and server-side error recovery
+- **Security Considerations**: Authentication, validation, data protection
+- **Performance and Scalability**: Optimization strategies and scaling plans
+- **Future Enhancements**: Planned features and roadmap
+
+**Status:** Design Complete ✅  
+**Stage:** Design Specification (No Code)
+
+### 4. Backend API Workflows (`backend_api_workflows.md`)
+
+Detailed workflow diagrams and sequence diagrams, including:
+
+- **Complete End-to-End Workflow**: Full user journey from upload to results
+- **File Upload Workflow**: Validation, storage, and metadata management
+- **Inference Execution Workflow**: Job creation, Celery task queuing, worker processing
+- **Job Status Polling Workflow**: Client polling loop and status updates
+- **Results Retrieval Workflow**: Fetching predictions and visualization images
+- **Error Handling Workflows**: Error detection, recovery, and retry strategies
+- **Monitoring Data Flow**: Prometheus metrics collection and dashboard display
+- **State Transitions**: Job status state machine and valid transitions
+- **Sequence Diagrams**: Complete interaction sequences between components
+- **Data Transformations**: Input/output formats at each processing stage
+
+**Status:** Design Complete ✅  
+**Stage:** Design Specification (No Code)
+
 ## How to Use These Documents
 
 ### For Product Managers / Designers
 - Review `frontend_ui_design.md` for complete UI/UX specifications
-- Use wireframes for stakeholder presentations
+- Review `backend_api_architecture.md` for API design and integration points
+- Use wireframes and workflow diagrams for stakeholder presentations
 - Reference component specs for design validation
 
-### For Developers
+### For Backend Developers
+1. Start with `backend_api_architecture.md` for complete API specification
+2. Review `backend_api_workflows.md` for detailed workflow diagrams
+3. Understand integration points with frontend and monitoring
+4. Follow technology stack recommendations for implementation
+
+### For Frontend Developers
 1. Start with `frontend_ui_design.md` to understand the overall vision
 2. Follow `ui_implementation_guide.md` for step-by-step implementation
-3. Use code examples as starting templates
-4. Follow the roadmap phases for structured development
+3. Review `backend_api_workflows.md` to understand API integration
+4. Use code examples as starting templates
+5. Follow the roadmap phases for structured development
 
 ### For QA / Testers
 - Use user workflows in `frontend_ui_design.md` to create test cases
-- Reference interaction patterns for expected behavior
+- Reference `backend_api_workflows.md` for end-to-end testing scenarios
+- Use interaction patterns and error scenarios for expected behavior
 - Use component specifications for acceptance criteria
 
 ## Related Documentation
@@ -83,6 +134,13 @@ Step-by-step implementation guide for developers, including:
 - [Component Specs](frontend_ui_design.md#component-specifications)
 - [Prometheus Integration](frontend_ui_design.md#prometheus-monitoring-integration)
 
+### Backend API Documentation
+- [API Design Justification](backend_api_architecture.md#api-design-justification)
+- [API Endpoints](backend_api_architecture.md#api-endpoints-specification)
+- [System Architecture](backend_api_architecture.md#system-architecture)
+- [Workflow Diagrams](backend_api_workflows.md)
+- [Prometheus Integration](backend_api_architecture.md#prometheus-integration)
+
 ### Implementation Guides
 - [Implementation Roadmap](ui_implementation_guide.md#implementation-roadmap)
 - [Technology Stack](ui_implementation_guide.md#technology-stack-details)
@@ -93,12 +151,22 @@ Step-by-step implementation guide for developers, including:
 
 | Feature | Design | Implementation | Testing | Status |
 |---------|--------|----------------|---------|--------|
+| **Frontend Components** | | | | |
 | Upload Panel | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
 | Configuration Panel | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
 | Results Viewer | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
 | Monitoring Dashboard | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
-| Backend API | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
+| **Backend API** | | | | |
+| API Architecture | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
+| File Upload Endpoint | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
+| Inference Endpoint | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
+| Status Polling Endpoint | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
+| Results Endpoints | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
+| Celery Task Queue | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
+| **Monitoring** | | | | |
 | Prometheus Integration | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
+| Grafana Dashboards | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
+| Metrics Collection | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
 
 ## Next Steps
 
