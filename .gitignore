@@ -17,8 +17,8 @@ venv/
 
 # Model and training artifacts (do not commit large models / results)
 Neural Conception Module/Training_results/
-*.pt
-*.pth
+# *.pt
+# *.pth
 
 # Logs and temp
 *.log
@@ -47,3 +47,4 @@ coverage.xml
 
 # YOLO training runs
 runs/
+
