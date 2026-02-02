@@ -74,6 +74,12 @@ Complete backend API architecture specification for prediction automation, inclu
 **Status:** Design Complete ✅  
 **Stage:** Design Specification (No Code)
 
+**Quick Links:**
+- [Quick Reference Guide](BACKEND_API_QUICK_REFERENCE.md) - Fast navigation and common tasks
+- [API Endpoints Summary](backend_api_architecture.md#api-endpoints-specification)
+- [Technology Stack](backend_api_architecture.md#technology-stack)
+- [System Architecture Diagram](backend_api_architecture.md#system-architecture)
+
 ### 4. Backend API Workflows (`backend_api_workflows.md`)
 
 Detailed workflow diagrams and sequence diagrams, including:
@@ -135,11 +141,13 @@ Detailed workflow diagrams and sequence diagrams, including:
 - [Prometheus Integration](frontend_ui_design.md#prometheus-monitoring-integration)
 
 ### Backend API Documentation
+- [Quick Reference Guide](BACKEND_API_QUICK_REFERENCE.md) - Fast navigation
 - [API Design Justification](backend_api_architecture.md#api-design-justification)
 - [API Endpoints](backend_api_architecture.md#api-endpoints-specification)
 - [System Architecture](backend_api_architecture.md#system-architecture)
 - [Workflow Diagrams](backend_api_workflows.md)
 - [Prometheus Integration](backend_api_architecture.md#prometheus-integration)
+- [Design Summary](backend_api_design_summary.md) - Executive overview
 
 ### Implementation Guides
 - [Implementation Roadmap](ui_implementation_guide.md#implementation-roadmap)
