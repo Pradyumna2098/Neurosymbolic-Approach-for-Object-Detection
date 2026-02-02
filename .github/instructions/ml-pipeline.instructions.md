@@ -42,9 +42,10 @@ results = model.predict(
 ### Configuration Loading
 ```python
 from config_utils import load_config_file
+from pathlib import Path
 
 # Always load from YAML, never hardcode paths
-config = load_config_file(config_path)
+config = load_config_file(Path(config_path))
 ```
 
 ## Reproducibility Requirements
