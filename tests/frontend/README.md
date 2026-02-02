@@ -45,4 +45,4 @@ When implementing frontend tests, ensure:
 ## Related
 
 - See [Frontend README](../../frontend/README.md) for frontend architecture
-- See main [Testing Instructions](.github/instructions/tests.instructions.md) for testing guidelines
+- See main [Testing Instructions](../../.github/instructions/tests.instructions.md) for testing guidelines

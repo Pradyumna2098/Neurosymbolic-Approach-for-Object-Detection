@@ -17,7 +17,7 @@ The repository has been restructured into a mono-repository with three distinct 
 |----------|----------|-------|
 | `training.py` | `pipeline/training/training.py` | Training script moved |
 | `config_utils.py` | `shared/utils/config_utils.py` | Now in shared utilities |
-| `nsai pipeline.py` | `pipeline/nsai_pipeline.py` | Legacy wrapper maintained |
+| `nsai_pipeline.py` | `pipeline/nsai_pipeline.py` | Legacy wrapper maintained |
 
 ### Pipeline Modules
 
@@ -94,7 +94,7 @@ python -m pipeline.core.eval --config shared/configs/pipeline_local.yaml
 
 **Old:**
 ```bash
-python "sahi yolo prediction.py" --config configs/prediction_local.yaml
+python sahi_yolo_prediction.py --config configs/prediction_local.yaml
 ```
 
 **New:**
@@ -106,7 +106,7 @@ python pipeline/inference/sahi_yolo_prediction.py --config shared/configs/predic
 
 **Old:**
 ```bash
-python "weighted kg +sahi.py" --config configs/knowledge_graph_local.yaml
+python weighted_kg_sahi.py --config configs/knowledge_graph_local.yaml
 ```
 
 **New:**

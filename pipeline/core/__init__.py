@@ -3,6 +3,6 @@
 __all__ = [
     "preprocess",
     "symbolic",
-    "evaluation",
+    "eval",
     "run_pipeline",
 ]

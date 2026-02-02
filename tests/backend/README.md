@@ -37,4 +37,4 @@ When implementing backend tests, ensure:
 ## Related
 
 - See [Backend README](../../backend/README.md) for backend architecture
-- See main [Testing Instructions](.github/instructions/tests.instructions.md) for testing guidelines
+- See main [Testing Instructions](../../.github/instructions/tests.instructions.md) for testing guidelines

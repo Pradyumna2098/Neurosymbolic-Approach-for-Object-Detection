@@ -73,4 +73,4 @@ Use small, synthetic datasets for testing:
 ## Related
 
 - See [Pipeline README](../../pipeline/README.md) for pipeline architecture
-- See main [Testing Instructions](.github/instructions/tests.instructions.md) for detailed testing guidelines
+- See main [Testing Instructions](../../.github/instructions/tests.instructions.md) for detailed testing guidelines
