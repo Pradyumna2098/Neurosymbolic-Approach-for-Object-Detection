@@ -8,10 +8,10 @@ from typing import Any, Dict, Mapping, Sequence
 
 import torch
 
-from config_utils import ConfigError, PathRequirement, ensure_paths
+from shared.utils.config_utils import ConfigError, PathRequirement, ensure_paths
 
-from .config import apply_path_overrides, load_pipeline_config, require_keys
-from .utils import calculate_map, parse_ground_truths, parse_predictions
+from pipeline.core.config import apply_path_overrides, load_pipeline_config, require_keys
+from pipeline.core.utils import calculate_map, parse_ground_truths, parse_predictions
 
 _REQUIRED_KEYS = [
     "ground_truth_dir",

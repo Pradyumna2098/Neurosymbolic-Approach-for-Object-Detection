@@ -6,10 +6,10 @@ import argparse
 from pathlib import Path
 from typing import Sequence
 
-from config_utils import ConfigError
+from shared.utils.config_utils import ConfigError
 
-from . import eval as evaluation
-from . import preprocess, symbolic
+from pipeline.core import eval as evaluation
+from pipeline.core import preprocess, symbolic
 
 
 def build_parser() -> argparse.ArgumentParser:

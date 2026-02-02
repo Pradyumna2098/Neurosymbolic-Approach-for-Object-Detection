@@ -6,11 +6,11 @@ import argparse
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Sequence
 
-from config_utils import ConfigError, PathRequirement, ensure_paths
+from shared.utils.config_utils import ConfigError, PathRequirement, ensure_paths
 from pyswip import Prolog
 
-from .config import apply_path_overrides, load_pipeline_config, require_keys
-from .utils import (
+from pipeline.core.config import apply_path_overrides, load_pipeline_config, require_keys
+from pipeline.core.utils import (
     apply_symbolic_modifiers,
     load_prolog_modifiers,
     parse_predictions,

@@ -13,7 +13,7 @@ import cv2
 from tqdm import tqdm
 from ultralytics import YOLO
 
-from config_utils import (
+from shared.utils.config_utils import (
     ConfigError,
     PathRequirement,
     apply_overrides,
@@ -22,7 +22,7 @@ from config_utils import (
     load_config_file,
 )
 
-DEFAULT_CONFIG_PATH = Path("configs/training_kaggle.yaml")
+DEFAULT_CONFIG_PATH = Path("shared/configs/training_kaggle.yaml")
 
 
 def parse_args() -> argparse.Namespace:

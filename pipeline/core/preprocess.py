@@ -6,10 +6,10 @@ import argparse
 from pathlib import Path
 from typing import Any, Dict, Mapping, Sequence
 
-from config_utils import ConfigError, PathRequirement, ensure_paths
+from shared.utils.config_utils import ConfigError, PathRequirement, ensure_paths
 
-from .config import apply_path_overrides, load_pipeline_config, require_keys
-from .utils import parse_predictions_for_nms, pre_filter_with_nms, save_predictions_to_file
+from pipeline.core.config import apply_path_overrides, load_pipeline_config, require_keys
+from pipeline.core.utils import parse_predictions_for_nms, pre_filter_with_nms, save_predictions_to_file
 
 _REQUIRED_KEYS = ["raw_predictions_dir", "nms_predictions_dir"]
 

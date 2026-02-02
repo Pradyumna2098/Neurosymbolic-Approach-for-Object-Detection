@@ -3,6 +3,6 @@ raw_predictions_dir: /path/to/project/predictions/raw
 nms_predictions_dir: /path/to/project/predictions/nms
 refined_predictions_dir: /path/to/project/predictions/refined
 ground_truth_dir: /path/to/project/data/labels/val
-rules_file: /path/to/project/prolog/rules.pl
+rules_file: /path/to/project/pipeline/prolog/rules.pl
 report_file: /path/to/project/reports/explainability_report.csv
 nms_iou_threshold: 0.5

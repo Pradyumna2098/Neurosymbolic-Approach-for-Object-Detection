@@ -23,3 +23,27 @@ Neural Conception Module/Training_results/
 # Logs and temp
 *.log
 tmp/
+
+# Monitoring outputs (keep directory structure, ignore content)
+monitoring/logs/*.log
+monitoring/logs/**/*.log
+monitoring/metrics/*.json
+monitoring/metrics/*.csv
+monitoring/metrics/**/*.json
+monitoring/metrics/**/*.csv
+
+# Keep README files in monitoring directories
+!monitoring/logs/README.md
+!monitoring/metrics/README.md
+
+# Test coverage reports
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
+# Pytest cache
+.pytest_cache/
+
+# YOLO training runs
+runs/

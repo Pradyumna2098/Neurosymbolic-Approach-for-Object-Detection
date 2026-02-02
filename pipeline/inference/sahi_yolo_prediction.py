@@ -12,7 +12,7 @@ import torch
 from sahi import AutoDetectionModel
 from sahi.predict import get_sliced_prediction
 
-from config_utils import (
+from shared.utils.config_utils import (
     ConfigError,
     PathRequirement,
     apply_overrides,
@@ -23,7 +23,7 @@ from config_utils import (
 
 LOGGER = logging.getLogger(__name__)
 
-DEFAULT_CONFIG_PATH = Path("configs/prediction_kaggle.yaml")
+DEFAULT_CONFIG_PATH = Path("shared/configs/prediction_kaggle.yaml")
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
