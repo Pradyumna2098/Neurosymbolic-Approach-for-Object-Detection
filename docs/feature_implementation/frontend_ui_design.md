@@ -874,7 +874,7 @@ The UI is designed with these extensibility principles:
 - **A/B Testing**: Compare model versions
 - **Performance Profiling**: Detailed timing breakdown
 - **Dataset Analysis**: Class distribution, image stats
-- **Model Explanability**: Attention maps, feature visualization
+- **Model Explainability**: Attention maps, feature visualization
 
 #### Phase 4: Collaboration Features
 - **Cloud Sync**: Save results to cloud
