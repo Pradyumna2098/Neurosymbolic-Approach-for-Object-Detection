@@ -46,6 +46,10 @@ For detailed information about each subproject, see their respective README file
 - [Shared Resources README](shared/README.md)
 - [Monitoring README](monitoring/README.md)
 
+**📖 Documentation:**
+- [Repository Structure Guide](docs/STRUCTURE.md) - Detailed overview of the mono-repo organization
+- [Migration Guide](docs/MIGRATION.md) - Guide for transitioning from the old structure
+
 ## Quick Start
 
 ### Environment Setup
