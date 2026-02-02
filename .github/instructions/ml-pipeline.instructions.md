@@ -34,16 +34,17 @@ results = model.predict(
 ```
 
 ### YOLO Format Conventions
-- Predictions and labels use YOLO normalized coordinates: `[class_id, cx, cy, width, height, confidence]`
+- Ground truth labels use YOLO normalized coordinates: `[class_id, cx, cy, width, height]`
+- Predictions use YOLO normalized coordinates with confidence: `[class_id, cx, cy, width, height, confidence]`
 - Center coordinates (cx, cy) and dimensions (width, height) are normalized to [0, 1]
 - Convert to VOC format for NMS: `[x_min, y_min, x_max, y_max]`
 
 ### Configuration Loading
 ```python
-from pipeline.config import load_config
+from config_utils import load_config_file
 
 # Always load from YAML, never hardcode paths
-config = load_config(config_path)
+config = load_config_file(config_path)
 ```
 
 ## Reproducibility Requirements

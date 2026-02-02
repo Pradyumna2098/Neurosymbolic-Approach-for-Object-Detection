@@ -169,13 +169,13 @@ inference:
 ### Standard Loading Pattern
 
 ```python
-from pipeline.config import load_config
+from config_utils import load_config_file
 from pathlib import Path
 
 def main(config_path: str):
     """Load and validate configuration."""
     # Load config
-    config = load_config(config_path)
+    config = load_config_file(Path(config_path))
     
     # Validate required fields
     required_keys = ['data', 'training', 'output']
@@ -197,7 +197,8 @@ Allow CLI arguments to override config values:
 
 ```python
 import argparse
-from pipeline.config import load_config
+from config_utils import load_config_file
+from pathlib import Path
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', required=True, help='Config file path')
@@ -207,7 +208,7 @@ parser.add_argument('--batch-size', type=int, help='Override batch size')
 args = parser.parse_args()
 
 # Load base config
-config = load_config(args.config)
+config = load_config_file(Path(args.config))
 
 # Apply CLI overrides
 if args.epochs:
@@ -370,11 +371,13 @@ datasets:
 ### Log Loaded Config
 
 ```python
+from config_utils import load_config_file
+from pathlib import Path
 import json
 
 def load_and_log_config(config_path: str) -> dict:
     """Load config and log its contents."""
-    config = load_config(config_path)
+    config = load_config_file(Path(config_path))
     
     # Log config for debugging
     print(f"Loaded config from: {config_path}")

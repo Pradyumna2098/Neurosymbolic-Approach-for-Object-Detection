@@ -55,7 +55,7 @@ import numpy as np
 import torch
 from ultralytics import YOLO
 
-from pipeline.config import load_config
+from config_utils import load_config_file
 from pipeline.utils import parse_predictions_for_nms
 ```
 
@@ -212,7 +212,7 @@ def pre_filter_with_nms(
 ```python
 # Good
 try:
-    config = load_config(config_path)
+    config = load_config_file(config_path)
 except FileNotFoundError as e:
     raise FileNotFoundError(f"Config file not found: {config_path}") from e
 except yaml.YAMLError as e:
@@ -220,7 +220,7 @@ except yaml.YAMLError as e:
 
 # Bad
 try:
-    config = load_config(config_path)
+    config = load_config_file(config_path)
 except:
     pass
 ```
