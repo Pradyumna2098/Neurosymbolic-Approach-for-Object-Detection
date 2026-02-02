@@ -1,8 +1,54 @@
 # Neurosymbolic Approach for Object Detection
 
-This repository contains the end-to-end pipeline that combines YOLO-based neural detectors with symbolic reasoning and a knowledge-graph (KG) layer for explainability and downstream analytics.  The workflow is organised around four entry points that can be executed independently or chained together depending on the experiment you want to run.
+This mono-repository contains an end-to-end pipeline that combines YOLO-based neural detectors with symbolic reasoning and knowledge-graph construction for explainable object detection and spatial relationship extraction.
 
-## Environment setup
+## Repository Structure
+
+This repository is organized as a mono-repository with three distinct subprojects and shared resources:
+
+```
+.
+├── backend/              # APIs for pipeline interaction (planned)
+├── frontend/             # Visual dashboards and interfaces (planned)
+├── pipeline/             # Core AI/ML pipeline
+│   ├── core/            # Preprocessing, symbolic reasoning, evaluation
+│   ├── training/        # Model training scripts
+│   ├── inference/       # SAHI prediction & knowledge graph construction
+│   └── prolog/          # Symbolic reasoning rules
+├── shared/              # Shared configurations and utilities
+│   ├── configs/         # YAML configuration files
+│   └── utils/           # Shared utility modules
+├── tests/               # Test suite organized by subproject
+│   ├── pipeline/        # Pipeline tests
+│   ├── backend/         # Backend tests (planned)
+│   └── frontend/        # Frontend tests (planned)
+├── monitoring/          # Metrics and logging infrastructure
+│   ├── metrics/         # Performance metrics
+│   └── logs/            # Application logs
+└── docs/                # Additional documentation
+
+```
+
+### Subproject Overview
+
+| Subproject | Purpose | Status |
+|------------|---------|--------|
+| **Pipeline** | Core AI/ML code for object detection and symbolic reasoning | ✅ Active |
+| **Backend** | REST APIs for pipeline interaction and job management | 📋 Planned |
+| **Frontend** | Web dashboards for visualization and monitoring | 📋 Planned |
+| **Shared** | Common configurations and utilities | ✅ Active |
+| **Monitoring** | Metrics tracking and logging infrastructure | 📋 Planned |
+
+For detailed information about each subproject, see their respective README files:
+- [Pipeline README](pipeline/README.md)
+- [Backend README](backend/README.md)
+- [Frontend README](frontend/README.md)
+- [Shared Resources README](shared/README.md)
+- [Monitoring README](monitoring/README.md)
+
+## Quick Start
+
+### Environment Setup
 - **Python**: tested with Python 3.10+. PyTorch/Ultralytics currently publish wheels for 3.8–3.11, so stay within that range.
 - **GPU**: a CUDA-capable NVIDIA GPU is strongly recommended for the training and SAHI slicing stages. The scripts fall back to CPU inference, but training without a GPU will be prohibitively slow.
 - **Dependencies**: create a virtual environment and install the pinned packages.
@@ -19,86 +65,166 @@ pip install -r requirements.txt
 ## Dataset preparation
 1. Prepare the DOTA-style dataset in YOLO format with matching `images/` and `labels/` folders for each split you plan to use (e.g. `train`, `val`, `test`).
 2. Update the dataset YAML (for example, `dota.yaml`) so that it references the absolute paths for your machine.
-3. Ensure the working directories referenced in your configuration files exist. Sample Kaggle and local YAML files live in `configs/` – copy the closest one and tweak the paths for your environment.
+3. Ensure the working directories referenced in your configuration files exist. Sample Kaggle and local YAML files live in `shared/configs/` – copy the closest one and tweak the paths for your environment.
 4. Validate that ground-truth labels use YOLO normalised coordinates; the symbolic pipeline expects `.txt` predictions/labels in that format.
 
-## Workflow at a glance
-- **Neural stage**
-  - Train a YOLOv11 OBB detector (`training.py`).
-  - Optionally generate high-resolution sliced predictions with SAHI (`sahi_yolo_prediction.py`).
-- **Symbolic stage**
-  - Clean YOLO predictions with NMS (`python -m pipeline.preprocess`).
-  - Apply Prolog-based confidence modifiers (`python -m pipeline.symbolic`).
-  - Evaluate each prediction set with TorchMetrics mAP (`python -m pipeline.eval`).
-  - Chain all three stages via `python -m pipeline.run_pipeline` or the legacy `nsai_pipeline.py` wrapper.
-- **Knowledge-graph stage**
-  - Build weighted co-occurrence and spatial-relation graphs from predictions and emit Prolog facts/visualisations (`weighted_kg_sahi.py`).
+## Pipeline Workflow
 
-Outputs are written into the locations defined in the YAML configuration files (for example `/kaggle/working/yolo/viz_results`, `/kaggle/working/predictions_refined`, and `/kaggle/working/knowledge_graph`). Adjust these paths when running outside Kaggle.
+The neurosymbolic pipeline consists of three main stages:
 
-## Entry points
+### 1. Neural Stage (Training & Inference)
+- **Train YOLOv11-OBB**: Train object detection models on DOTA-style datasets
+- **SAHI Inference**: Generate high-resolution sliced predictions for large images
 
-### `training.py` — neural training & inference
-- Trains a YOLOv11-OBB model and runs inference over a held-out image set, saving annotated renders plus a JSON dump of detections.
-- **Customising paths**: provide a YAML file (see `configs/training_*.yaml`) via `--config` or override specific values with CLI flags like `--data-yaml`, `--test-image-dir`, and `--zip-source-dir`.
-- **Running**:
-  ```bash
-  python training.py --config configs/training_kaggle.yaml
-  # or override one-off values
-  python training.py --config configs/training_local.yaml --epochs 100 --conf-threshold 0.2
-  ```
-  The script validates that input paths exist and creates missing output folders. GPU acceleration is used automatically when `torch.cuda.is_available()` returns `True`.
+### 2. Symbolic Reasoning Stage
+- **NMS Preprocessing**: Apply class-wise Non-Maximum Suppression
+- **Prolog Reasoning**: Adjust confidence scores using symbolic rules
+- **Evaluation**: Compute mAP metrics across prediction sets
 
-### `pipeline` package — symbolic reasoning workflow
-- The symbolic pipeline now lives in a dedicated package:
-  - `python -m pipeline.preprocess` executes Stage 1 (class-wise NMS over YOLO `.txt` files).
-  - `python -m pipeline.symbolic` executes Stage 2 (Prolog-defined confidence modifiers plus explainability report).
-  - `python -m pipeline.eval` executes Stage 3 (TorchMetrics mAP comparison across prediction sets).
-  - `python -m pipeline.run_pipeline` orchestrates all three stages sequentially. The historical `nsai_pipeline.py` script remains as a thin wrapper around this runner for backwards compatibility.
-- **Customising paths**: point any stage at a YAML file such as `configs/pipeline_kaggle.yaml`, or override flags like `--raw-predictions-dir` and `--rules-file`. Output directories are created automatically where applicable.
-- **Dependencies**: requires `swi-prolog` at runtime for `pyswip`. Install via apt on Linux or use the Kaggle image where it is available.
-- **Running individual stages**:
-  ```bash
-  python -m pipeline.preprocess --config configs/pipeline_local.yaml
-  python -m pipeline.symbolic --config configs/pipeline_local.yaml
-  python -m pipeline.eval --config configs/pipeline_local.yaml
-  ```
-- **Running the full pipeline**:
-  ```bash
-  python -m pipeline.run_pipeline --config configs/pipeline_local.yaml
-  ```
+### 3. Knowledge Graph Stage
+- **Relationship Extraction**: Build spatial relationship graphs
+- **Prolog Facts**: Generate symbolic facts for downstream reasoning
+- **Visualization**: Create graph visualizations
 
-### `sahi_yolo_prediction.py` (`sahi yolo prediction.py`) — sliced inference helper
-- Loads a trained YOLO checkpoint with SAHI to generate dense predictions over large images, emitting YOLO-format `.txt` files ready for the symbolic pipeline.
-- **Customising paths**: use a YAML config (see `configs/prediction_*.yaml`) or pass flags like `--model-path`, `--test-images-dir`, and `--output-predictions-dir`.
-- **Running**:
-  ```bash
-  python "sahi yolo prediction.py" --config configs/prediction_kaggle.yaml
-  ```
-  GPU usage is automatic when `torch.cuda.is_available()` reports a device.
+## Usage Examples
 
-### `weighted_kg_sahi.py` (`weighted kg +sahi.py`) — knowledge-graph construction
-- Runs SAHI inference over configured dataset splits, extracts spatial relations, and aggregates them into a weighted directed graph.
-- Emits:
-  - Prolog facts at the configured `facts_filename` within `knowledge_graph_dir`.
-  - Visualisations at the configured `graph_filename`.
-- **Customising paths**: select a config file like `configs/knowledge_graph_kaggle.yaml` or override the CLI flags (`--model-path`, `--knowledge-graph-dir`, `--data-split train=/path/to/images/train`, etc.). Relation filter sets (`ALLOWED_*`) remain editable in the script if you need domain-specific tweaks.
-- **Running**:
-  ```bash
-  python "weighted kg +sahi.py" --config configs/knowledge_graph_local.yaml
-  ```
+### Training a Model
+
+```bash
+python pipeline/training/training.py --config shared/configs/training_local.yaml
+```
+
+### Running the Full Symbolic Pipeline
+
+```bash
+# Run all stages sequentially
+python -m pipeline.core.run_pipeline --config shared/configs/pipeline_local.yaml
+
+# Or run individual stages
+python -m pipeline.core.preprocess --config shared/configs/pipeline_local.yaml
+python -m pipeline.core.symbolic --config shared/configs/pipeline_local.yaml
+python -m pipeline.core.eval --config shared/configs/pipeline_local.yaml
+```
+
+### SAHI Prediction
+
+```bash
+python pipeline/inference/sahi_yolo_prediction.py --config shared/configs/prediction_local.yaml
+```
+
+### Knowledge Graph Construction
+
+```bash
+python pipeline/inference/weighted_kg_sahi.py --config shared/configs/knowledge_graph_local.yaml
+```
+
+## Configuration
+
+All configurations are stored in `shared/configs/` with separate files for local and Kaggle environments:
+
+- `training_*.yaml` - Model training configurations
+- `pipeline_*.yaml` - Symbolic pipeline configurations
+- `prediction_*.yaml` - SAHI inference configurations
+- `knowledge_graph_*.yaml` - Knowledge graph construction configurations
+
+### Configuration Example
+
+```yaml
+# shared/configs/pipeline_local.yaml
+raw_predictions_dir: /path/to/predictions/raw
+nms_predictions_dir: /path/to/predictions/nms
+refined_predictions_dir: /path/to/predictions/refined
+ground_truth_dir: /path/to/data/labels/val
+rules_file: /path/to/pipeline/prolog/rules.pl
+report_file: /path/to/reports/explainability_report.csv
+nms_iou_threshold: 0.5
+```
+
+## Outputs and Artifacts
+
+Outputs are written to locations defined in YAML configuration files:
+
+- **Training outputs**: Model weights, loss curves, validation metrics
+- **Predictions**: Raw, NMS-filtered, and symbolically-refined detections
+- **Symbolic reports**: Confidence adjustments and explainability metrics
+- **Knowledge graphs**: Prolog facts, graph visualizations, relationship statistics
+- **Evaluation metrics**: mAP scores, precision-recall curves, confusion matrices
+
+## Testing
+
+Run tests for specific subprojects:
+
+```bash
+# Run pipeline tests
+pytest tests/pipeline/ -v
+
+# Run all tests
+pytest tests/ -v
+
+# Run with coverage
+pytest tests/ --cov=pipeline --cov=shared
+```
+
+## Development
+
+### Project Structure Philosophy
+
+This mono-repository follows a modular architecture:
+
+- **Separation of Concerns**: Each subproject has a clear, distinct purpose
+- **Shared Resources**: Common utilities and configurations avoid duplication
+- **Independent Development**: Subprojects can be developed and tested independently
+- **Future-Ready**: Structure supports addition of backend APIs and frontend dashboards
+
+### Adding New Features
+
+1. Identify the appropriate subproject (pipeline, backend, frontend)
+2. Add code following the existing structure and conventions
+3. Update relevant configuration files in `shared/configs/`
+4. Add tests in the corresponding `tests/` subdirectory
+5. Update the subproject's README with new functionality
+6. Add any new dependencies to `requirements.txt` or `requirements/common.txt`
+
+## Legacy Compatibility
+
+The `pipeline/nsai_pipeline.py` script is maintained for backwards compatibility. It's a thin wrapper around the new modular pipeline structure.
+
+```bash
+# Legacy usage (still supported)
+python pipeline/nsai_pipeline.py --config shared/configs/pipeline_local.yaml
+```
 
 ## Troubleshooting
-- **Missing folders (e.g. `/kaggle/working/...`)**: create the directories manually or update the relevant configuration values before running. Every entry point creates its output folders, but parent directories must already exist.
-- **Kaggle-specific default paths**: when running locally, replace `/kaggle/input/...` and `/kaggle/working/...` references inside the config files with your local dataset and scratch directories.
-- **Prolog not found**: install SWI-Prolog (e.g. `sudo apt-get install swi-prolog`) before running `nsai_pipeline.py`.
-- **GPU not detected**: verify that NVIDIA drivers and CUDA runtime compatible with your PyTorch version are installed. The scripts fall back to CPU, but performance will degrade significantly.
-- **Package install failures**: upgrade `pip` and ensure build tools such as `build-essential`, `cmake`, and Python headers are present when compiling packages like `pyswip`.
+- **Missing folders**: Create directories manually or update configuration values before running. Scripts create output folders, but parent directories must exist.
+- **Kaggle-specific paths**: When running locally, replace `/kaggle/input/...` and `/kaggle/working/...` references with your local paths in `shared/configs/`.
+- **Prolog not found**: Install SWI-Prolog (e.g., `sudo apt-get install swi-prolog`) before running symbolic reasoning stages.
+- **GPU not detected**: Verify NVIDIA drivers and CUDA runtime compatible with your PyTorch version. Scripts fall back to CPU but with degraded performance.
+- **Package install failures**: Upgrade `pip` and ensure build tools (`build-essential`, `cmake`, Python headers) are present when compiling packages like `pyswip`.
+- **Import errors**: Ensure you're running from the repository root and have activated your virtual environment.
 
-## Outputs and artefact locations
-- YOLO training runs: `runs/obb/<experiment_name>/` inside the working directory used by Ultralytics.
-- Visualisations and JSON predictions: `visualization_dir` defined in your training config.
-- Symbolic reports: `refined_predictions_dir` and the configured `report_file` in the pipeline config.
-- Knowledge graph artefacts: the configured `knowledge_graph_dir`.
+## Contributing
 
-Adjust the directory constants if you wish to persist results outside the transient Kaggle filesystem.
+Contributions are welcome! Please:
+1. Follow the existing code structure and conventions
+2. Add tests for new functionality in the appropriate `tests/` subdirectory
+3. Update relevant documentation (README files)
+4. Use meaningful commit messages
+5. Ensure all tests pass before submitting
+
+## License
+
+See [LICENSE](LICENSE) file for details.
+
+## Citation
+
+If you use this code in your research, please cite:
+
+```bibtex
+@misc{neurosymbolic-object-detection,
+  author = {Repository Authors},
+  title = {Neurosymbolic Approach for Object Detection},
+  year = {2024},
+  publisher = {GitHub},
+  url = {https://github.com/Pradyumna2098/Neurosymbolic-Approach-for-Object-Detection}
+}
+```

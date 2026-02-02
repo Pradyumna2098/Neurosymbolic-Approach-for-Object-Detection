@@ -8,9 +8,9 @@ from typing import Dict, List
 
 import torch
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))
+sys.path.append(str(Path(__file__).resolve().parents[2]))
 
-from pipeline.utils import apply_symbolic_modifiers, pre_filter_with_nms
+from pipeline.core.utils import apply_symbolic_modifiers, pre_filter_with_nms
 
 
 def test_pre_filter_with_nms_removes_overlapping_boxes() -> None:

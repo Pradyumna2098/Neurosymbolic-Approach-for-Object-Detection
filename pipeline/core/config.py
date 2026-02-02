@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Iterable, Mapping, Optional
 
-from config_utils import ConfigError, apply_overrides, expand_path, load_config_file
+from shared.utils.config_utils import ConfigError, apply_overrides, expand_path, load_config_file
 
-DEFAULT_CONFIG_PATH = Path("configs/pipeline_kaggle.yaml")
+DEFAULT_CONFIG_PATH = Path("shared/configs/pipeline_kaggle.yaml")
 
 _DEFAULTS: Dict[str, Any] = {
     "nms_iou_threshold": 0.6,
