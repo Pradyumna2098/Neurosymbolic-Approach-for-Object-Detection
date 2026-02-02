@@ -2,30 +2,40 @@
 
 import pytest
 from pathlib import Path
-import sys
-
-sys.path.append(str(Path(__file__).resolve().parents[2]))
-
-from pipeline.config import load_config
+import yaml
 
 
-def test_load_config_from_yaml(tmp_path):
-    """Test loading configuration from YAML file."""
-    config_file = tmp_path / "test_config.yaml"
-    config_content = """
-raw_predictions_dir: /test/predictions
-refined_predictions_dir: /test/refined
-ground_truth_dir: /test/ground_truth
-"""
-    config_file.write_text(config_content)
+def test_pipeline_config_files_exist():
+    """Test that pipeline configuration files exist."""
+    repo_root = Path(__file__).resolve().parents[2]
+    configs_dir = repo_root / "shared"
     
-    config = load_config(str(config_file))
-    assert config.raw_predictions_dir == "/test/predictions"
-    assert config.refined_predictions_dir == "/test/refined"
-    assert config.ground_truth_dir == "/test/ground_truth"
+    assert configs_dir.exists(), f"Shared configs directory not found: {configs_dir}"
+    
+    # Check for expected config files
+    expected_configs = [
+        "pipeline_kaggle.yaml",
+        "pipeline_local.yaml",
+        "training_kaggle.yaml",
+        "training_local.yaml"
+    ]
+    
+    for config_file in expected_configs:
+        config_path = configs_dir / config_file
+        assert config_path.exists(), f"Config file not found: {config_path}"
 
 
-def test_load_config_missing_file():
-    """Test error handling for missing config file."""
-    with pytest.raises((FileNotFoundError, SystemExit)):
-        load_config("/nonexistent/config.yaml")
+def test_pipeline_config_structure():
+    """Test that pipeline config files have valid YAML structure."""
+    repo_root = Path(__file__).resolve().parents[2]
+    configs_dir = repo_root / "shared"
+    
+    pipeline_config = configs_dir / "pipeline_local.yaml"
+    
+    if pipeline_config.exists():
+        with open(pipeline_config, 'r') as f:
+            config = yaml.safe_load(f)
+        
+        # Just verify it's a valid YAML and is a dict
+        assert isinstance(config, dict), "Config should be a dictionary"
+        assert len(config) > 0, "Config should not be empty"

@@ -4,11 +4,20 @@ import pytest
 from fastapi.testclient import TestClient
 from pathlib import Path
 import sys
+import importlib.util
 
-# Add parent directory to path
-sys.path.append(str(Path(__file__).resolve().parents[2]))
+# Load the backend module dynamically
+repo_root = Path(__file__).resolve().parents[2]
+backend_main_path = repo_root / "backend" / "app" / "main.py"
 
-from backend.app.main import app, training_jobs, results_cache
+spec = importlib.util.spec_from_file_location("backend_main", backend_main_path)
+backend_main = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(backend_main)
+
+# Extract what we need
+app = backend_main.app
+training_jobs = backend_main.training_jobs
+results_cache = backend_main.results_cache
 
 
 @pytest.fixture
