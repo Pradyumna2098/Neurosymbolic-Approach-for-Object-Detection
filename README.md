@@ -58,6 +58,8 @@ This is a **mono-repository** organized into distinct subprojects:
 
 ## 🚀 Quick Start
 
+**New to the project?** Start here: **[QUICKSTART.md](QUICKSTART.md)**
+
 ### Prerequisites
 
 - **Docker & Docker Compose**: For containerized deployment
@@ -138,6 +140,13 @@ python -m pipeline.run_pipeline --config shared/pipeline_local.yaml
 
 ## 📚 Documentation
 
+### Essential Reading
+
+- **[QUICKSTART.md](QUICKSTART.md)**: Get started in 5 minutes
+- **[instructions.md](instructions.md)**: Development guidelines and best practices
+- **[CONTRIBUTING.md](CONTRIBUTING.md)**: How to contribute to the project
+- **[ARCHITECTURE.md](ARCHITECTURE.md)**: System architecture and design
+
 ### For Developers
 
 - **[instructions.md](instructions.md)**: Comprehensive guide covering:
@@ -180,6 +189,33 @@ cd frontend && npm test
 
 We aim for **80%+ code coverage** across all components. Coverage reports are generated automatically in CI/CD.
 
+## 🛠️ Common Tasks
+
+Use the provided Makefile for common operations:
+
+```bash
+# Install dependencies
+make install
+
+# Run all tests
+make test
+
+# Lint code
+make lint
+
+# Format code
+make format
+
+# Build Docker images
+make docker-build
+
+# Start services
+make docker-up
+
+# View all available commands
+make help
+```
+
 ## 🔍 Monitoring
 
 ### Prometheus Metrics
@@ -203,6 +239,8 @@ Pre-configured dashboard includes:
 - Duration percentiles (p50, p95)
 - Error rate tracking
 - Stage-wise performance metrics
+
+**Full monitoring documentation**: [monitoring/README.md](monitoring/README.md)
 
 ## 🔄 CI/CD Pipeline
 
