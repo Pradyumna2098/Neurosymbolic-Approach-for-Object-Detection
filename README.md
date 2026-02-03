@@ -1,5 +1,8 @@
 # Neurosymbolic Approach for Object Detection
 
+![CI Pipeline](https://github.com/Pradyumna2098/Neurosymbolic-Approach-for-Object-Detection/workflows/CI%20Pipeline/badge.svg)
+[![codecov](https://codecov.io/gh/Pradyumna2098/Neurosymbolic-Approach-for-Object-Detection/branch/master/graph/badge.svg)](https://codecov.io/gh/Pradyumna2098/Neurosymbolic-Approach-for-Object-Detection)
+
 This mono-repository contains an end-to-end pipeline that combines YOLO-based neural detectors with symbolic reasoning and knowledge-graph construction for explainable object detection and spatial relationship extraction.
 
 ## Repository Structure
@@ -49,6 +52,7 @@ For detailed information about each subproject, see their respective README file
 **📖 Documentation:**
 - [Repository Structure Guide](docs/STRUCTURE.md) - Detailed overview of the mono-repo organization
 - [Migration Guide](docs/MIGRATION.md) - Guide for transitioning from the old structure
+- [CI/CD Pipeline](docs/CICD.md) - Continuous Integration and Deployment documentation
 
 ## Quick Start
 
