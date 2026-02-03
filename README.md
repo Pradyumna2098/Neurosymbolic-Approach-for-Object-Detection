@@ -1,5 +1,8 @@
 # Neurosymbolic Approach for Object Detection
 
+![Tests](https://github.com/Pradyumna2098/Neurosymbolic-Approach-for-Object-Detection/workflows/Tests/badge.svg)
+[![codecov](https://codecov.io/gh/Pradyumna2098/Neurosymbolic-Approach-for-Object-Detection/branch/master/graph/badge.svg)](https://codecov.io/gh/Pradyumna2098/Neurosymbolic-Approach-for-Object-Detection)
+
 This mono-repository contains an end-to-end pipeline that combines YOLO-based neural detectors with symbolic reasoning and knowledge-graph construction for explainable object detection and spatial relationship extraction.
 
 ## Repository Structure
@@ -49,6 +52,9 @@ For detailed information about each subproject, see their respective README file
 **📖 Documentation:**
 - [Repository Structure Guide](docs/STRUCTURE.md) - Detailed overview of the mono-repo organization
 - [Migration Guide](docs/MIGRATION.md) - Guide for transitioning from the old structure
+- [CI/CD Quick Start](docs/CI_QUICKSTART.md) - ⚡ Quick guide to using the CI/CD pipeline
+- [CI/CD Pipeline](docs/CICD.md) - Comprehensive CI/CD documentation
+- [Branch Protection Setup](docs/BRANCH_PROTECTION.md) - Guide for enforcing CI checks before merging
 
 ## Quick Start
 
@@ -213,7 +219,14 @@ Contributions are welcome! Please:
 2. Add tests for new functionality in the appropriate `tests/` subdirectory
 3. Update relevant documentation (README files)
 4. Use meaningful commit messages
-5. Ensure all tests pass before submitting
+5. Ensure all CI checks pass before requesting review
+
+All pull requests to `master` must pass automated CI checks including:
+- ✅ Unit tests (Python 3.10 & 3.11)
+- ✅ Code quality checks (flake8)
+- ✅ Build verification
+
+See [CI/CD Documentation](docs/CICD.md) for details on the testing pipeline.
 
 ## License
 
