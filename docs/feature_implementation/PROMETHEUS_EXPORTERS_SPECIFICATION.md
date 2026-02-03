@@ -312,6 +312,33 @@ memory_usage = Gauge(
     'Memory usage in bytes'
 )
 
+memory_available = Gauge(
+    'memory_available_bytes',
+    'Available memory in bytes'
+)
+
+gpu_memory_reserved = Gauge(
+    'gpu_memory_reserved_bytes',
+    'GPU memory reserved',
+    ['device_id']
+)
+
+gpu_utilization = Gauge(
+    'gpu_utilization_percent',
+    'GPU utilization percentage',
+    ['device_id']
+)
+
+disk_read_total = Counter(
+    'disk_read_bytes_total',
+    'Total disk bytes read'
+)
+
+disk_write_total = Counter(
+    'disk_write_bytes_total',
+    'Total disk bytes written'
+)
+
 # ============================================================================
 # Application Info
 # ============================================================================
@@ -471,16 +498,19 @@ class SystemMetricsCollector:
         self.interval = interval
         self._thread = None
         self._stop_flag = threading.Event()
+        self.pynvml_available = False
+        self.gpu_count = 0
         
         # Initialize NVML for GPU metrics
         if PYNVML_AVAILABLE:
             try:
                 pynvml.nvmlInit()
                 self.gpu_count = pynvml.nvmlDeviceGetCount()
+                self.pynvml_available = True
                 logger.info(f"Initialized GPU monitoring ({self.gpu_count} GPUs)")
             except Exception as e:
                 logger.warning(f"Failed to initialize NVML: {e}")
-                PYNVML_AVAILABLE = False
+                self.pynvml_available = False
     
     def start(self):
         """Start collecting metrics in background thread."""
@@ -524,11 +554,23 @@ class SystemMetricsCollector:
         pm.memory_usage.set(mem.used)
         pm.memory_available.set(mem.available)
         
-        # Disk I/O metrics
+        # Disk I/O metrics (track deltas)
         disk_io = psutil.disk_io_counters()
         if disk_io:
-            pm.disk_read_total.inc(disk_io.read_bytes)
-            pm.disk_write_total.inc(disk_io.write_bytes)
+            # Note: In production, track previous values to compute deltas
+            # For planning docs, showing the pattern
+            if not hasattr(self, '_prev_disk_read'):
+                self._prev_disk_read = disk_io.read_bytes
+                self._prev_disk_write = disk_io.write_bytes
+            else:
+                read_delta = disk_io.read_bytes - self._prev_disk_read
+                write_delta = disk_io.write_bytes - self._prev_disk_write
+                if read_delta > 0:
+                    pm.disk_read_total.inc(read_delta)
+                if write_delta > 0:
+                    pm.disk_write_total.inc(write_delta)
+                self._prev_disk_read = disk_io.read_bytes
+                self._prev_disk_write = disk_io.write_bytes
         
         # GPU metrics (PyTorch)
         if TORCH_AVAILABLE and torch.cuda.is_available():
@@ -539,7 +581,7 @@ class SystemMetricsCollector:
                 pm.gpu_memory_reserved.labels(device_id=str(i)).set(reserved)
         
         # GPU utilization (NVML)
-        if PYNVML_AVAILABLE:
+        if self.pynvml_available:
             for i in range(self.gpu_count):
                 try:
                     handle = pynvml.nvmlDeviceGetHandleByIndex(i)
@@ -716,15 +758,22 @@ def train_model(config):
     # Training loop
     num_epochs = config['training']['epochs']
     
+    # Note: This is a simplified example for documentation purposes.
+    # In a real implementation, you would need to:
+    # - Initialize optimizer, train_loader, val_loader
+    # - Implement train_one_epoch() and validate() functions
+    # - Set val_frequency appropriately
+    
     for epoch in range(num_epochs):
         epoch_start = time.time()
         
-        # Set learning rate metric
-        lr = optimizer.param_groups[0]['lr']
+        # Set learning rate metric from config (or optimizer if available)
+        lr = config['training'].get('learning_rate', 0.001)
         pm.learning_rate.labels(model=model_name).set(lr)
         
-        # Training epoch
-        train_loss = train_one_epoch(model, train_loader)
+        # Training epoch (placeholder - implement train_one_epoch)
+        # train_loss = train_one_epoch(model, train_loader)
+        train_loss = 0.5  # Placeholder for documentation
         
         # Record training loss
         pm.training_loss.labels(model=model_name, epoch=str(epoch)).set(train_loss)
@@ -733,9 +782,11 @@ def train_model(config):
         epoch_duration = time.time() - epoch_start
         pm.training_duration.labels(model=model_name).observe(epoch_duration)
         
-        # Validation
+        # Validation (placeholder - implement validate function)
+        val_frequency = config['training'].get('val_frequency', 5)
         if epoch % val_frequency == 0:
-            map_50 = validate(model, val_loader)
+            # map_50 = validate(model, val_loader)
+            map_50 = 0.75  # Placeholder for documentation
             pm.validation_map.labels(
                 model=model_name,
                 iou_threshold='0.5'
@@ -748,7 +799,14 @@ def train_model(config):
 
 
 if __name__ == '__main__':
-    # Parse config and start training
+    # Example: load config from YAML file and start training
+    import yaml
+    from pathlib import Path
+    
+    config_path = Path("configs/training.yaml")
+    with config_path.open("r", encoding="utf-8") as f:
+        config = yaml.safe_load(f)
+    
     train_model(config)
 ```
 

@@ -184,9 +184,9 @@ rate(detections_per_image_sum[5m]) / rate(detections_per_image_count[5m])
 # Median detection count
 histogram_quantile(0.5, sum(rate(detections_per_image_bucket[5m])) by (le))
 
-# Images with high detection counts (>100 detections)
-sum(detections_per_image_bucket{le="100"}) - 
-sum(detections_per_image_bucket{le="200"})
+# Images with 100-200 detections
+sum(detections_per_image_bucket{le="200"}) - 
+sum(detections_per_image_bucket{le="100"})
 ```
 
 #### Confidence Distribution
@@ -240,12 +240,11 @@ rate(failed_prolog_queries_total[5m]) / rate(prolog_query_seconds_count[5m])
 rate(confidence_adjustment_delta_sum[5m]) / 
 rate(confidence_adjustment_delta_count[5m])
 
-# Positive adjustments (increased confidence)
+# Zero or negative adjustments (no change or decreased confidence)
 sum(confidence_adjustment_delta_bucket{le="0"}) by (le)
 
-# Large adjustments (|delta| > 0.2)
-rate(confidence_adjustment_delta_bucket{le="-0.2"}[5m]) + 
-rate(confidence_adjustment_delta_bucket{le="0.2"}[5m])
+# Large negative adjustments (delta < -0.2)
+rate(confidence_adjustment_delta_bucket{le="-0.2"}[5m])
 ```
 
 #### Pipeline Stages
