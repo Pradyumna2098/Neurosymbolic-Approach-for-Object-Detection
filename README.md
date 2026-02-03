@@ -53,6 +53,7 @@ For detailed information about each subproject, see their respective README file
 - [Repository Structure Guide](docs/STRUCTURE.md) - Detailed overview of the mono-repo organization
 - [Migration Guide](docs/MIGRATION.md) - Guide for transitioning from the old structure
 - [CI/CD Pipeline](docs/CICD.md) - Continuous Integration and Deployment documentation
+- [Branch Protection Setup](docs/BRANCH_PROTECTION.md) - Guide for enforcing CI checks before merging
 
 ## Quick Start
 
@@ -217,7 +218,14 @@ Contributions are welcome! Please:
 2. Add tests for new functionality in the appropriate `tests/` subdirectory
 3. Update relevant documentation (README files)
 4. Use meaningful commit messages
-5. Ensure all tests pass before submitting
+5. Ensure all CI checks pass before requesting review
+
+All pull requests to `master` must pass automated CI checks including:
+- ✅ Unit tests (Python 3.10 & 3.11)
+- ✅ Code quality checks (flake8)
+- ✅ Build verification
+
+See [CI/CD Documentation](docs/CICD.md) for details on the testing pipeline.
 
 ## License
 

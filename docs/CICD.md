@@ -82,9 +82,11 @@ All three jobs (`test-pipeline`, `code-quality`, `build-verification`) must pass
 
 ## Branch Protection
 
-To enforce CI checks before merging, configure branch protection rules for the `master` branch:
+To enforce CI checks before merging, configure branch protection rules for the `master` branch.
 
-### Recommended Settings
+**📋 See the detailed [Branch Protection Setup Guide](BRANCH_PROTECTION.md) for step-by-step instructions.**
+
+### Quick Setup
 
 1. Go to **Settings** → **Branches** → **Branch protection rules**
 2. Add rule for `master` branch
