@@ -164,6 +164,12 @@ Detailed workflow diagrams and sequence diagrams, including:
 
 ## Quick Links
 
+### Visualization Design (NEW)
+- [Visualization Logic Design](visualization_logic_design.md) - Complete specification
+- [Workflow Diagrams](visualization_workflow.md) - Process flows and integration
+- [Quick Reference](visualization_quick_reference.md) - Code snippets and examples
+- [Color Schemes](visualization_color_schemes.md) - Styling standards and conventions
+
 ### Design Documents
 - [User Workflow](frontend_ui_design.md#user-workflow)
 - [UI Wireframes](frontend_ui_design.md#screen-wireframes)
@@ -193,6 +199,46 @@ Detailed workflow diagrams and sequence diagrams, including:
 - [Code Examples](ui_implementation_guide.md#component-implementation)
 - [Testing Strategy](ui_implementation_guide.md#testing-strategy)
 
+### 5. Bounding Box Visualization Design (NEW)
+
+**NEW** Comprehensive visualization design for bounding box overlay on images, including:
+
+- **[Visualization Logic Design](visualization_logic_design.md)**: Complete specification for implementing visualization
+  - Prediction file format interpretation (OBB and YOLO formats)
+  - Overlay logic for bounding boxes, labels, and scores
+  - Library recommendations (Pillow, OpenCV, Matplotlib)
+  - Color schemes and label formatting
+  - Output conventions and directory structure
+  - Error handling and performance optimization
+
+- **[Visualization Workflow](visualization_workflow.md)**: Detailed process flows and diagrams
+  - High-level pipeline overview
+  - Step-by-step process flows
+  - Format detection and parsing logic
+  - Drawing and rendering workflows
+  - Batch processing patterns
+  - Error recovery flows
+  - Integration with existing pipeline
+
+- **[Visualization Quick Reference](visualization_quick_reference.md)**: Practical implementation guide
+  - Quick start code examples
+  - Code snippets library
+  - Configuration templates
+  - Common issues and solutions
+  - API reference
+  - Command-line usage
+
+- **[Visualization Color Schemes](visualization_color_schemes.md)**: Visual styling standards
+  - Color palettes for DOTA dataset classes
+  - Confidence-based styling approaches
+  - Output file naming conventions
+  - Directory organization
+  - Metadata format specifications
+  - Visual style guidelines
+
+**Status:** Design Complete ✅  
+**Stage:** Design Specification (Ready for Implementation)
+
 ## Implementation Status
 
 | Feature | Design | Implementation | Testing | Status |
@@ -208,6 +254,11 @@ Detailed workflow diagrams and sequence diagrams, including:
 | File Output Specification | ✅ Complete | N/A | N/A | Documentation Phase |
 | Prometheus Metrics Design | ✅ Complete | N/A | N/A | Documentation Phase |
 | Error Handling Strategy | ✅ Complete | N/A | N/A | Documentation Phase |
+| **Bounding Box Visualization (NEW)** | | | | |
+| Visualization Logic Design | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
+| Workflow Documentation | ✅ Complete | N/A | N/A | Design Phase |
+| Quick Reference Guide | ✅ Complete | N/A | N/A | Design Phase |
+| Color Schemes & Conventions | ✅ Complete | N/A | N/A | Design Phase |
 | **Backend API** | | | | |
 | API Architecture | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
 | File Upload Endpoint | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
