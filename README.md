@@ -52,7 +52,8 @@ For detailed information about each subproject, see their respective README file
 **📖 Documentation:**
 - [Repository Structure Guide](docs/STRUCTURE.md) - Detailed overview of the mono-repo organization
 - [Migration Guide](docs/MIGRATION.md) - Guide for transitioning from the old structure
-- [CI/CD Pipeline](docs/CICD.md) - Continuous Integration and Deployment documentation
+- [CI/CD Quick Start](docs/CI_QUICKSTART.md) - ⚡ Quick guide to using the CI/CD pipeline
+- [CI/CD Pipeline](docs/CICD.md) - Comprehensive CI/CD documentation
 - [Branch Protection Setup](docs/BRANCH_PROTECTION.md) - Guide for enforcing CI checks before merging
 
 ## Quick Start
