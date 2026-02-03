@@ -356,10 +356,12 @@ CLIENT                  API SERVER              CELERY              WORKER
       │                     │
       │ {                   │
       │   status: "accepted"│
-      │   job_id,           │
-      │   status: "queued", │
-      │   created_at,       │
-      │   status_url        │
+      │   data: {           │
+      │     job_id,         │
+      │     status: "queued"│
+      │     created_at,     │
+      │     status_url      │
+      │   }                 │
       │ }                   │
       └──────────┬──────────┘
                  │
@@ -695,7 +697,7 @@ STATUS: 'failed'
   "error": {
     "code": "MODEL_LOAD_ERROR",
     "message": "Failed to load YOLO model",
-    "details": "Model file not found: /path/to/best.pt"
+    "details": "Model file not found. Refer to server logs for more details."
   }
 }
 ```
@@ -1133,25 +1135,19 @@ Click "Monitoring"
 ┌─────────────────────────────────────────────────┐
 │ Fetch current metrics                           │
 │                                                 │
-│ Option A: Direct Prometheus Query               │
-│   POST http://prometheus:9090/api/v1/query     │
-│   Body: query=queue_length{queue="inference"}  │
-│                                                 │
-│ Option B: Backend aggregation endpoint         │
-│   GET /api/v1/monitoring/dashboard             │
+│ GET /api/v1/monitoring/dashboard                │
 │                                                 │
 └────────────────────┬────────────────────────────┘
                      │
                      ▼
             ┌──────────────────┐
             │ Backend endpoint │      ┌───────────────┐
-            │ (recommended)    │─────▶│ Prometheus    │
-            │                  │      │ HTTP API      │
-            │ Queries:         │      │               │
-            │ - queue_length   │      │ Execute PromQL│
-            │ - active_workers │      │ queries       │
-            │ - job_rate       │      └───────┬───────┘
-            │ - avg_duration   │              │
+            │                  │─────▶│ Prometheus    │
+            │ Queries:         │      │ HTTP API      │
+            │ - queue_length   │      │               │
+            │ - active_workers │      │ Execute PromQL│
+            │ - job_rate       │      │ queries       │
+            │ - avg_duration   │      └───────┬───────┘
             │                  │              │
             │ Aggregates and   │◀─────────────┘
             │ returns JSON     │

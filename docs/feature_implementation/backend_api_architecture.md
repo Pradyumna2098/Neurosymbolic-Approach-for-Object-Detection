@@ -518,7 +518,7 @@ curl http://localhost:8000/api/v1/jobs/job_abc123xyz789/status
     "error": {
       "code": "MODEL_LOAD_ERROR",
       "message": "Failed to load YOLO model",
-      "details": "Model file not found: /path/to/best.pt"
+      "details": "Model file not found. Please contact support with the job ID."
     }
   }
 }
@@ -1332,24 +1332,28 @@ scrape_configs:
 
 ### Windows App Integration
 
-The Windows application can display real-time metrics by:
+The Windows application displays real-time metrics by querying the backend aggregation endpoint:
 
-1. **Option A: Query Prometheus API Directly**
-   ```javascript
-   const response = await fetch('http://localhost:9090/api/v1/query', {
-     method: 'POST',
-     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-     body: 'query=queue_length'
-   });
-   ```
+```http
+GET /api/v1/monitoring/dashboard
+```
 
-2. **Option B: Backend Aggregation Endpoint**
-   ```http
-   GET /api/v1/monitoring/dashboard
-   ```
-   Returns aggregated metrics in JSON for easy display
+This endpoint aggregates metrics from Prometheus and returns them in JSON format for easy display, simplifying the client implementation and avoiding the need for the Windows app to understand PromQL syntax.
 
-**Recommended**: Option B for better client simplicity
+**Example Response:**
+```json
+{
+  "queue_length": 3,
+  "active_workers": 4,
+  "average_inference_time_seconds": 45.2,
+  "job_completion_rate": 12.5,
+  "recent_jobs": {
+    "completed": 298,
+    "failed": 12,
+    "processing": 5
+  }
+}
+```
 
 ---
 
