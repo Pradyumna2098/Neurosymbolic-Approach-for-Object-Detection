@@ -50,7 +50,37 @@ Step-by-step implementation guide for developers, including:
 **Status:** Implementation Guide Complete ✅  
 **Stage:** Ready for Development
 
-### 3. Backend API Architecture (`backend_api_architecture.md`)
+### 3. Model Pipeline Integration (`model_pipeline_integration.md`)
+
+**NEW** Comprehensive integration guide for YOLO/SAHI object detection pipeline, including:
+
+- **Pipeline Architecture Overview**: Complete 3-stage pipeline (Neural, Symbolic, Knowledge Graph)
+- **Component Structure**: Directory layout and script responsibilities
+- **Backend API Integration Patterns**: Three integration approaches:
+  - Subprocess invocation (simple deployments)
+  - Async task queue with Celery (production, recommended)
+  - Direct Python import (low-latency)
+- **End-to-End Integration Flow**: Complete workflow diagrams from API to results
+- **File Outputs and Formats**: Detailed specification of all output files
+  - YOLO prediction format (.txt)
+  - Evaluation metrics (JSON)
+  - Explainability reports (CSV)
+  - Knowledge graph facts (Prolog)
+- **Prometheus Metrics Integration**: Comprehensive instrumentation strategy
+  - Counter, histogram, and gauge metrics
+  - Metrics collection points at each pipeline stage
+  - Grafana dashboard recommendations
+- **Pseudocode Examples**: Complete working examples for:
+  - Async Celery task integration
+  - Direct Python import integration
+  - Subprocess invocation with error handling
+- **Error Handling and Recovery**: Robust error management strategies
+- **Future Extensibility**: Planned enhancements (A/B testing, ensembles, distributed processing)
+
+**Status:** Design Complete ✅  
+**Stage:** Design Specification (No Code Implementation)
+
+### 4. Backend API Architecture (`backend_api_architecture.md`)
 
 Complete backend API architecture specification for prediction automation, including:
 
@@ -140,6 +170,14 @@ Detailed workflow diagrams and sequence diagrams, including:
 - [Component Specs](frontend_ui_design.md#component-specifications)
 - [Prometheus Integration](frontend_ui_design.md#prometheus-monitoring-integration)
 
+### Model Pipeline Integration
+- [Pipeline Architecture](model_pipeline_integration.md#pipeline-architecture-overview)
+- [Integration Patterns](model_pipeline_integration.md#backend-api-integration)
+- [End-to-End Flow](model_pipeline_integration.md#end-to-end-integration-flow)
+- [File Outputs](model_pipeline_integration.md#file-outputs-and-formats)
+- [Prometheus Metrics](model_pipeline_integration.md#prometheus-metrics-integration)
+- [Pseudocode Examples](model_pipeline_integration.md#pseudocode-examples)
+
 ### Backend API Documentation
 - [Quick Reference Guide](BACKEND_API_QUICK_REFERENCE.md) - Fast navigation
 - [API Design Justification](backend_api_architecture.md#api-design-justification)
@@ -164,6 +202,12 @@ Detailed workflow diagrams and sequence diagrams, including:
 | Configuration Panel | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
 | Results Viewer | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
 | Monitoring Dashboard | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
+| **Model Pipeline Integration** | | | | |
+| Pipeline Architecture | ✅ Complete | N/A | N/A | Documentation Phase |
+| Integration Patterns | ✅ Complete | N/A | N/A | Documentation Phase |
+| File Output Specification | ✅ Complete | N/A | N/A | Documentation Phase |
+| Prometheus Metrics Design | ✅ Complete | N/A | N/A | Documentation Phase |
+| Error Handling Strategy | ✅ Complete | N/A | N/A | Documentation Phase |
 | **Backend API** | | | | |
 | API Architecture | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
 | File Upload Endpoint | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
