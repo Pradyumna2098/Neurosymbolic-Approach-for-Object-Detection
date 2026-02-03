@@ -131,25 +131,30 @@ Detailed workflow diagrams and sequence diagrams, including:
 ## How to Use These Documents
 
 ### For Product Managers / Designers
+- Review `FILE_HANDLING_EXECUTIVE_SUMMARY.md` for file handling overview and business value
 - Review `frontend_ui_design.md` for complete UI/UX specifications
 - Review `backend_api_architecture.md` for API design and integration points
 - Use wireframes and workflow diagrams for stakeholder presentations
 - Reference component specs for design validation
 
 ### For Backend Developers
-1. Start with `backend_api_architecture.md` for complete API specification
-2. Review `backend_api_workflows.md` for detailed workflow diagrams
-3. Understand integration points with frontend and monitoring
-4. Follow technology stack recommendations for implementation
+1. Start with `FILE_HANDLING_QUICK_REFERENCE.md` for file handling code examples
+2. Review `file_data_handling_specifications.md` for complete file handling specification
+3. Start with `backend_api_architecture.md` for complete API specification
+4. Review `backend_api_workflows.md` for detailed workflow diagrams
+5. Understand integration points with frontend and monitoring
+6. Follow technology stack recommendations for implementation
 
 ### For Frontend Developers
 1. Start with `frontend_ui_design.md` to understand the overall vision
 2. Follow `ui_implementation_guide.md` for step-by-step implementation
-3. Review `backend_api_workflows.md` to understand API integration
-4. Use code examples as starting templates
-5. Follow the roadmap phases for structured development
+3. Review `FILE_HANDLING_QUICK_REFERENCE.md` for file upload/download patterns
+4. Review `backend_api_workflows.md` to understand API integration
+5. Use code examples as starting templates
+6. Follow the roadmap phases for structured development
 
 ### For QA / Testers
+- Use `file_data_handling_specifications.md` for file validation test cases
 - Use user workflows in `frontend_ui_design.md` to create test cases
 - Reference `backend_api_workflows.md` for end-to-end testing scenarios
 - Use interaction patterns and error scenarios for expected behavior
@@ -165,6 +170,7 @@ Detailed workflow diagrams and sequence diagrams, including:
 ## Quick Links
 
 ### File and Data Handling (NEW)
+- [Executive Summary](FILE_HANDLING_EXECUTIVE_SUMMARY.md) - High-level overview for stakeholders
 - [File and Data Handling Specifications](file_data_handling_specifications.md) - Complete specification
 - [File Handling Quick Reference](FILE_HANDLING_QUICK_REFERENCE.md) - Code examples and troubleshooting
 - [File Validation Rules](file_data_handling_specifications.md#file-validation-specifications)
@@ -250,6 +256,15 @@ Detailed workflow diagrams and sequence diagrams, including:
 ### 6. File and Data Handling Specifications (NEW)
 
 **NEW** Comprehensive specifications for input/output file handling and data management, including:
+
+- **[Executive Summary](FILE_HANDLING_EXECUTIVE_SUMMARY.md)**: High-level overview for stakeholders and decision makers
+  - Problem statement and solution architecture
+  - Key features and benefits
+  - Technical highlights and integration points
+  - Compliance, security, and performance characteristics
+  - Operational impact and business value
+  - Implementation phases and success criteria
+  - Risk mitigation strategies
 
 - **[File and Data Handling Specifications](file_data_handling_specifications.md)**: Complete specification for file operations
   - File validation rules for images, predictions, and configurations
