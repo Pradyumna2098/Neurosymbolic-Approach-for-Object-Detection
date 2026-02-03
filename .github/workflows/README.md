@@ -4,7 +4,7 @@ This directory contains GitHub Actions workflow definitions for automated CI/CD.
 
 ## Workflows
 
-### `ci.yml` - Main CI Pipeline
+### `tests.yml` - Main CI Pipeline
 
 **Purpose**: Continuous Integration pipeline that runs on all pull requests to `master` branch.
 

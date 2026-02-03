@@ -8,7 +8,7 @@ The CI/CD pipeline automatically verifies code quality, runs tests, and validate
 
 ## Pipeline Structure
 
-The pipeline is defined in `.github/workflows/ci.yml` and consists of three main jobs:
+The pipeline is defined in `.github/workflows/tests.yml` and consists of three main jobs:
 
 ### 1. Test Pipeline (`test-pipeline`)
 
@@ -143,7 +143,7 @@ When implementing the backend or frontend subprojects:
 
 #### For Backend (Python/FastAPI):
 
-1. **Add backend-specific job** to `.github/workflows/ci.yml`:
+1. **Add backend-specific job** to `.github/workflows/tests.yml`:
    ```yaml
    test-backend:
      name: Test Backend API
@@ -167,7 +167,7 @@ When implementing the backend or frontend subprojects:
 
 #### For Frontend (Node.js/React/Vue):
 
-1. **Add frontend-specific job** to `.github/workflows/ci.yml`:
+1. **Add frontend-specific job** to `.github/workflows/tests.yml`:
    ```yaml
    test-frontend:
      name: Test Frontend
@@ -293,7 +293,7 @@ For end-to-end testing:
 **Solutions**:
 - Use the same Python version as CI (3.10 or 3.11)
 - Install system dependencies: `sudo apt-get install swi-prolog`
-- Check `.github/workflows/ci.yml` for environment setup differences
+- Check `.github/workflows/tests.yml` for environment setup differences
 
 ### Flaky Tests
 
@@ -432,7 +432,7 @@ Coverage reports are uploaded to Codecov for Python 3.10 runs. View them at:
 
 ## Changelog
 
-### 2024-02-03 - Initial CI/CD Setup
+### 2026-02-03 - Initial CI/CD Setup
 - Created CI pipeline with test, code quality, and build verification jobs
 - Added support for Python 3.10 and 3.11
 - Integrated pytest with coverage reporting

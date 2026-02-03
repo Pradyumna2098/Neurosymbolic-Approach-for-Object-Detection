@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: Tests
 
 on:
   pull_request:
@@ -37,11 +37,18 @@ jobs:
       
       - name: Install Python dependencies
         run: |
+          set -e
           python -m pip install --upgrade pip
           pip install pytest pytest-cov
-          # Install dependencies with compatibility handling
+          # Install core dependencies
           pip install torch==2.2.2 torchvision==0.17.2
-          pip install -r requirements/common.txt || pip install numpy pandas pyyaml tqdm matplotlib networkx torchmetrics
+          # Install project dependencies
+          if [ -f requirements/common.txt ]; then
+            pip install -r requirements/common.txt
+          else
+            echo "Error: requirements/common.txt not found. Cannot install full dependency set." >&2
+            exit 1
+          fi
       
       - name: Run tests
         run: |
@@ -107,10 +114,17 @@ jobs:
       
       - name: Install dependencies
         run: |
+          set -e
           python -m pip install --upgrade pip
-          # Install dependencies with compatibility handling
+          # Install core dependencies
           pip install torch==2.2.2 torchvision==0.17.2
-          pip install -r requirements/common.txt || pip install numpy pandas pyyaml tqdm matplotlib networkx torchmetrics
+          # Install project dependencies
+          if [ -f requirements/common.txt ]; then
+            pip install -r requirements/common.txt
+          else
+            echo "Error: requirements/common.txt not found. Cannot install full dependency set." >&2
+            exit 1
+          fi
       
       - name: Verify imports
         run: |
@@ -120,5 +134,6 @@ jobs:
       
       - name: Test pipeline scripts
         run: |
-          python -m pipeline.core.preprocess --help || true
-          python pipeline/training/training.py --help || true
+          # Verify scripts can be invoked (requires full dependencies)
+          python -m pipeline.core.preprocess --help
+          python pipeline/training/training.py --help

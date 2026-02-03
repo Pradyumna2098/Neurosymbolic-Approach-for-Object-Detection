@@ -159,7 +159,7 @@ As the CI pipeline evolves:
 
 ### Adding New Checks
 
-1. Add new job to `.github/workflows/ci.yml`
+1. Add new job to `.github/workflows/tests.yml`
 2. Let it run on a PR once
 3. Go to Settings → Branches
 4. Edit the rule
