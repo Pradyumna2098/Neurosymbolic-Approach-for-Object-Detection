@@ -161,8 +161,8 @@ if __name__ == "__main__":
 """Visualize with class-specific colors."""
 
 CLASS_COLORS = {
-    'large_vehicle': (255, 0, 0),      # Red
-    'small_vehicle': (0, 255, 0),      # Green
+    'large-vehicle': (255, 0, 0),      # Red
+    'small-vehicle': (0, 255, 0),      # Green
     'plane': (0, 0, 255),              # Blue
     'ship': (255, 255, 0),             # Yellow
     'harbor': (255, 0, 255),           # Magenta
@@ -493,19 +493,19 @@ visualization:
   class_colors:
     plane: [255, 0, 0]              # Red
     ship: [0, 255, 0]               # Green
-    storage_tank: [0, 0, 255]       # Blue
-    baseball_diamond: [255, 255, 0] # Yellow
-    tennis_court: [255, 0, 255]     # Magenta
-    basketball_court: [0, 255, 255] # Cyan
-    ground_track_field: [255, 128, 0]   # Orange
+    storage-tank: [0, 0, 255]       # Blue
+    baseball-diamond: [255, 255, 0] # Yellow
+    tennis-court: [255, 0, 255]     # Magenta
+    basketball-court: [0, 255, 255] # Cyan
+    ground-track-field: [255, 128, 0]   # Orange
     harbor: [128, 0, 255]           # Purple
     bridge: [0, 128, 255]           # Light Blue
-    large_vehicle: [255, 128, 128]  # Light Red
-    small_vehicle: [128, 255, 128]  # Light Green
+    large-vehicle: [255, 128, 128]  # Light Red
+    small-vehicle: [128, 255, 128]  # Light Green
     helicopter: [128, 128, 255]     # Light Purple
     roundabout: [192, 192, 0]       # Dark Yellow
-    soccer_ball_field: [192, 0, 192]    # Dark Magenta
-    swimming_pool: [0, 192, 192]    # Dark Cyan
+    soccer-ball-field: [192, 0, 192]    # Dark Magenta
+    swimming-pool: [0, 192, 192]    # Dark Cyan
 ```
 
 ### Template 4: Comparison Mode
@@ -680,7 +680,7 @@ Get RGB color for a class name.
 
 **Example:**
 ```python
-color = get_class_color("large_vehicle")  # Returns (255, 0, 0)
+color = get_class_color("large-vehicle")  # Returns (255, 0, 0)
 ```
 
 ---

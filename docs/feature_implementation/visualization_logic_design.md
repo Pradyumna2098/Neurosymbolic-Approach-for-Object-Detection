@@ -504,22 +504,22 @@ Assign a unique, distinctive color to each object class for easy visual identifi
 CLASS_COLORS = {
     'plane': (255, 0, 0),           # Red
     'ship': (0, 255, 0),            # Green
-    'storage_tank': (0, 0, 255),    # Blue
-    'baseball_diamond': (255, 255, 0),  # Yellow
-    'tennis_court': (255, 0, 255),  # Magenta
-    'basketball_court': (0, 255, 255),  # Cyan
-    'ground_track_field': (255, 128, 0),  # Orange
+    'storage-tank': (0, 0, 255),    # Blue
+    'baseball-diamond': (255, 255, 0),  # Yellow
+    'tennis-court': (255, 0, 255),  # Magenta
+    'basketball-court': (0, 255, 255),  # Cyan
+    'ground-track-field': (255, 128, 0),  # Orange
     'harbor': (128, 0, 255),        # Purple
     'bridge': (0, 128, 255),        # Light Blue
-    'large_vehicle': (255, 128, 128),  # Light Red
-    'small_vehicle': (128, 255, 128),  # Light Green
+    'large-vehicle': (255, 128, 128),  # Light Red
+    'small-vehicle': (128, 255, 128),  # Light Green
     'helicopter': (128, 128, 255),  # Light Blue
     'roundabout': (192, 192, 0),    # Dark Yellow
-    'soccer_ball_field': (192, 0, 192),  # Dark Magenta
-    'swimming_pool': (0, 192, 192), # Dark Cyan
+    'soccer-ball-field': (192, 0, 192),  # Dark Magenta
+    'swimming-pool': (0, 192, 192), # Dark Cyan
 }
 
-def get_class_color(class_name: str) -> Tuple[int, int, int]:
+def get_class_color(class_name: str) -> tuple[int, int, int]:
     """
     Get the color for a given class name.
     
@@ -866,11 +866,11 @@ def parse_obb_predictions(pred_file: Path) -> List[Dict]:
     return detections
 
 
-def get_class_color(class_name: str) -> Tuple[int, int, int]:
+def get_class_color(class_name: str) -> tuple[int, int, int]:
     """Return consistent color for each class."""
     colors = {
-        'large_vehicle': (255, 0, 0),      # Red
-        'small_vehicle': (0, 255, 0),      # Green
+        'large-vehicle': (255, 0, 0),      # Red
+        'small-vehicle': (0, 255, 0),      # Green
         'plane': (0, 0, 255),              # Blue
         'ship': (255, 255, 0),             # Yellow
     }
@@ -1073,7 +1073,7 @@ def safe_load_image(image_path: Path) -> Image.Image:
 #### Issue 3: Out-of-Bounds Coordinates
 
 ```python
-def validate_polygon(polygon: List[Tuple[float, float]], 
+def validate_polygon(polygon: list[tuple[float, float]], 
                     img_width: int, img_height: int) -> bool:
     """Check if polygon coordinates are within image bounds."""
     for x, y in polygon:
@@ -1082,8 +1082,8 @@ def validate_polygon(polygon: List[Tuple[float, float]],
     return True
 
 
-def clip_polygon(polygon: List[Tuple[float, float]], 
-                img_width: int, img_height: int) -> List[Tuple[float, float]]:
+def clip_polygon(polygon: list[tuple[float, float]], 
+                img_width: int, img_height: int) -> list[tuple[float, float]]:
     """Clip polygon coordinates to image bounds."""
     clipped = []
     for x, y in polygon:
