@@ -184,6 +184,14 @@ Detailed workflow diagrams and sequence diagrams, including:
 - [Quick Reference](visualization_quick_reference.md) - Code snippets and examples
 - [Color Schemes](visualization_color_schemes.md) - Styling standards and conventions
 
+### Prometheus Metrics and Monitoring (NEW)
+- [Metrics Catalog](PROMETHEUS_METRICS_CATALOG.md) - Complete metrics reference (52+ metrics)
+- [Exporters Specification](PROMETHEUS_EXPORTERS_SPECIFICATION.md) - Implementation guide with code examples
+- [Dashboard Guide](PROMETHEUS_DASHBOARD_GUIDE.md) - PromQL queries and Grafana dashboards
+- [Monitoring Deployment](PROMETHEUS_MONITORING_DEPLOYMENT.md) - Setup and user access guide
+- [Integration Guide](PROMETHEUS_INTEGRATION_GUIDE.md) - Detailed technical integration (existing)
+- [Packaging Guide](PACKAGING_PROMETHEUS_README.md) - Bundling metrics with application
+
 ### Design Documents
 - [User Workflow](frontend_ui_design.md#user-workflow)
 - [UI Wireframes](frontend_ui_design.md#screen-wireframes)
@@ -253,7 +261,50 @@ Detailed workflow diagrams and sequence diagrams, including:
 **Status:** Design Complete ✅  
 **Stage:** Design Specification (Ready for Implementation)
 
-### 6. File and Data Handling Specifications (NEW)
+### 6. Prometheus Metrics and Monitoring Documentation (NEW)
+
+**NEW** Comprehensive Prometheus-based monitoring and metrics documentation, including:
+
+- **[Prometheus Metrics Catalog](PROMETHEUS_METRICS_CATALOG.md)**: Complete catalog of all metrics
+  - 52+ metrics across training, inference, symbolic pipeline, and system resources
+  - Detailed metric specifications with types, labels, and units
+  - PromQL query examples for each metric
+  - Label specifications and cardinality guidelines
+  - Integration points for each pipeline stage
+  - Recording rules for common aggregations
+
+- **[Prometheus Exporters Specification](PROMETHEUS_EXPORTERS_SPECIFICATION.md)**: Implementation guide for metrics export
+  - Export architecture using prometheus_client library
+  - HTTP endpoint specifications (/metrics)
+  - Complete implementation examples with code
+  - Integration patterns for training, inference, and pipeline
+  - Decorator utilities for easy instrumentation
+  - Performance considerations and best practices
+  - Security and access control
+  - Testing strategies for metrics export
+
+- **[Prometheus Dashboard Guide](PROMETHEUS_DASHBOARD_GUIDE.md)**: Query examples and visualization specifications
+  - 50+ PromQL query examples for all metrics
+  - 5 complete Grafana dashboard specifications
+  - GUI integration patterns for custom applications
+  - Python client examples for programmatic access
+  - Custom visualization with Matplotlib
+  - Alert rules and notification configuration
+  - Query optimization techniques
+
+- **[Prometheus Monitoring Deployment](PROMETHEUS_MONITORING_DEPLOYMENT.md)**: User and developer access guide
+  - Three deployment architectures (standalone, with server, full stack)
+  - User access methods for different roles
+  - Setup instructions for all deployment options
+  - Viewing metrics guide for end users, data scientists, and engineers
+  - Developer workflow and debugging
+  - Production deployment checklist
+  - Troubleshooting common issues
+
+**Status:** Planning Complete ✅  
+**Stage:** Documentation Phase (No Code Implementation Required)
+
+### 7. File and Data Handling Specifications (NEW)
 
 **NEW** Comprehensive specifications for input/output file handling and data management, including:
 
@@ -326,6 +377,10 @@ Detailed workflow diagrams and sequence diagrams, including:
 | Results Endpoints | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
 | Celery Task Queue | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
 | **Monitoring** | | | | |
+| Prometheus Metrics Catalog | ✅ Complete | N/A | N/A | Documentation Phase |
+| Prometheus Exporters Spec | ✅ Complete | N/A | N/A | Documentation Phase |
+| Prometheus Dashboard Guide | ✅ Complete | N/A | N/A | Documentation Phase |
+| Monitoring Deployment Guide | ✅ Complete | N/A | N/A | Documentation Phase |
 | Prometheus Integration | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
 | Grafana Dashboards | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
 | Metrics Collection | ✅ Complete | ⏳ Pending | ⏳ Pending | Design Phase |
