@@ -4,7 +4,7 @@ pandas==2.2.2
 pyyaml==6.0.1
 
 # Machine learning utilities
-sahi==0.11.16
+sahi==0.11.36
 torchmetrics==1.4.0.post0
 ultralytics==8.2.77
 
