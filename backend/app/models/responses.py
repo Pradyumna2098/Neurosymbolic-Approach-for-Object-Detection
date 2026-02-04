@@ -68,3 +68,53 @@ class UploadResponse(BaseModel):
     job_id: str = Field(..., description="Unique job identifier for tracking")
     files: List[UploadedFileInfo] = Field(..., description="List of uploaded files with metadata")
     warnings: Optional[List[FileValidationWarning]] = Field(None, description="Warnings for files that failed validation (partial success)")
+
+
+class JobProgress(BaseModel):
+    """Job progress information."""
+    
+    stage: Optional[str] = Field(None, description="Current processing stage")
+    message: Optional[str] = Field(None, description="Progress message")
+    percentage: Optional[float] = Field(None, ge=0, le=100, description="Progress percentage (0-100)")
+    total_images: Optional[int] = Field(None, description="Total number of images to process")
+    processed_images: Optional[int] = Field(None, description="Number of images processed")
+
+
+class JobSummary(BaseModel):
+    """Summary information for completed jobs."""
+    
+    total_detections: Optional[int] = Field(None, description="Total number of detections")
+    average_confidence: Optional[float] = Field(None, ge=0, le=1, description="Average confidence score")
+    processing_time_seconds: Optional[float] = Field(None, description="Total processing time in seconds")
+
+
+class JobError(BaseModel):
+    """Error information for failed jobs."""
+    
+    code: str = Field(..., description="Machine-readable error code")
+    message: str = Field(..., description="Human-readable error message")
+    details: Optional[str] = Field(None, description="Additional error details")
+
+
+class JobStatusData(BaseModel):
+    """Job status data."""
+    
+    job_id: str = Field(..., description="Job identifier")
+    status: str = Field(..., description="Job status (queued, processing, completed, failed)")
+    created_at: str = Field(..., description="Job creation timestamp (ISO 8601)")
+    updated_at: Optional[str] = Field(None, description="Last update timestamp (ISO 8601)")
+    started_at: Optional[str] = Field(None, description="Processing start timestamp (ISO 8601)")
+    completed_at: Optional[str] = Field(None, description="Completion timestamp (ISO 8601)")
+    failed_at: Optional[str] = Field(None, description="Failure timestamp (ISO 8601)")
+    progress: Optional[JobProgress] = Field(None, description="Progress information")
+    summary: Optional[JobSummary] = Field(None, description="Summary for completed jobs")
+    error: Optional[JobError] = Field(None, description="Error details for failed jobs")
+    results_url: Optional[str] = Field(None, description="URL to retrieve results (for completed jobs)")
+    visualization_url: Optional[str] = Field(None, description="URL to retrieve visualizations (for completed jobs)")
+
+
+class JobStatusResponse(BaseModel):
+    """Response for job status endpoint."""
+    
+    status: str = Field(default="success", description="Response status")
+    data: JobStatusData = Field(..., description="Job status data")
