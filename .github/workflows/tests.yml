@@ -45,10 +45,21 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest
-          # Install PyTorch with CPU-only version for faster installation
+          # Install PyTorch CPU-only version first to prevent conflicts
           pip install torch==2.2.2 torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cpu
+          # Install common dependencies (includes sahi, ultralytics) ensuring torch version is preserved
           if [ -f requirements/common.txt ]; then
-            pip install -r requirements/common.txt
+            # Install packages one by one to control dependency resolution
+            pip install --no-deps sahi==0.11.36
+            pip install --no-deps ultralytics==8.2.77
+            # Install other dependencies from common.txt
+            pip install numpy==1.26.4 pandas==2.2.2 pyyaml==6.0.1
+            pip install torchmetrics==1.4.0.post0
+            pip install opencv-python==4.10.0.84 tqdm==4.66.4
+            pip install matplotlib==3.8.4 networkx==3.3
+            pip install pyswip==0.2.10
+            # Install remaining dependencies for ML packages
+            pip install scipy>=1.4.1 shapely>=1.8.0 seaborn>=0.11.0 psutil thop
           fi
       
       - name: Run pipeline tests
@@ -82,11 +93,16 @@ jobs:
       - name: Install backend dependencies
         run: |
           python -m pip install --upgrade pip
-          # Install PyTorch CPU-only version for backend tests (required by inference service)
+          # Install PyTorch CPU-only version first (required by inference service)
           pip install torch==2.2.2 torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cpu
-          # Install SAHI and ultralytics for inference service
-          pip install sahi==0.11.36
-          pip install ultralytics==8.2.77
+          # Install ML libraries that depend on torch, using --no-deps to prevent torch version conflicts
+          pip install --no-deps sahi==0.11.36
+          pip install --no-deps ultralytics==8.2.77
+          # Install remaining dependencies for sahi and ultralytics
+          pip install opencv-python>=4.6.0 scipy>=1.4.1 shapely>=1.8.0
+          pip install PyYAML>=5.3.1 tqdm>=4.64.0 matplotlib>=3.3
+          pip install pandas>=1.1.4 seaborn>=0.11.0 psutil thop
+          # Install backend requirements
           pip install -r backend/requirements.txt
       
       - name: Run backend tests
