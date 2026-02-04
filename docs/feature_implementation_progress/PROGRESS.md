@@ -1,18 +1,18 @@
 # Feature Implementation Progress Tracking
 
-**Last Updated:** 2026-02-04 20:10:00 UTC
+**Last Updated:** 2026-02-04 21:15:00 UTC
 
 ---
 
 ## Overall Progress Summary
 
-**Total Issues:** 9  
-**Completed:** 9  
+**Total Issues:** 10  
+**Completed:** 10  
 **In Progress:** 0  
 **Not Started:** 0  
 **Blocked:** 0  
 
-**Overall Completion:** 100% (9/9 issues completed)
+**Overall Completion:** 100% (10/10 issues completed)
 
 ---
 
@@ -53,6 +53,7 @@
 | Issue # | Title | Status | Completed Date | Notes |
 |---------|-------|--------|----------------|-------|
 | 9 | Integrate SAHI Sliced Prediction Pipeline | Complete | 2026-02-04 | Full SAHI inference implementation with YOLO model loading |
+| 10 | Implement NMS Post-Processing | Complete | 2026-02-04 | Class-wise NMS filtering with IoU threshold from config, saves to data/results/{job_id}/nms/ |
 
 ### Phase 4: Frontend Development (High Priority)
 
@@ -743,6 +744,82 @@ All Phase 2 Backend Infrastructure issues are now **complete**:
 - Background threading allows async processing
 - All tests pass with proper mocking of ML components
 - Dependencies: Issue #5 (Inference Trigger Endpoint) completed
+
+---
+
+### Issue #10: Implement NMS Post-Processing
+
+**Priority:** 🔴 Critical  
+**Estimated Effort:** Medium  
+**Phase:** ML Pipeline  
+**Status:** Complete  
+**Started:** 2026-02-04  
+**Completed:** 2026-02-04
+
+**Acceptance Criteria:**
+- [x] NMS applied per class (class-wise filtering)
+- [x] IoU threshold from job config
+- [x] Results saved to `data/results/{job_id}/nms/`
+- [x] Reduction stats logged (before/after counts, percentage)
+- [x] Update progress in job JSON (stage: "nms_filtering", percentage: 92%)
+
+**Implementation Checklist:**
+- [x] Add NMS function to inference service (`apply_nms_post_processing`)
+- [x] Implement class-wise NMS using torchvision (via `pipeline.core.utils`)
+- [x] Save filtered predictions (`_save_nms_predictions` method)
+- [x] Update progress in job JSON (job status tracking)
+- [x] Track before/after detection counts (reduction statistics)
+- [x] Comprehensive unit tests (6 test cases covering success, errors, edge cases)
+
+**Key Implementation Details:**
+- **Location:** `backend/app/services/inference.py`
+- **Methods Added:**
+  - `apply_nms_post_processing()`: Main NMS processing method
+  - `_save_nms_predictions()`: Helper to save filtered predictions in YOLO format
+- **Integration:** Called automatically after SAHI inference in `run_inference()`
+- **Dependencies:** Reuses existing NMS implementation from `pipeline.core.utils`
+  - `parse_predictions_for_nms()`: Loads raw predictions
+  - `pre_filter_with_nms()`: Applies class-wise NMS filtering
+
+**Input/Output:**
+- **Input:** Raw predictions from `data/results/{job_id}/raw/*.txt`
+- **Output:** Filtered predictions to `data/results/{job_id}/nms/*.txt`
+- **Format:** YOLO normalized format: `class_id cx cy width height confidence`
+
+**Statistics Tracked:**
+- `total_before`: Total detections before NMS
+- `total_after`: Total detections after NMS
+- `reduction_count`: Number of detections removed
+- `reduction_percentage`: Percentage of detections filtered out
+- `elapsed_time_seconds`: Time taken for NMS processing
+
+**Error Handling:**
+- Raw predictions directory not found (raises `InferenceError`)
+- Empty raw predictions directory (returns zero statistics, no error)
+- NMS processing errors (logged but don't fail entire job)
+
+**Testing:**
+- 6 comprehensive unit tests added to `tests/backend/test_inference_service.py`:
+  1. `test_apply_nms_post_processing_success`: Verifies overlapping detections reduced
+  2. `test_apply_nms_post_processing_no_raw_predictions`: Error handling for missing directory
+  3. `test_apply_nms_post_processing_empty_predictions`: Handles empty predictions gracefully
+  4. `test_save_nms_predictions`: Validates YOLO format output
+  5. `test_apply_nms_reduces_overlapping_same_class`: Class-wise NMS behavior
+  6. `test_apply_nms_keeps_different_classes`: Preserves multi-class overlaps
+
+**Logging:**
+- NMS start and completion events
+- Detection count reduction statistics
+- Per-image processing (debug level)
+- Error conditions with stack traces
+
+**Notes:**
+- NMS seamlessly integrated into existing inference workflow
+- Uses proven NMS implementation from pipeline module
+- Progress tracking keeps frontend informed during processing
+- Non-blocking: NMS failures don't crash entire job
+- YOLO format compatibility maintained for downstream pipeline stages
+- Dependencies: Issue #9 (SAHI Integration) completed
 
 ---
 
