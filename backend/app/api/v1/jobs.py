@@ -350,7 +350,20 @@ async def get_job_results(job_id: str) -> JobResultsResponse:
     
     # Get file metadata from job data
     job_files = job_data.get("files", [])
-    file_id_map = {f["stored_filename"].split(".")[0]: f for f in job_files}
+    file_id_map: Dict[str, Dict[str, Any]] = {}
+    for f in job_files:
+        stored_filename = f.get("stored_filename")
+        key: Optional[str]
+        if stored_filename:
+            # Use Path.stem to robustly strip the extension (handles multiple dots)
+            key = Path(stored_filename).stem
+        else:
+            # Fallback to file_id if stored_filename is missing or empty
+            file_id_value = f.get("file_id")
+            key = str(file_id_value) if file_id_value is not None else None
+        
+        if key:
+            file_id_map[key] = f
     
     # Build per-image results
     image_results = []
