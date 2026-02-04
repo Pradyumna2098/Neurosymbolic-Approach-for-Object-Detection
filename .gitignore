@@ -48,3 +48,16 @@ coverage.xml
 # YOLO training runs
 runs/
 
+# Backend API data (local storage for prototype)
+backend/.env
+data/uploads/*
+data/jobs/*
+data/results/*
+data/visualizations/*
+
+# Keep directory structure with README files
+!data/uploads/.gitkeep
+!data/jobs/.gitkeep
+!data/results/.gitkeep
+!data/visualizations/.gitkeep
+
