@@ -6,7 +6,7 @@ Tests model loading, SAHI prediction, progress updates, and error handling.
 import sys
 from io import BytesIO
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from PIL import Image
