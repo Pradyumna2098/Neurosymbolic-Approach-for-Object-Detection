@@ -263,11 +263,12 @@ class StorageService:
     
     # Job Management Methods
     
-    def create_job(self, config: Optional[Dict[str, Any]] = None) -> str:
+    def create_job(self, config: Optional[Dict[str, Any]] = None, status: str = "queued") -> str:
         """Create a new job with unique ID and initial status.
         
         Args:
             config: Optional job configuration parameters
+            status: Initial job status (default: "queued")
             
         Returns:
             Generated job ID (UUID)
@@ -276,7 +277,7 @@ class StorageService:
         
         job_data = {
             "job_id": job_id,
-            "status": "queued",
+            "status": status,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "config": config or {},
             "files": [],
