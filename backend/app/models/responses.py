@@ -118,3 +118,62 @@ class JobStatusResponse(BaseModel):
     
     status: str = Field(default="success", description="Response status")
     data: JobStatusData = Field(..., description="Job status data")
+
+
+class DetectionBBox(BaseModel):
+    """Bounding box coordinates for a detection."""
+    
+    format: str = Field(..., description="Coordinate format (yolo or xyxy)")
+    center_x: Optional[float] = Field(None, description="Normalized center X (YOLO format)")
+    center_y: Optional[float] = Field(None, description="Normalized center Y (YOLO format)")
+    width: Optional[float] = Field(None, description="Normalized width (YOLO format)")
+    height: Optional[float] = Field(None, description="Normalized height (YOLO format)")
+    x_min: Optional[float] = Field(None, description="Absolute X minimum (xyxy format)")
+    y_min: Optional[float] = Field(None, description="Absolute Y minimum (xyxy format)")
+    x_max: Optional[float] = Field(None, description="Absolute X maximum (xyxy format)")
+    y_max: Optional[float] = Field(None, description="Absolute Y maximum (xyxy format)")
+
+
+class Detection(BaseModel):
+    """Individual object detection."""
+    
+    class_id: int = Field(..., description="Class ID of detected object")
+    class_name: Optional[str] = Field(None, description="Class name (if available)")
+    confidence: float = Field(..., ge=0, le=1, description="Detection confidence score")
+    bbox: DetectionBBox = Field(..., description="Bounding box coordinates")
+
+
+class ImageResult(BaseModel):
+    """Detection results for a single image."""
+    
+    file_id: str = Field(..., description="File identifier")
+    filename: str = Field(..., description="Original filename")
+    detections: List[Detection] = Field(..., description="List of detections")
+    detection_count: int = Field(..., description="Total number of detections")
+
+
+class ClassSummary(BaseModel):
+    """Summary of detections by class."""
+    
+    class_id: int = Field(..., description="Class ID")
+    class_name: Optional[str] = Field(None, description="Class name (if available)")
+    count: int = Field(..., description="Number of detections for this class")
+    average_confidence: float = Field(..., ge=0, le=1, description="Average confidence for this class")
+
+
+class JobResultsData(BaseModel):
+    """Results data for a completed job."""
+    
+    job_id: str = Field(..., description="Job identifier")
+    format: str = Field(default="json", description="Output format")
+    total_images: int = Field(..., description="Total number of images processed")
+    total_detections: int = Field(..., description="Total number of detections across all images")
+    class_distribution: List[ClassSummary] = Field(..., description="Distribution of detections by class")
+    results: List[ImageResult] = Field(..., description="Per-image detection results")
+
+
+class JobResultsResponse(BaseModel):
+    """Response for job results endpoint."""
+    
+    status: str = Field(default="success", description="Response status")
+    data: JobResultsData = Field(..., description="Job results data")
