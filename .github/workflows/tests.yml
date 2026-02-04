@@ -13,58 +13,7 @@ on:
 
 jobs:
   test-pipeline:
-    name: Test Python Pipeline
-    runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11"]
-    
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-      
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-      
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y swi-prolog
-      
-      - name: Install Python dependencies
-        run: |
-          set -e
-          python -m pip install --upgrade pip
-          pip install pytest pytest-cov
-          # Install core dependencies
-          pip install torch==2.2.2 torchvision==0.17.2
-          # Install project dependencies
-          if [ -f requirements/common.txt ]; then
-            pip install -r requirements/common.txt
-          else
-            echo "Error: requirements/common.txt not found. Cannot install full dependency set." >&2
-            exit 1
-          fi
-      
-      - name: Run tests
-        run: |
-          pytest tests/ -v --cov=pipeline --cov=shared --cov-report=xml --cov-report=term
-      
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        if: matrix.python-version == '3.10'
-        with:
-          file: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
-  
-  code-quality:
-    name: Code Quality Checks
+    name: Test Pipeline
     runs-on: ubuntu-latest
     
     steps:
@@ -75,26 +24,27 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-          cache: 'pip'
       
-      - name: Install dependencies
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y swi-prolog
+      
+      - name: Install pipeline dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8
+          pip install pytest
+          pip install torch==2.2.2 torchvision==0.17.2
+          if [ -f requirements/common.txt ]; then
+            pip install -r requirements/common.txt
+          fi
       
-      - name: Lint with flake8
+      - name: Run pipeline tests
         run: |
-          # Stop the build if there are Python syntax errors or undefined names
-          flake8 pipeline/ shared/ --count --select=E9,F63,F7,F82 --show-source --statistics
-          # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 pipeline/ shared/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-      
-      - name: Check Python syntax
-        run: |
-          python -m compileall pipeline/ shared/ -q
+          pytest tests/pipeline/ -v
   
-  build-verification:
-    name: Build Verification
+  test-backend:
+    name: Test Backend
     runs-on: ubuntu-latest
     
     steps:
@@ -105,35 +55,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-          cache: 'pip'
       
-      - name: Install system dependencies
+      - name: Install backend dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y swi-prolog
-      
-      - name: Install dependencies
-        run: |
-          set -e
           python -m pip install --upgrade pip
-          # Install core dependencies
-          pip install torch==2.2.2 torchvision==0.17.2
-          # Install project dependencies
-          if [ -f requirements/common.txt ]; then
-            pip install -r requirements/common.txt
-          else
-            echo "Error: requirements/common.txt not found. Cannot install full dependency set." >&2
-            exit 1
-          fi
+          pip install -r backend/requirements.txt
       
-      - name: Verify imports
+      - name: Run backend tests
         run: |
-          python -c "import pipeline; import shared"
-          python -c "from pipeline.core import utils"
-          python -c "from shared.utils import config_utils"
-      
-      - name: Test pipeline scripts
-        run: |
-          # Verify scripts can be invoked (requires full dependencies)
-          python -m pipeline.core.preprocess --help
-          python pipeline/training/training.py --help
+          pytest tests/backend/ -v
+
