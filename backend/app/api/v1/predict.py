@@ -10,7 +10,7 @@ import time
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 from app.services import storage_service
 
@@ -139,7 +139,7 @@ def run_inference(job_id: str, config: InferenceConfig) -> None:
         )
 
 
-@router.post("/predict", response_model=PredictResponse, status_code=status.HTTP_202_ACCEPTED, tags=["Inference"])
+@router.post("/predict", response_model=PredictResponse, status_code=status.HTTP_202_ACCEPTED)
 async def trigger_inference(request: PredictRequest) -> PredictResponse:
     """Trigger inference job for uploaded images.
     
@@ -205,6 +205,14 @@ async def trigger_inference(request: PredictRequest) -> PredictResponse:
     )
     
     # Start inference in background thread
+    # NOTE: Prototype implementation using threading (not Celery)
+    # LIMITATION: Potential race condition exists in storage_service.update_job()
+    # which uses read-modify-write without file locking. The endpoint prevents
+    # concurrent inference on same job by checking status != "uploaded", but
+    # this is not atomic. For production, consider:
+    # - File locking in storage service (per file_data_handling_specifications.md)
+    # - Task queue with atomic operations (Celery)
+    # - Optimistic locking with version numbers
     inference_thread = threading.Thread(
         target=run_inference,
         args=(job_id, config),

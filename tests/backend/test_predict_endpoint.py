@@ -142,6 +142,9 @@ class TestPredictEndpoint:
         data = response.json()
         assert data["status"] == "accepted"
         
+        # Wait briefly for file write to complete
+        time.sleep(0.1)
+        
         # Verify config was stored
         job_data = storage_service.get_job(job_id)
         assert job_data["config"]["sahi"]["slice_width"] == 512
@@ -325,6 +328,9 @@ class TestPredictEndpoint:
         # Wait for background thread to complete (with timeout)
         max_wait_time = 5  # seconds
         start_time = time.time()
+        
+        # Initial delay to allow file write to complete
+        time.sleep(0.1)
         
         while time.time() - start_time < max_wait_time:
             job_data = storage_service.get_job(job_id)
