@@ -1,18 +1,18 @@
 # Feature Implementation Progress Tracking
 
-**Last Updated:** 2026-02-04 13:16:00 UTC
+**Last Updated:** 2026-02-04 14:40:00 UTC
 
 ---
 
 ## Overall Progress Summary
 
-**Total Issues:** 6  
-**Completed:** 6  
+**Total Issues:** 7  
+**Completed:** 7  
 **In Progress:** 0  
 **Not Started:** 0  
 **Blocked:** 0  
 
-**Overall Completion:** 100% (6/6 issues completed)
+**Overall Completion:** 100% (7/7 issues completed)
 
 ---
 
@@ -44,6 +44,7 @@
 | 4 | Implement Image Upload Endpoint (Local Storage) | Complete | 2026-02-04 | POST /api/v1/upload endpoint with file validation |
 | 5 | Implement Inference Trigger Endpoint | Complete | 2026-02-04 | POST /api/v1/predict endpoint with background threading |
 | 6 | Implement Job Status Endpoint (File-Based) | Complete | 2026-02-04 | GET /api/v1/jobs/{job_id}/status endpoint with progress tracking |
+| 7 | Implement Results Retrieval Endpoint | Complete | 2026-02-04 | GET /api/v1/jobs/{job_id}/results endpoint for detection predictions |
 
 ### Phase 3: Frontend Development (High Priority)
 
@@ -422,6 +423,91 @@
 - All existing tests continue to pass
 - Total test count: 93 tests passing
 - Dependencies satisfied: Issue #5 (Inference Trigger Endpoint) completed
+
+---
+
+### Issue #7: Implement Results Retrieval Endpoint
+
+**Priority:** 🔴 Critical  
+**Estimated Effort:** Medium  
+**Phase:** Backend Infrastructure  
+**Status:** Complete  
+**Started:** 2026-02-04  
+**Completed:** 2026-02-04
+
+**Acceptance Criteria:**
+- [x] Returns predictions for completed jobs
+- [x] Reads from `data/results/{job_id}/` directory
+- [x] Parses YOLO format prediction files
+- [x] Returns structured JSON response
+- [x] Returns 404 for incomplete jobs
+
+**Implementation Details:**
+- Added comprehensive Pydantic response models in `backend/app/models/responses.py`:
+  - `DetectionBBox`: Bounding box coordinates with YOLO format support
+  - `Detection`: Individual object detection with class, confidence, and bbox
+  - `ImageResult`: Detection results for a single image
+  - `ClassSummary`: Distribution statistics per class (count, avg confidence)
+  - `JobResultsData`: Complete results data with per-image detections and class distribution
+  - `JobResultsResponse`: Top-level response wrapper
+- Implemented GET /api/v1/jobs/{job_id}/results endpoint in `backend/app/api/v1/jobs.py`:
+  - Validates job exists using `StorageService.get_job()`
+  - Returns 404 with error code `JOB_NOT_FOUND` if job doesn't exist
+  - Returns 404 with error code `RESULTS_NOT_READY` if job is not completed
+  - Returns 404 with error code `RESULTS_NOT_FOUND` if prediction files missing
+  - Reads prediction files from `data/results/{job_id}/refined/` directory
+  - Parses YOLO format predictions: `class_id cx cy w h confidence`
+  - Maps file IDs to original filenames from job metadata
+  - Calculates class distribution with counts and average confidence per class
+  - Structures response with per-image detections and summary statistics
+- Implemented helper functions:
+  - `_parse_yolo_prediction_line()`: Parse single line from YOLO format file
+  - `_parse_prediction_files()`: Parse all .txt files from results directory
+  - `_calculate_class_distribution()`: Compute class statistics from predictions
+- Response format:
+  - `job_id`: Job identifier
+  - `format`: Output format (currently "json")
+  - `total_images`: Number of images processed
+  - `total_detections`: Total detections across all images
+  - `class_distribution`: Array of class summaries with counts and confidence
+  - `results`: Array of per-image results with detections
+- Created comprehensive test suite (10 tests) in `tests/backend/test_results_endpoint.py`:
+  - Test results retrieval for completed job with predictions
+  - Test detection format and coordinate parsing
+  - Test class distribution calculation
+  - Test 404 for non-existent job
+  - Test 404 for incomplete job (processing state)
+  - Test 404 for completed job with no prediction files
+  - Test response schema validation
+  - Test multiple images with predictions
+  - Test invalid prediction lines are skipped gracefully
+  - Test OpenAPI schema includes endpoint
+- All tests passing: 103 total tests (93 existing + 10 new)
+- Manual testing verified:
+  - Created test job with mock prediction files
+  - Endpoint accessible at GET /api/v1/jobs/{job_id}/results
+  - Returns structured JSON with detections for completed jobs
+  - Returns 404 for non-existent job with proper error code
+  - Returns 404 for processing job with "RESULTS_NOT_READY" error
+  - Class distribution correctly calculated (3 class 0, 1 class 1, 1 class 2)
+  - Average confidence calculated correctly per class
+  - YOLO format bounding boxes parsed correctly (normalized coordinates)
+  - File IDs mapped to original filenames from job metadata
+  - Swagger UI documentation auto-generated at `/docs`
+  - Status endpoint returns results URL for completed jobs
+
+**Notes:**
+- Reads from "refined" stage results directory (final pipeline output)
+- Supports YOLO normalized format: class_id, center_x, center_y, width, height, confidence
+- Gracefully handles invalid prediction lines (skips them)
+- Returns null for class_name (class mapping not yet implemented)
+- Bounding box format is "yolo" with normalized coordinates (0-1 range)
+- Compatible with existing pipeline output from `pipeline/core/utils.py`
+- Zero changes required to `StorageService` - reused existing methods
+- Matches API specification from `backend_api_architecture.md` Endpoint 4
+- All existing tests continue to pass
+- Total test count: 103 tests passing
+- Dependencies satisfied: Issue #6 (Job Status Endpoint) completed
 
 ---
 
