@@ -3,6 +3,7 @@
 from .responses import (
     ErrorDetail,
     ErrorResponse,
+    FileValidationWarning,
     HealthResponse,
     SuccessResponse,
     UploadedFileInfo,
@@ -16,4 +17,5 @@ __all__ = [
     "SuccessResponse",
     "UploadedFileInfo",
     "UploadResponse",
+    "FileValidationWarning",
 ]

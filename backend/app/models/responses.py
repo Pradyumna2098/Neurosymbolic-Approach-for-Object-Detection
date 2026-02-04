@@ -54,9 +54,17 @@ class UploadedFileInfo(BaseModel):
     height: Optional[int] = Field(None, description="Image height in pixels")
 
 
+class FileValidationWarning(BaseModel):
+    """Warning for a file that failed validation."""
+    
+    filename: str = Field(..., description="Name of the file that failed")
+    error: str = Field(..., description="Validation error message")
+
+
 class UploadResponse(BaseModel):
     """Response for successful file upload."""
     
     status: str = Field(default="success", description="Response status")
     job_id: str = Field(..., description="Unique job identifier for tracking")
     files: List[UploadedFileInfo] = Field(..., description="List of uploaded files with metadata")
+    warnings: Optional[List[FileValidationWarning]] = Field(None, description="Warnings for files that failed validation (partial success)")

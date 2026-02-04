@@ -5,6 +5,7 @@ and job creation.
 """
 
 import sys
+import uuid
 from io import BytesIO
 from pathlib import Path
 
@@ -193,7 +194,6 @@ class TestUploadEndpoint:
         job_id = data["job_id"]
         
         # Verify job_id is a valid UUID format
-        import uuid
         try:
             uuid.UUID(job_id)
         except ValueError:
@@ -250,3 +250,83 @@ class TestUploadEndpoint:
         data = response.json()
         
         assert data["files"][0]["filename"] == original_filename
+    
+    def test_upload_bmp_format(self, client):
+        """Test uploading BMP format images."""
+        image_data = create_test_image(640, 480, "BMP")
+        
+        response = client.post(
+            "/api/v1/upload",
+            files={"files": ("image.bmp", image_data, "image/bmp")}
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        assert data["status"] == "success"
+        assert data["files"][0]["format"] == "BMP"
+    
+    def test_upload_file_too_large(self, client):
+        """Test uploading a file that exceeds the 50MB size limit."""
+        # Create a large file that exceeds 50MB
+        # We'll create a simple bytes object that's larger than 50MB
+        large_data = b"x" * (51 * 1024 * 1024)  # 51MB
+        
+        # Attempt upload
+        response = client.post(
+            "/api/v1/upload",
+            files={"files": ("large_file.png", large_data, "image/png")}
+        )
+        
+        # Should return 400 with validation error
+        assert response.status_code == 400
+        data = response.json()
+        
+        assert data["detail"]["status"] == "error"
+        assert "validation" in data["detail"]["message"].lower() or "failed" in data["detail"]["message"].lower()
+    
+    def test_upload_image_dimensions_too_large(self, client):
+        """Test uploading an image with dimensions exceeding 8192x8192."""
+        # Create an image larger than maximum dimensions
+        large_image = create_test_image(8193, 8193, "PNG")
+        
+        # Attempt upload
+        response = client.post(
+            "/api/v1/upload",
+            files={"files": ("huge.png", large_image, "image/png")}
+        )
+        
+        # Should return 400 with validation error
+        assert response.status_code == 400
+        data = response.json()
+        
+        assert data["detail"]["status"] == "error"
+    
+    def test_upload_partial_success_includes_warnings(self, client):
+        """Test that partial failures include warnings in response."""
+        # Create one valid and one invalid file
+        valid_image = create_test_image(640, 480, "PNG")
+        invalid_data = b"not an image"
+        
+        # Upload both
+        response = client.post(
+            "/api/v1/upload",
+            files=[
+                ("files", ("valid.png", valid_image, "image/png")),
+                ("files", ("invalid.txt", invalid_data, "text/plain"))
+            ]
+        )
+        
+        # Should return 200 with warnings
+        assert response.status_code == 200
+        data = response.json()
+        
+        assert data["status"] == "success"
+        assert len(data["files"]) == 1  # Only valid file uploaded
+        assert data["files"][0]["filename"] == "valid.png"
+        
+        # Check warnings are present
+        assert "warnings" in data
+        assert data["warnings"] is not None
+        assert len(data["warnings"]) == 1
+        assert data["warnings"][0]["filename"] == "invalid.txt"
