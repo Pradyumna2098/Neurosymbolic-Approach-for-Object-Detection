@@ -1,18 +1,18 @@
 # Feature Implementation Progress Tracking
 
-**Last Updated:** 2026-02-04 12:00:00 UTC
+**Last Updated:** 2026-02-04 12:36:00 UTC
 
 ---
 
 ## Overall Progress Summary
 
-**Total Issues:** 4  
-**Completed:** 4  
+**Total Issues:** 5  
+**Completed:** 5  
 **In Progress:** 0  
 **Not Started:** 0  
 **Blocked:** 0  
 
-**Overall Completion:** 100% (4/4 issues completed)
+**Overall Completion:** 100% (5/5 issues completed)
 
 ---
 
@@ -42,6 +42,7 @@
 |---------|-------|--------|----------------|-------|
 | 2 | Set Up Backend Project Structure with FastAPI | Complete | 2026-02-04 | Prototype implementation with local filesystem storage |
 | 4 | Implement Image Upload Endpoint (Local Storage) | Complete | 2026-02-04 | POST /api/v1/upload endpoint with file validation |
+| 5 | Implement Inference Trigger Endpoint | Complete | 2026-02-04 | POST /api/v1/predict endpoint with background threading |
 
 ### Phase 3: Frontend Development (High Priority)
 
@@ -258,6 +259,90 @@
 - Files stored with UUID-based filenames to prevent collisions
 - Job metadata includes file information for tracking
 - Endpoint automatically documented in Swagger UI at `/docs`
+
+---
+
+### Issue #5: Implement Inference Trigger Endpoint
+
+**Priority:** 🔴 Critical  
+**Estimated Effort:** Medium  
+**Phase:** Backend Infrastructure  
+**Status:** Complete  
+**Started:** 2026-02-04  
+**Completed:** 2026-02-04
+
+**Acceptance Criteria:**
+- [x] Endpoint accepts job_id and config
+- [x] Validates job exists and has files
+- [x] Starts inference in background thread
+- [x] Returns 202 Accepted immediately
+- [x] Updates job JSON status to "processing"
+
+**Implementation Details:**
+- Created `backend/app/api/v1/predict.py` with POST /api/v1/predict endpoint
+- Implemented comprehensive Pydantic models for configuration:
+  - `SAHIConfig`: SAHI sliced inference configuration
+  - `SymbolicReasoningConfig`: Symbolic reasoning with Prolog
+  - `VisualizationConfig`: Visualization generation settings
+  - `InferenceConfig`: Complete inference configuration
+  - `PredictRequest`: Request model with job_id and config
+  - `PredictResponse`: 202 Accepted response model
+- Implemented endpoint logic:
+  - Validates job_id exists in storage
+  - Validates job has uploaded files
+  - Validates job status is "uploaded" (ready for inference)
+  - Updates job status to "processing" with config stored
+  - Starts background thread for inference processing
+  - Returns 202 Accepted immediately (async pattern)
+- Implemented placeholder `run_inference()` function:
+  - Runs in background daemon thread
+  - Updates job progress during processing
+  - Simulates inference stages (initializing, processing, completed)
+  - Updates job status to "completed" on success
+  - Updates job status to "failed" on error with error message
+- Configuration validation:
+  - Confidence threshold: 0.0 to 1.0 (default: 0.25)
+  - IoU threshold: 0.0 to 1.0 (default: 0.45)
+  - SAHI slice dimensions: 256 to 2048 pixels (default: 640x640)
+  - SAHI overlap ratio: 0.0 to 0.5 (default: 0.2)
+  - All nested configs have proper defaults
+- Error handling:
+  - 404 if job not found
+  - 400 if job has no files
+  - 400 if job status is not "uploaded"
+  - 422 for validation errors (invalid thresholds, dimensions)
+- Registered predict router in `backend/app/api/v1/__init__.py`
+- Created comprehensive test suite (12 tests):
+  - Test successful inference trigger
+  - Test full configuration with all options
+  - Test job not found error
+  - Test job with no files error
+  - Test invalid job status error
+  - Test validation of confidence threshold
+  - Test validation of IoU threshold
+  - Test validation of slice dimensions
+  - Test validation of overlap ratio
+  - Test background thread updates job status
+  - Test missing required model_path
+  - Test default config values applied
+- All tests passing: 83 total tests (71 existing + 12 new)
+- Manual testing verified:
+  - Endpoint accessible at POST /api/v1/predict
+  - Returns 202 Accepted with proper response
+  - Background thread successfully updates job status
+  - Config stored correctly in job JSON
+  - Error responses properly formatted
+  - Swagger UI documentation auto-generated
+
+**Notes:**
+- Uses **Python threading** for background processing (not Celery)
+- Prototype implementation suitable for MVP
+- Daemon threads prevent blocking on server shutdown
+- `run_inference()` is a placeholder - actual ML inference in later issue
+- Fixed Pydantic v2 deprecation warning (dict() → model_dump())
+- Fixed protected namespace warning for model_path field
+- All existing tests continue to pass
+- Total test count: 83 tests passing
 
 ---
 
