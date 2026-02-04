@@ -4,14 +4,17 @@ This endpoint allows clients to poll for job status and progress information
 by reading from local JSON files in the data/jobs directory.
 """
 
+import base64
 import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.models.responses import (
+    Base64VisualizationData,
+    Base64VisualizationResponse,
     ClassSummary,
     Detection,
     DetectionBBox,
@@ -23,6 +26,9 @@ from app.models.responses import (
     JobStatusData,
     JobStatusResponse,
     JobSummary,
+    VisualizationData,
+    VisualizationItem,
+    VisualizationResponse,
 )
 from app.services import storage_service
 
@@ -411,4 +417,287 @@ async def get_job_results(job_id: str) -> JobResultsResponse:
     return JobResultsResponse(
         status="success",
         data=results_data
+    )
+
+
+def _get_detection_count_from_prediction_file(pred_file: Path) -> int:
+    """Count detections in a YOLO format prediction file.
+    
+    Args:
+        pred_file: Path to prediction file
+        
+    Returns:
+        Number of valid detection lines
+    """
+    if not pred_file.exists():
+        return 0
+    
+    count = 0
+    with open(pred_file, "r", encoding="utf-8") as f:
+        for line in f:
+            parsed = _parse_yolo_prediction_line(line)
+            if parsed is not None:
+                count += 1
+    return count
+
+
+def _encode_image_to_base64(image_path: Path) -> str:
+    """Encode image file to base64 with data URI prefix.
+    
+    Args:
+        image_path: Path to image file
+        
+    Returns:
+        Base64-encoded image with data URI prefix
+    """
+    with open(image_path, "rb") as f:
+        image_data = f.read()
+    
+    # Determine MIME type from extension
+    ext = image_path.suffix.lower()
+    mime_type = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".bmp": "image/bmp",
+        ".tiff": "image/tiff",
+        ".tif": "image/tiff"
+    }.get(ext, "image/png")
+    
+    # Encode to base64
+    encoded = base64.b64encode(image_data).decode("utf-8")
+    
+    return f"data:{mime_type};base64,{encoded}"
+
+
+@router.get("/jobs/{job_id}/visualization")
+async def get_job_visualization(
+    job_id: str,
+    file_id: Optional[str] = Query(None, description="Filter by specific file ID"),
+    format: str = Query("url", description="Response format: 'url' or 'base64'")
+) -> Union[VisualizationResponse, Base64VisualizationResponse]:
+    """Get visualization images for a completed job.
+    
+    Returns URLs or base64-encoded annotated images with bounding boxes drawn.
+    Images are served from data/visualizations/{job_id}/ directory.
+    
+    Args:
+        job_id: Job identifier (UUID)
+        file_id: Optional file ID to filter for specific image
+        format: Response format - 'url' (default) or 'base64'
+        
+    Returns:
+        VisualizationResponse: URLs to visualization images (format='url')
+        Base64VisualizationResponse: Base64-encoded images (format='base64')
+        
+    Raises:
+        HTTPException: 404 if job not found or visualizations not available
+        HTTPException: 400 if invalid format parameter
+    """
+    logger.info(f"Retrieving visualizations for job {job_id} (format={format}, file_id={file_id})")
+    
+    # Validate format parameter
+    if format not in ["url", "base64"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "status": "error",
+                "message": "Invalid format parameter",
+                "error_code": "INVALID_FORMAT",
+                "details": f"Format must be 'url' or 'base64', got: {format}"
+            }
+        )
+    
+    # Check if job exists
+    job_data = storage_service.get_job(job_id)
+    
+    if job_data is None:
+        logger.warning(f"Job not found: {job_id}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "status": "error",
+                "message": f"Job not found: {job_id}",
+                "error_code": "JOB_NOT_FOUND"
+            }
+        )
+    
+    # Check if job is completed
+    job_status = job_data.get("status", "unknown")
+    if job_status != "completed":
+        logger.warning(f"Visualizations not available for job {job_id} (status: {job_status})")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "status": "error",
+                "message": "Visualizations not available",
+                "error_code": "VISUALIZATIONS_NOT_READY",
+                "details": f"Job is {job_status}"
+            }
+        )
+    
+    # Get visualization directory
+    viz_dir = storage_service._get_job_visualization_dir(job_id)
+    
+    # Check if visualizations exist
+    if not viz_dir.exists() or not any(viz_dir.iterdir()):
+        logger.warning(f"No visualization files found for job {job_id}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "status": "error",
+                "message": "Visualizations not available",
+                "error_code": "VISUALIZATIONS_NOT_FOUND",
+                "details": "No visualization files generated yet"
+            }
+        )
+    
+    # Get upload directory for original images
+    upload_dir = storage_service._get_job_upload_dir(job_id)
+    
+    # Get results directory for detection counts
+    results_dir = storage_service._get_job_results_dir(job_id, stage="refined")
+    
+    # Get file metadata from job data
+    job_files = job_data.get("files", [])
+    file_id_map: Dict[str, Dict[str, Any]] = {}
+    for f in job_files:
+        fid = f.get("file_id")
+        if fid:
+            file_id_map[fid] = f
+    
+    # If file_id filter specified and format is base64, return single file
+    if file_id and format == "base64":
+        # Find the file in job files
+        if file_id not in file_id_map:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "status": "error",
+                    "message": f"File not found: {file_id}",
+                    "error_code": "FILE_NOT_FOUND"
+                }
+            )
+        
+        file_info = file_id_map[file_id]
+        original_filename = file_info["filename"]
+        stored_filename = file_info["stored_filename"]
+        
+        # Get original image path
+        original_path = upload_dir / stored_filename
+        if not original_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "status": "error",
+                    "message": "Original image not found",
+                    "error_code": "ORIGINAL_IMAGE_NOT_FOUND"
+                }
+            )
+        
+        # Get annotated image path (same name but in viz directory)
+        annotated_path = viz_dir / stored_filename
+        if not annotated_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "status": "error",
+                    "message": "Annotated image not found",
+                    "error_code": "ANNOTATED_IMAGE_NOT_FOUND"
+                }
+            )
+        
+        # Get detection count
+        pred_file = results_dir / f"{file_id}.txt"
+        detection_count = _get_detection_count_from_prediction_file(pred_file)
+        
+        # Encode images to base64
+        original_base64 = _encode_image_to_base64(original_path)
+        annotated_base64 = _encode_image_to_base64(annotated_path)
+        
+        base64_data = Base64VisualizationData(
+            file_id=file_id,
+            filename=original_filename,
+            format="base64",
+            original_image=original_base64,
+            annotated_image=annotated_base64,
+            detection_count=detection_count
+        )
+        
+        logger.info(f"Returning base64 visualization for file {file_id}")
+        
+        return Base64VisualizationResponse(
+            status="success",
+            data=base64_data
+        )
+    
+    # URL format: return list of all visualizations (or filtered by file_id)
+    visualizations = []
+    
+    for viz_file in sorted(viz_dir.iterdir()):
+        if not viz_file.is_file():
+            continue
+        
+        # Extract file_id from stored filename (e.g., "uuid.png" -> "uuid")
+        viz_file_id = viz_file.stem
+        
+        # Apply file_id filter if specified
+        if file_id and viz_file_id != file_id:
+            continue
+        
+        # Find corresponding file info
+        if viz_file_id not in file_id_map:
+            # Skip files not in job metadata
+            continue
+        
+        file_info = file_id_map[viz_file_id]
+        original_filename = file_info["filename"]
+        
+        # Get detection count
+        pred_file = results_dir / f"{viz_file_id}.txt"
+        detection_count = _get_detection_count_from_prediction_file(pred_file)
+        
+        # Generate URLs
+        original_url = f"/api/v1/files/{job_id}/{viz_file_id}/original"
+        annotated_url = f"/api/v1/files/{job_id}/{viz_file_id}/annotated"
+        
+        viz_item = VisualizationItem(
+            file_id=viz_file_id,
+            filename=original_filename,
+            original_url=original_url,
+            annotated_url=annotated_url,
+            detection_count=detection_count
+        )
+        visualizations.append(viz_item)
+    
+    if not visualizations:
+        if file_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "status": "error",
+                    "message": f"Visualization not found for file: {file_id}",
+                    "error_code": "VISUALIZATION_NOT_FOUND"
+                }
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "status": "error",
+                    "message": "No visualizations available",
+                    "error_code": "NO_VISUALIZATIONS"
+                }
+            )
+    
+    viz_data = VisualizationData(
+        job_id=job_id,
+        visualizations=visualizations
+    )
+    
+    logger.info(f"Returning {len(visualizations)} visualization URLs for job {job_id}")
+    
+    return VisualizationResponse(
+        status="success",
+        data=viz_data
     )
