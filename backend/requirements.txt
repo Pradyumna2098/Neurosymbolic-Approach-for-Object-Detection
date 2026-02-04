@@ -2,7 +2,7 @@
 # For the neurosymbolic object detection API prototype
 
 # Web Framework
-fastapi==0.109.0
+fastapi==0.109.1  # Security: Fixed ReDoS vulnerability (CVE-2024-24762)
 uvicorn[standard]==0.27.0
 
 # Data Validation
@@ -10,13 +10,13 @@ pydantic==2.5.3
 pydantic-settings==2.1.0
 
 # File Upload Support
-python-multipart==0.0.6
+python-multipart==0.0.22  # Security: Fixed arbitrary file write, DoS, and ReDoS vulnerabilities
 
 # Environment Configuration
 python-dotenv==1.0.0
 
 # Image Processing
-Pillow==10.2.0
+Pillow==10.3.0  # Security: Fixed buffer overflow vulnerability
 
 # Testing Dependencies
 pytest==7.4.3
