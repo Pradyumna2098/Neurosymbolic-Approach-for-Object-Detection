@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.services import storage_service
+from app.services.inference import inference_service, InferenceError
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -82,60 +83,87 @@ class PredictResponse(BaseModel):
 
 
 def run_inference(job_id: str, config: InferenceConfig) -> None:
-    """Placeholder inference function that runs in background thread.
+    """Run inference using SAHI and YOLO model in background thread.
     
-    This is a prototype implementation that simulates inference processing.
-    In production, this would be replaced by Celery tasks.
+    This function integrates the actual SAHI inference pipeline:
+    1. Loads YOLO model from config.model_path
+    2. Runs SAHI sliced prediction on all uploaded images
+    3. Saves predictions to data/results/{job_id}/raw/ in YOLO format
+    4. Updates job status and progress throughout processing
     
     Args:
         job_id: Job identifier
-        config: Inference configuration
+        config: Inference configuration with model path and parameters
     """
     try:
-        logger.info(f"Starting inference for job {job_id}")
+        logger.info(f"Starting SAHI inference for job {job_id}")
         
-        # Update job progress
-        storage_service.update_job(
-            job_id,
-            progress={
-                "stage": "initializing",
-                "message": "Loading model and preparing inference"
+        # Extract configuration
+        model_path = config.model_path
+        confidence_threshold = config.confidence_threshold
+        iou_threshold = config.iou_threshold
+        
+        # Prepare SAHI configuration
+        sahi_config = {}
+        if config.sahi.enabled:
+            sahi_config = {
+                'slice_width': config.sahi.slice_width,
+                'slice_height': config.sahi.slice_height,
+                'overlap_ratio': config.sahi.overlap_ratio,
             }
+            logger.info(f"SAHI enabled: {sahi_config}")
+        else:
+            # Use full image inference (no slicing)
+            logger.info("SAHI disabled, using full image inference")
+            sahi_config = {
+                'slice_width': 999999,  # Large value to process full image
+                'slice_height': 999999,
+                'overlap_ratio': 0.0,
+            }
+        
+        # Run inference using the inference service
+        inference_stats = inference_service.run_inference(
+            job_id=job_id,
+            model_path=model_path,
+            confidence_threshold=confidence_threshold,
+            iou_threshold=iou_threshold,
+            sahi_config=sahi_config,
+            storage_service=storage_service,
         )
         
-        # Simulate inference processing
-        # In actual implementation, this would:
-        # 1. Load YOLO model from config.model_path
-        # 2. Load images from job upload directory
-        # 3. Run SAHI inference if enabled
-        # 4. Apply NMS filtering
-        # 5. Run symbolic reasoning if enabled
-        # 6. Generate visualizations if enabled
-        # 7. Save results to job results directory
-        
-        time.sleep(2)  # Simulate processing time
-        
-        # Simulate successful completion
-        storage_service.update_job(
-            job_id,
-            status="completed",
-            progress={
-                "stage": "completed",
-                "message": "Inference completed successfully"
-            }
+        logger.info(
+            f"Inference completed for job {job_id}: "
+            f"{inference_stats['processed_images']}/{inference_stats['total_images']} images, "
+            f"{inference_stats['total_detections']} detections"
         )
         
-        logger.info(f"Inference completed for job {job_id}")
-        
-    except Exception as e:
-        # Handle errors and update job status
+    except InferenceError as e:
+        # Handle inference-specific errors
         error_message = f"Inference failed: {str(e)}"
         logger.error(f"Inference error for job {job_id}: {error_message}", exc_info=True)
         
         storage_service.update_job(
             job_id,
             status="failed",
-            error=error_message
+            error=error_message,
+            progress={
+                "stage": "failed",
+                "message": error_message
+            }
+        )
+    except Exception as e:
+        # Handle unexpected errors
+        error_message = f"Unexpected error during inference: {str(e)}"
+        logger.error(f"Unexpected error for job {job_id}: {error_message}", exc_info=True)
+        
+        storage_service.update_job(
+            job_id,
+            status="failed",
+            error=error_message,
+            progress={
+                "stage": "failed",
+                "message": error_message
+            }
         )
 
 
