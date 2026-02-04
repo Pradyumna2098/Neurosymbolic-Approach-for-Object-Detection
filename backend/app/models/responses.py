@@ -177,3 +177,45 @@ class JobResultsResponse(BaseModel):
     
     status: str = Field(default="success", description="Response status")
     data: JobResultsData = Field(..., description="Job results data")
+
+
+class VisualizationItem(BaseModel):
+    """Metadata for a single visualization image."""
+    
+    file_id: str = Field(..., description="File identifier")
+    filename: str = Field(..., description="Original filename")
+    original_url: str = Field(..., description="URL to original image")
+    annotated_url: str = Field(..., description="URL to annotated image")
+    detection_count: int = Field(..., description="Number of detections in image")
+
+
+class VisualizationData(BaseModel):
+    """Visualization data for a job."""
+    
+    job_id: str = Field(..., description="Job identifier")
+    visualizations: List[VisualizationItem] = Field(..., description="List of visualization items")
+
+
+class VisualizationResponse(BaseModel):
+    """Response for visualization endpoint with URLs."""
+    
+    status: str = Field(default="success", description="Response status")
+    data: VisualizationData = Field(..., description="Visualization data")
+
+
+class Base64VisualizationData(BaseModel):
+    """Base64-encoded visualization data for a single image."""
+    
+    file_id: str = Field(..., description="File identifier")
+    filename: str = Field(..., description="Original filename")
+    format: str = Field(default="base64", description="Response format")
+    original_image: str = Field(..., description="Base64-encoded original image with data URI prefix")
+    annotated_image: str = Field(..., description="Base64-encoded annotated image with data URI prefix")
+    detection_count: int = Field(..., description="Number of detections in image")
+
+
+class Base64VisualizationResponse(BaseModel):
+    """Response for visualization endpoint with base64 encoding."""
+    
+    status: str = Field(default="success", description="Response status")
+    data: Base64VisualizationData = Field(..., description="Base64 visualization data")
