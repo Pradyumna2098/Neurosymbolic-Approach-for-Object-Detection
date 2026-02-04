@@ -442,7 +442,9 @@ class TestInferenceService:
             assert stats['reduction_percentage'] == 0.0
     
     def test_save_nms_predictions(self, service, tmp_path):
-        """Test _save_nms_predictions saves correct format."""
+        """Test save_predictions_to_file utility saves correct format."""
+        from pipeline.core.utils import save_predictions_to_file
+        
         predictions_dict = {
             "image1.png": [
                 {
@@ -468,7 +470,7 @@ class TestInferenceService:
         output_dir = tmp_path / "nms"
         output_dir.mkdir()
         
-        service._save_nms_predictions(predictions_dict, output_dir)
+        save_predictions_to_file(predictions_dict, output_dir)
         
         # Verify files created
         file1 = output_dir / "image1.txt"

@@ -14,6 +14,11 @@ import torch
 from PIL import Image
 
 from app.core import settings
+from pipeline.core.utils import (
+    parse_predictions_for_nms,
+    pre_filter_with_nms,
+    save_predictions_to_file,
+)
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -156,21 +161,19 @@ class InferenceService:
             if not raw_dir.exists():
                 raise InferenceError(f"Raw predictions directory not found: {raw_dir}")
             
-            # Import NMS utilities from pipeline
-            from pipeline.core.utils import parse_predictions_for_nms, pre_filter_with_nms
-            
             # Load raw predictions
             logger.info(f"[Job {job_id}] Loading raw predictions from {raw_dir}")
             raw_predictions = parse_predictions_for_nms(raw_dir)
             
             if not raw_predictions:
                 logger.warning(f"[Job {job_id}] No raw predictions found")
+                elapsed_time_seconds = round(time.time() - start_time, 2)
                 return {
                     "total_before": 0,
                     "total_after": 0,
                     "reduction_count": 0,
                     "reduction_percentage": 0.0,
-                    "elapsed_time_seconds": 0.0
+                    "elapsed_time_seconds": elapsed_time_seconds
                 }
             
             # Apply NMS per image
@@ -190,7 +193,7 @@ class InferenceService:
             
             # Save NMS-filtered predictions
             logger.info(f"[Job {job_id}] Saving NMS-filtered predictions to {nms_dir}")
-            self._save_nms_predictions(nms_predictions, nms_dir)
+            save_predictions_to_file(nms_predictions, nms_dir)
             
             # Calculate statistics
             elapsed_time = time.time() - start_time
@@ -216,36 +219,6 @@ class InferenceService:
         except Exception as e:
             logger.error(f"[Job {job_id}] NMS post-processing failed: {e}", exc_info=True)
             raise InferenceError(f"NMS post-processing failed: {e}") from e
-    
-    def _save_nms_predictions(
-        self,
-        predictions_dict: Dict[str, List[Dict[str, Any]]],
-        output_dir: Path
-    ) -> None:
-        """Save NMS-filtered predictions to YOLO format text files.
-        
-        Args:
-            predictions_dict: Dictionary mapping image names to prediction lists
-            output_dir: Directory to save prediction files
-        """
-        for image_name, objects in predictions_dict.items():
-            # Convert image name to txt filename
-            txt_file = output_dir / (Path(image_name).stem + ".txt")
-            
-            with open(txt_file, 'w', encoding='utf-8') as f:
-                for obj in objects:
-                    cx, cy, width, height = obj['bbox_yolo']
-                    line = (
-                        f"{obj['category_id']} "
-                        f"{cx:.6f} "
-                        f"{cy:.6f} "
-                        f"{width:.6f} "
-                        f"{height:.6f} "
-                        f"{obj['confidence']:.6f}\n"
-                    )
-                    f.write(line)
-            
-            logger.debug(f"Saved {len(objects)} NMS-filtered predictions to {txt_file}")
     
     def run_inference(
         self,
