@@ -650,8 +650,8 @@
   - Passes complete configuration including SAHI settings
 - Updated `backend/app/services/__init__.py`:
   - Export `InferenceService` and `inference_service` for endpoint use
-- Created comprehensive test suite (16 tests) in `tests/backend/test_inference_service.py`:
-  - Model cache tests (6 tests):
+- Created comprehensive test suite (18 tests) in `tests/backend/test_inference_service.py`:
+  - Model cache tests (7 tests):
     - Test cache initialization
     - Test model loading on CPU
     - Test model loading on GPU
@@ -659,7 +659,7 @@
     - Test different parameters create separate cache entries
     - Test model loading error handling
     - Test cache clearing
-  - Inference service tests (10 tests):
+  - Inference service tests (11 tests):
     - Test service initialization
     - Test image prediction with SAHI enabled
     - Test image prediction with SAHI disabled
@@ -728,10 +728,12 @@ All Phase 2 Backend Infrastructure issues and ML Pipeline integration are now **
 7. ✅ Issue #8: Visualization endpoint with static file serving
 8. ✅ Issue #9: SAHI + YOLO inference integration
 
-**Total Tests:** 116 existing tests + 16 new tests = 132 tests  
+**Total Tests:** 116 existing tests + 18 new tests = 134 tests  
 **Code Coverage:** High coverage for all endpoints and services  
 **API Documentation:** Complete OpenAPI specification at `/docs`  
-**ML Integration:** SAHI + YOLO pipeline fully integrated
+**ML Integration:** SAHI + YOLO pipeline fully integrated  
+
+**Note:** Existing `/api/v1/predict` endpoint tests have been updated to create temporary model files or mock inference components to work with the new model file validation.
 
 **API Endpoints Implemented:**
 - `GET /` - Root API information

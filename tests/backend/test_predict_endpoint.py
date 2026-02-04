@@ -8,6 +8,7 @@ import sys
 import time
 from io import BytesIO
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -70,9 +71,13 @@ def uploaded_job(client):
 class TestPredictEndpoint:
     """Tests for the /api/v1/predict endpoint."""
     
-    def test_trigger_inference_success(self, client, uploaded_job):
+    def test_trigger_inference_success(self, client, uploaded_job, tmp_path):
         """Test successfully triggering inference on uploaded job."""
         job_id, _ = uploaded_job
+        
+        # Create a temporary model file
+        model_path = tmp_path / "test_model.pt"
+        model_path.write_text("fake model")
         
         # Trigger inference with minimal config
         response = client.post(
@@ -80,7 +85,7 @@ class TestPredictEndpoint:
             json={
                 "job_id": job_id,
                 "config": {
-                    "model_path": "/path/to/model.pt",
+                    "model_path": str(model_path),
                     "confidence_threshold": 0.25,
                     "iou_threshold": 0.45
                 }
@@ -103,11 +108,15 @@ class TestPredictEndpoint:
         job_data = storage_service.get_job(job_id)
         assert job_data["status"] == "processing"
         assert "config" in job_data
-        assert job_data["config"]["model_path"] == "/path/to/model.pt"
+        assert job_data["config"]["model_path"] == str(model_path)
     
-    def test_trigger_inference_with_full_config(self, client, uploaded_job):
+    def test_trigger_inference_with_full_config(self, client, uploaded_job, tmp_path):
         """Test triggering inference with complete configuration."""
         job_id, _ = uploaded_job
+        
+        # Create a temporary model file
+        model_path = tmp_path / "test_model.pt"
+        model_path.write_text("fake model")
         
         # Trigger inference with full config
         response = client.post(
@@ -115,7 +124,7 @@ class TestPredictEndpoint:
             json={
                 "job_id": job_id,
                 "config": {
-                    "model_path": "/path/to/model.pt",
+                    "model_path": str(model_path),
                     "confidence_threshold": 0.3,
                     "iou_threshold": 0.5,
                     "sahi": {
@@ -308,9 +317,26 @@ class TestPredictEndpoint:
         data = response.json()
         assert "detail" in data
     
-    def test_background_thread_updates_job_status(self, client, uploaded_job):
+    @patch('app.services.inference.AutoDetectionModel.from_pretrained')
+    @patch('app.services.inference.get_sliced_prediction')
+    def test_background_thread_updates_job_status(self, mock_get_sliced, mock_from_pretrained, client, uploaded_job, tmp_path):
         """Test that background thread eventually updates job status."""
         job_id, _ = uploaded_job
+        
+        # Mock the model and predictions
+        mock_model = Mock()
+        mock_from_pretrained.return_value = mock_model
+        
+        # Mock prediction result
+        mock_result = Mock()
+        mock_result.image_height = 480
+        mock_result.image_width = 640
+        mock_result.object_prediction_list = []
+        mock_get_sliced.return_value = mock_result
+        
+        # Create a temporary model file
+        model_path = tmp_path / "test_model.pt"
+        model_path.write_text("fake model")
         
         # Trigger inference
         response = client.post(
@@ -318,7 +344,7 @@ class TestPredictEndpoint:
             json={
                 "job_id": job_id,
                 "config": {
-                    "model_path": "/path/to/model.pt"
+                    "model_path": str(model_path)
                 }
             }
         )
@@ -334,7 +360,7 @@ class TestPredictEndpoint:
         
         while time.time() - start_time < max_wait_time:
             job_data = storage_service.get_job(job_id)
-            if job_data["status"] == "completed":
+            if job_data["status"] in ("completed", "failed"):
                 break
             time.sleep(0.5)
         
@@ -365,9 +391,13 @@ class TestPredictEndpoint:
         data = response.json()
         assert "detail" in data
     
-    def test_default_config_values(self, client, uploaded_job):
+    def test_default_config_values(self, client, uploaded_job, tmp_path):
         """Test that config defaults are applied correctly."""
         job_id, _ = uploaded_job
+        
+        # Create a temporary model file
+        model_path = tmp_path / "test_model.pt"
+        model_path.write_text("fake model")
         
         # Trigger with minimal config
         response = client.post(
@@ -375,7 +405,7 @@ class TestPredictEndpoint:
             json={
                 "job_id": job_id,
                 "config": {
-                    "model_path": "/path/to/model.pt"
+                    "model_path": str(model_path)
                     # All other fields should use defaults
                 }
             }

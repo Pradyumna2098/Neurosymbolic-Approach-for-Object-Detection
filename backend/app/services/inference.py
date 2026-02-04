@@ -177,6 +177,7 @@ class InferenceService:
             # Process each image
             all_predictions = {}
             processed_count = 0
+            failed_count = 0
             
             for idx, file_info in enumerate(files, 1):
                 file_id = file_info["file_id"]
@@ -186,6 +187,7 @@ class InferenceService:
                 image_path = storage_service.get_upload_path(job_id, file_id)
                 if not image_path or not image_path.exists():
                     logger.warning(f"Image not found: {file_id}, skipping")
+                    failed_count += 1
                     continue
                 
                 logger.info(f"Processing image {idx}/{total_images}: {original_filename}")
@@ -221,8 +223,15 @@ class InferenceService:
                     
                 except Exception as e:
                     logger.error(f"Error processing image {original_filename}: {e}")
+                    failed_count += 1
                     # Continue processing other images
                     continue
+            
+            # Check if all images failed
+            if processed_count == 0:
+                error_msg = f"All {total_images} images failed to process ({failed_count} failures)"
+                logger.error(error_msg)
+                raise RuntimeError(error_msg)
             
             # Save predictions to raw stage
             logger.info(f"Saving predictions for {processed_count} images")
@@ -232,16 +241,23 @@ class InferenceService:
             total_detections = sum(len(preds) for preds in all_predictions.values())
             elapsed_time = time.time() - start_time
             
+            # Create completion message with partial failure info if applicable
+            if failed_count > 0:
+                completion_msg = f"Inference completed with {failed_count} failed image(s)"
+            else:
+                completion_msg = "Inference completed successfully"
+            
             # Update job to completed
             storage_service.update_job(
                 job_id,
                 status="completed",
                 progress={
                     "stage": "completed",
-                    "message": f"Inference completed successfully",
+                    "message": completion_msg,
                     "percentage": 100,
                     "total_images": total_images,
                     "processed_images": processed_count,
+                    "failed_images": failed_count,
                     "total_detections": total_detections,
                     "elapsed_time": elapsed_time
                 }
