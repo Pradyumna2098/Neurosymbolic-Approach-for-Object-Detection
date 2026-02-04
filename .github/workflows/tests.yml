@@ -84,8 +84,9 @@ jobs:
           python -m pip install --upgrade pip
           # Install PyTorch CPU-only version for backend tests (required by inference service)
           pip install torch==2.2.2 torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cpu
-          # Install SAHI for inference service
+          # Install SAHI and ultralytics for inference service
           pip install sahi==0.11.36
+          pip install ultralytics==8.2.77
           pip install -r backend/requirements.txt
       
       - name: Run backend tests
