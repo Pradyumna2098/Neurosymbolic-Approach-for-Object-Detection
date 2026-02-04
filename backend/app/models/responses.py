@@ -1,6 +1,6 @@
 """Pydantic models for API request/response schemas."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, Field
@@ -22,7 +22,10 @@ class ErrorDetail(BaseModel):
     message: str = Field(..., description="Human-readable error message")
     details: Optional[str] = Field(None, description="Additional error context")
     field: Optional[str] = Field(None, description="Field name for validation errors")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Error timestamp")
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Error timestamp"
+    )
 
 
 class ErrorResponse(BaseModel):

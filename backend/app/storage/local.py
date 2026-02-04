@@ -7,7 +7,7 @@ PostgreSQL for metadata and S3/MinIO for files.
 
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -35,7 +35,7 @@ class LocalStorageService:
         job_id = str(uuid.uuid4())
         job_data.update({
             "job_id": job_id,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "status": "created"
         })
         
@@ -76,7 +76,7 @@ class LocalStorageService:
             return False
         
         job_data.update(updates)
-        job_data["updated_at"] = datetime.utcnow().isoformat()
+        job_data["updated_at"] = datetime.now(timezone.utc).isoformat()
         
         job_file = settings.jobs_dir / f"{job_id}.json"
         with open(job_file, "w") as f:
