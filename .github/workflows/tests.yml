@@ -50,17 +50,54 @@ jobs:
             exit 1
           fi
       
-      - name: Run tests
+      - name: Run pipeline tests
         run: |
-          pytest tests/ -v --cov=pipeline --cov=shared --cov-report=xml --cov-report=term
+          pytest tests/pipeline/ -v --cov=pipeline --cov=shared --cov-report=xml --cov-report=term
       
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         if: matrix.python-version == '3.10'
         with:
           file: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
+          flags: pipeline-unittests
+          name: codecov-pipeline
+          fail_ci_if_error: false
+  
+  test-backend:
+    name: Test FastAPI Backend
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+    
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      
+      - name: Install backend dependencies
+        run: |
+          set -e
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+      
+      - name: Run backend tests
+        run: |
+          pytest tests/backend/ -v --cov=backend/app --cov-report=xml --cov-report=term
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: matrix.python-version == '3.10'
+        with:
+          file: ./coverage.xml
+          flags: backend-unittests
+          name: codecov-backend
           fail_ci_if_error: false
   
   code-quality:
@@ -85,13 +122,13 @@ jobs:
       - name: Lint with flake8
         run: |
           # Stop the build if there are Python syntax errors or undefined names
-          flake8 pipeline/ shared/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 pipeline/ shared/ backend/app/ --count --select=E9,F63,F7,F82 --show-source --statistics
           # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 pipeline/ shared/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          flake8 pipeline/ shared/ backend/app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       
       - name: Check Python syntax
         run: |
-          python -m compileall pipeline/ shared/ -q
+          python -m compileall pipeline/ shared/ backend/app/ -q
   
   build-verification:
     name: Build Verification
@@ -126,7 +163,7 @@ jobs:
             exit 1
           fi
       
-      - name: Verify imports
+      - name: Verify pipeline imports
         run: |
           python -c "import pipeline; import shared"
           python -c "from pipeline.core import utils"
@@ -137,3 +174,14 @@ jobs:
           # Verify scripts can be invoked (requires full dependencies)
           python -m pipeline.core.preprocess --help
           python pipeline/training/training.py --help
+      
+      - name: Install backend dependencies
+        run: |
+          pip install -r backend/requirements.txt
+      
+      - name: Verify backend imports
+        run: |
+          cd backend && python -c "from app.main import app"
+          cd backend && python -c "from app.core import settings"
+          cd backend && python -c "from app.storage import storage"
+
