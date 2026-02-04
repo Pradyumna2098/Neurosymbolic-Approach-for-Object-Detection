@@ -120,30 +120,29 @@ class InferenceService:
         """
         start_time = time.time()
         
-        # Validate model path
-        model_path_obj = Path(model_path)
-        if not model_path_obj.exists():
-            raise FileNotFoundError(f"Model not found: {model_path}")
-        
-        # Get SAHI configuration with defaults
-        sahi_config = sahi_config or {}
-        sahi_enabled = sahi_config.get("enabled", True)
-        slice_height = sahi_config.get("slice_height", 640)
-        slice_width = sahi_config.get("slice_width", 640)
-        overlap_ratio = sahi_config.get("overlap_ratio", 0.2)
-        
         # Update job status to processing
         storage_service.update_job(
             job_id,
             status="processing",
             progress={
                 "stage": "initializing",
-                "message": "Loading YOLO model",
+                "message": "Validating configuration",
                 "percentage": 0
             }
         )
         
         try:
+            # Validate model path
+            model_path_obj = Path(model_path)
+            if not model_path_obj.exists():
+                raise FileNotFoundError(f"Model not found: {model_path}")
+            
+            # Get SAHI configuration with defaults
+            sahi_config = sahi_config or {}
+            sahi_enabled = sahi_config.get("enabled", True)
+            slice_height = sahi_config.get("slice_height", 640)
+            slice_width = sahi_config.get("slice_width", 640)
+            overlap_ratio = sahi_config.get("overlap_ratio", 0.2)
             # Load model (with caching)
             model = self.model_cache.get_or_load(
                 model_path, 
