@@ -1,56 +1,155 @@
 # Backend Subproject
 
-This subproject will contain REST APIs and backend services for interacting with the AI pipeline.
+FastAPI-based REST API for the neurosymbolic object detection pipeline.
 
-## Planned Features
+## Overview
 
-- **API Endpoints**: RESTful APIs for triggering pipeline execution and retrieving results
-- **Job Management**: Queue and manage long-running training and inference jobs
-- **Model Registry**: Store and version trained models
-- **Result Storage**: Persist predictions, metrics, and evaluation results
-- **Authentication**: Secure access to pipeline resources
+This backend provides a RESTful API for automating object detection inference. The current implementation is a **prototype** using local filesystem storage instead of PostgreSQL and Redis.
 
-## Technology Stack (Planned)
+## Features
 
-- **Framework**: FastAPI or Flask
-- **Database**: PostgreSQL for metadata, S3/MinIO for artifacts
-- **Task Queue**: Celery with Redis
-- **API Documentation**: OpenAPI/Swagger
+✅ **FastAPI Application** - Modern async Python web framework
+✅ **API Versioning** - Endpoints under `/api/v1/`
+✅ **Health Check** - Service health monitoring at `/api/v1/health`
+✅ **CORS Support** - Configured for Electron desktop applications
+✅ **Auto Documentation** - Swagger UI at `/docs`, OpenAPI schema at `/openapi.json`
+✅ **Local Storage** - Filesystem-based job tracking and file storage
+✅ **Environment Config** - Settings via `.env` file with Pydantic validation
+✅ **Test Coverage** - Comprehensive unit tests for all components
 
-## Getting Started
+## Quick Start
 
-This subproject is currently a placeholder. Implementation is planned for future releases.
+### Installation
 
-### Proposed API Structure
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+### Configuration
+
+Copy the example environment file and adjust as needed:
+
+```bash
+cp .env.example .env
+```
+
+### Running the Server
+
+```bash
+uvicorn app.main:app --reload
+```
+
+The API will be available at:
+- **Base URL:** http://localhost:8000
+- **API Endpoints:** http://localhost:8000/api/v1/
+- **Swagger UI:** http://localhost:8000/docs
+- **ReDoc:** http://localhost:8000/redoc
+- **OpenAPI Schema:** http://localhost:8000/openapi.json
+
+## API Endpoints
+
+### Root
+- `GET /` - API information and endpoint discovery
+
+### Health Check
+- `GET /api/v1/health` - Service health status
+
+## Project Structure
 
 ```
-/api/v1/
-├── /models
-│   ├── POST   /train          # Trigger model training
-│   ├── GET    /               # List trained models
-│   └── GET    /{id}           # Get model details
-├── /predictions
-│   ├── POST   /               # Run inference
-│   ├── GET    /{id}           # Get prediction results
-│   └── GET    /               # List predictions
-├── /pipeline
-│   ├── POST   /run            # Execute symbolic pipeline
-│   └── GET    /status/{id}    # Check pipeline status
-└── /metrics
-    └── GET    /               # Retrieve evaluation metrics
+backend/
+├── app/
+│   ├── __init__.py
+│   ├── main.py              # FastAPI application setup
+│   ├── api/
+│   │   └── v1/
+│   │       ├── __init__.py
+│   │       └── health.py    # Health check endpoint
+│   ├── core/
+│   │   ├── __init__.py
+│   │   └── config.py        # Settings and configuration
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── responses.py     # Pydantic response models
+│   ├── services/
+│   │   └── __init__.py      # Business logic (future)
+│   └── storage/
+│       ├── __init__.py
+│       └── local.py         # Filesystem storage service
+├── .env.example             # Environment configuration template
+└── requirements.txt         # Python dependencies
+```
+
+## Storage Architecture
+
+**Prototype Implementation:**
+- Uses local filesystem for all storage
+- No database required
+- Job status tracked in JSON files
+
+**Storage Directories:**
+```
+data/
+├── uploads/          # Uploaded images
+├── jobs/             # Job status JSON files
+├── results/          # Prediction results
+└── visualizations/   # Annotated images
 ```
 
 ## Development
 
-When implementing, ensure to:
-1. Follow RESTful API design principles
-2. Implement proper error handling and validation
-3. Add comprehensive API documentation
-4. Include authentication and authorization
-5. Write unit and integration tests
+### Running Tests
+
+```bash
+cd ..  # Return to project root
+pytest tests/backend/ -v
+```
+
+### Code Style
+
+This project follows:
+- PEP 8 style guidelines
+- Type hints for all functions
+- Google-style docstrings
+- Async/await patterns for I/O operations
+
+## Technology Stack
+
+| Component | Technology | Version |
+|-----------|-----------|---------|
+| **Web Framework** | FastAPI | 0.109.0 |
+| **ASGI Server** | Uvicorn | 0.27.0 |
+| **Validation** | Pydantic | 2.5.3 |
+| **Config** | python-dotenv | 1.0.0 |
+| **Testing** | pytest | 7.4.3 |
+
+## Future Enhancements
+
+The following features are planned for production:
+
+- [ ] **Database Integration** - PostgreSQL for metadata storage
+- [ ] **Task Queue** - Celery + Redis for async job processing
+- [ ] **Object Storage** - MinIO/S3 for file storage
+- [ ] **Authentication** - JWT-based API authentication
+- [ ] **Rate Limiting** - Prevent API abuse
+- [ ] **Monitoring** - Prometheus metrics endpoint
+- [ ] **Inference Endpoints** - Image upload and prediction
+- [ ] **Batch Processing** - Multiple image inference
+- [ ] **Result Retrieval** - Query and download results
+
+## Related Documentation
+
+- **API Architecture:** `../docs/feature_implementation/backend_api_architecture.md`
+- **API Design Summary:** `../docs/feature_implementation/backend_api_design_summary.md`
+- **Progress Tracking:** `../docs/feature_implementation_progress/PROGRESS.md`
 
 ## Related Subprojects
 
-- **Pipeline**: Core AI/ML logic that the backend will orchestrate
-- **Frontend**: Will consume these APIs for visualization
-- **Monitoring**: Backend will emit metrics for monitoring
+- **Pipeline** - Core ML pipeline that backend will orchestrate
+- **Frontend** - Electron app that consumes this API
+- **Monitoring** - Prometheus/Grafana for metrics (future)
+
+## License
+
+See the main project LICENSE file.
