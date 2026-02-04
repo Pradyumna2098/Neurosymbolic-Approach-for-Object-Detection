@@ -5,7 +5,7 @@ by reading from local JSON files in the data/jobs directory.
 """
 
 import logging
-from typing import Optional
+from typing import Any, Dict, Optional, Union
 
 from fastapi import APIRouter, HTTPException, status
 
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def _parse_progress(progress_data: dict) -> Optional[JobProgress]:
+def _parse_progress(progress_data: Optional[Dict[str, Any]]) -> Optional[JobProgress]:
     """Parse progress data from job JSON into JobProgress model.
     
     Args:
@@ -45,7 +45,7 @@ def _parse_progress(progress_data: dict) -> Optional[JobProgress]:
     )
 
 
-def _parse_summary(summary_data: dict) -> Optional[JobSummary]:
+def _parse_summary(summary_data: Optional[Dict[str, Any]]) -> Optional[JobSummary]:
     """Parse summary data from job JSON into JobSummary model.
     
     Args:
@@ -64,7 +64,7 @@ def _parse_summary(summary_data: dict) -> Optional[JobSummary]:
     )
 
 
-def _parse_error(error_data) -> Optional[JobError]:
+def _parse_error(error_data: Optional[Union[str, Dict[str, Any]]]) -> Optional[JobError]:
     """Parse error data from job JSON into JobError model.
     
     Args:

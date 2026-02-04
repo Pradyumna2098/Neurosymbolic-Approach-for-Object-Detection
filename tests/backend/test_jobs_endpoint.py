@@ -4,7 +4,6 @@ Tests the /api/v1/jobs/{job_id}/status endpoint for job status retrieval,
 progress tracking, and error handling.
 """
 
-import json
 import sys
 import time
 from io import BytesIO
@@ -323,7 +322,6 @@ class TestJobStatusEndpoint:
         job_id = uploaded_job
         
         # Measure response time
-        import time
         start_time = time.time()
         
         response = client.get(f"/api/v1/jobs/{job_id}/status")
