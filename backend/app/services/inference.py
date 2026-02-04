@@ -1,7 +1,8 @@
 """Inference service for SAHI-based object detection.
 
 This service provides YOLO model loading, SAHI sliced prediction,
-and result saving functionality for the neurosymbolic object detection pipeline.
+NMS post-processing, and result saving functionality for the
+neurosymbolic object detection pipeline.
 """
 
 import logging
@@ -13,6 +14,11 @@ import torch
 from PIL import Image
 
 from app.core import settings
+from pipeline.core.utils import (
+    parse_predictions_for_nms,
+    pre_filter_with_nms,
+    save_predictions_to_file,
+)
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -112,6 +118,107 @@ class InferenceService:
             raise InferenceError(f"SAHI library not installed: {e}") from e
         except Exception as e:
             raise InferenceError(f"Failed to load model: {e}") from e
+    
+    def apply_nms_post_processing(
+        self,
+        job_id: str,
+        iou_threshold: float,
+        storage_service: Any,
+    ) -> Dict[str, Any]:
+        """Apply class-wise NMS to raw predictions and save filtered results.
+        
+        Args:
+            job_id: Job identifier
+            iou_threshold: IoU threshold for NMS filtering
+            storage_service: Storage service instance for file operations
+            
+        Returns:
+            Dictionary with NMS statistics (before/after counts, reduction percentage)
+            
+        Raises:
+            InferenceError: If NMS processing fails
+        """
+        start_time = time.time()
+        
+        try:
+            logger.info(f"[Job {job_id}] Starting NMS post-processing with IoU threshold {iou_threshold}")
+            
+            # Update job progress
+            storage_service.update_job(
+                job_id,
+                progress={
+                    "stage": "nms_filtering",
+                    "message": "Applying NMS filtering to detections",
+                    "percentage": 92
+                }
+            )
+            
+            # Get directories
+            raw_dir = settings.results_dir / job_id / "raw"
+            nms_dir = settings.results_dir / job_id / "nms"
+            nms_dir.mkdir(parents=True, exist_ok=True)
+            
+            if not raw_dir.exists():
+                raise InferenceError(f"Raw predictions directory not found: {raw_dir}")
+            
+            # Load raw predictions
+            logger.info(f"[Job {job_id}] Loading raw predictions from {raw_dir}")
+            raw_predictions = parse_predictions_for_nms(raw_dir)
+            
+            if not raw_predictions:
+                logger.warning(f"[Job {job_id}] No raw predictions found")
+                elapsed_time_seconds = round(time.time() - start_time, 2)
+                return {
+                    "total_before": 0,
+                    "total_after": 0,
+                    "reduction_count": 0,
+                    "reduction_percentage": 0.0,
+                    "elapsed_time_seconds": elapsed_time_seconds
+                }
+            
+            # Apply NMS per image
+            nms_predictions = {}
+            total_before = 0
+            total_after = 0
+            
+            for image_name, objects in raw_predictions.items():
+                total_before += len(objects)
+                
+                # Apply class-wise NMS
+                filtered = pre_filter_with_nms(objects, iou_threshold)
+                total_after += len(filtered)
+                
+                if filtered:
+                    nms_predictions[image_name] = filtered
+            
+            # Save NMS-filtered predictions
+            logger.info(f"[Job {job_id}] Saving NMS-filtered predictions to {nms_dir}")
+            save_predictions_to_file(nms_predictions, nms_dir)
+            
+            # Calculate statistics
+            elapsed_time = time.time() - start_time
+            reduction_count = total_before - total_after
+            reduction_percentage = (reduction_count / total_before * 100) if total_before > 0 else 0.0
+            
+            nms_stats = {
+                "total_before": total_before,
+                "total_after": total_after,
+                "reduction_count": reduction_count,
+                "reduction_percentage": round(reduction_percentage, 2),
+                "elapsed_time_seconds": round(elapsed_time, 2)
+            }
+            
+            logger.info(
+                f"[Job {job_id}] NMS completed. "
+                f"Reduced detections from {total_before} to {total_after} "
+                f"({reduction_percentage:.1f}% reduction) in {elapsed_time:.2f}s"
+            )
+            
+            return nms_stats
+            
+        except Exception as e:
+            logger.error(f"[Job {job_id}] NMS post-processing failed: {e}", exc_info=True)
+            raise InferenceError(f"NMS post-processing failed: {e}") from e
     
     def run_inference(
         self,
@@ -262,6 +369,28 @@ class InferenceService:
                 f"Processed {processed_count}/{total_images} images, "
                 f"found {total_detections} detections in {elapsed_time:.2f}s"
             )
+            
+            # Apply NMS post-processing
+            logger.info(f"[Job {job_id}] Applying NMS post-processing")
+            try:
+                nms_stats = self.apply_nms_post_processing(
+                    job_id,
+                    iou_threshold,
+                    storage_service
+                )
+                inference_stats["nms"] = nms_stats
+                logger.info(
+                    f"[Job {job_id}] NMS reduced detections from "
+                    f"{nms_stats['total_before']} to {nms_stats['total_after']}"
+                )
+            except Exception as e:
+                logger.error(f"[Job {job_id}] NMS post-processing failed: {e}", exc_info=True)
+                # Don't fail the entire job if NMS fails
+                inference_stats["nms"] = {
+                    "error": str(e),
+                    "total_before": 0,
+                    "total_after": 0
+                }
             
             # Update job with completion
             storage_service.update_job(

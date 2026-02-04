@@ -355,3 +355,200 @@ class TestInferenceService:
                 sahi_config={},
                 storage_service=mock_storage_service,
             )
+    
+    def test_apply_nms_post_processing_success(self, service, mock_storage_service, tmp_path):
+        """Test successful NMS post-processing."""
+        job_id = "test-job-456"
+        
+        # Setup directories
+        raw_dir = tmp_path / "results" / job_id / "raw"
+        nms_dir = tmp_path / "results" / job_id / "nms"
+        raw_dir.mkdir(parents=True)
+        
+        # Create raw prediction file with overlapping detections
+        pred_file = raw_dir / "test_image.txt"
+        pred_file.write_text(
+            "0 0.5 0.5 0.2 0.2 0.95\n"  # High confidence
+            "0 0.51 0.51 0.19 0.19 0.85\n"  # Overlapping, lower confidence
+            "1 0.3 0.3 0.1 0.1 0.9\n"  # Different class
+        )
+        
+        # Mock settings
+        with patch('app.services.inference.settings') as mock_settings:
+            mock_settings.results_dir = tmp_path / "results"
+            
+            # Run NMS
+            stats = service.apply_nms_post_processing(
+                job_id=job_id,
+                iou_threshold=0.5,
+                storage_service=mock_storage_service
+            )
+            
+            # Verify statistics
+            assert stats['total_before'] == 3
+            assert stats['total_after'] == 2  # One overlapping detection removed
+            assert stats['reduction_count'] == 1
+            assert stats['reduction_percentage'] > 0
+            assert 'elapsed_time_seconds' in stats
+            
+            # Verify NMS directory created
+            assert nms_dir.exists()
+            
+            # Verify NMS filtered file created
+            nms_file = nms_dir / "test_image.txt"
+            assert nms_file.exists()
+            
+            # Verify filtered predictions
+            lines = nms_file.read_text().strip().split('\n')
+            assert len(lines) == 2  # Only 2 detections after NMS
+    
+    def test_apply_nms_post_processing_no_raw_predictions(self, service, mock_storage_service, tmp_path):
+        """Test NMS with no raw predictions directory."""
+        job_id = "test-job-789"
+        
+        with patch('app.services.inference.settings') as mock_settings:
+            mock_settings.results_dir = tmp_path / "results"
+            
+            # Should raise error
+            with pytest.raises(InferenceError, match="Raw predictions directory not found"):
+                service.apply_nms_post_processing(
+                    job_id=job_id,
+                    iou_threshold=0.5,
+                    storage_service=mock_storage_service
+                )
+    
+    def test_apply_nms_post_processing_empty_predictions(self, service, mock_storage_service, tmp_path):
+        """Test NMS with empty raw predictions directory."""
+        job_id = "test-job-empty"
+        
+        # Setup empty raw directory
+        raw_dir = tmp_path / "results" / job_id / "raw"
+        raw_dir.mkdir(parents=True)
+        
+        with patch('app.services.inference.settings') as mock_settings:
+            mock_settings.results_dir = tmp_path / "results"
+            
+            # Run NMS
+            stats = service.apply_nms_post_processing(
+                job_id=job_id,
+                iou_threshold=0.5,
+                storage_service=mock_storage_service
+            )
+            
+            # Verify statistics for empty case
+            assert stats['total_before'] == 0
+            assert stats['total_after'] == 0
+            assert stats['reduction_count'] == 0
+            assert stats['reduction_percentage'] == 0.0
+    
+    def test_save_nms_predictions(self, service, tmp_path):
+        """Test save_predictions_to_file utility saves correct format."""
+        from pipeline.core.utils import save_predictions_to_file
+        
+        predictions_dict = {
+            "image1.png": [
+                {
+                    'category_id': 0,
+                    'bbox_yolo': [0.5, 0.5, 0.2, 0.2],
+                    'confidence': 0.95
+                },
+                {
+                    'category_id': 1,
+                    'bbox_yolo': [0.3, 0.3, 0.15, 0.15],
+                    'confidence': 0.87
+                }
+            ],
+            "image2.png": [
+                {
+                    'category_id': 0,
+                    'bbox_yolo': [0.6, 0.7, 0.1, 0.1],
+                    'confidence': 0.92
+                }
+            ]
+        }
+        
+        output_dir = tmp_path / "nms"
+        output_dir.mkdir()
+        
+        save_predictions_to_file(predictions_dict, output_dir)
+        
+        # Verify files created
+        file1 = output_dir / "image1.txt"
+        file2 = output_dir / "image2.txt"
+        assert file1.exists()
+        assert file2.exists()
+        
+        # Verify file1 content
+        lines1 = file1.read_text().strip().split('\n')
+        assert len(lines1) == 2
+        parts1 = lines1[0].split()
+        assert len(parts1) == 6
+        assert parts1[0] == '0'
+        assert float(parts1[1]) == pytest.approx(0.5)
+        assert float(parts1[5]) == pytest.approx(0.95)
+        
+        # Verify file2 content
+        lines2 = file2.read_text().strip().split('\n')
+        assert len(lines2) == 1
+        parts2 = lines2[0].split()
+        assert parts2[0] == '0'
+        assert float(parts2[5]) == pytest.approx(0.92)
+    
+    def test_apply_nms_reduces_overlapping_same_class(self, service, mock_storage_service, tmp_path):
+        """Test NMS correctly removes overlapping detections of the same class."""
+        job_id = "test-job-overlap"
+        
+        # Setup directories
+        raw_dir = tmp_path / "results" / job_id / "raw"
+        raw_dir.mkdir(parents=True)
+        
+        # Create prediction file with highly overlapping detections (same class)
+        pred_file = raw_dir / "overlap_test.txt"
+        pred_file.write_text(
+            "0 0.5 0.5 0.2 0.2 0.95\n"  # Detection 1
+            "0 0.505 0.505 0.21 0.21 0.90\n"  # Highly overlapping with det 1
+            "0 0.8 0.8 0.1 0.1 0.85\n"  # Different location, same class
+        )
+        
+        with patch('app.services.inference.settings') as mock_settings:
+            mock_settings.results_dir = tmp_path / "results"
+            
+            stats = service.apply_nms_post_processing(
+                job_id=job_id,
+                iou_threshold=0.5,
+                storage_service=mock_storage_service
+            )
+            
+            # Should reduce from 3 to 2 (one overlapping removed)
+            assert stats['total_before'] == 3
+            assert stats['total_after'] == 2
+    
+    def test_apply_nms_keeps_different_classes(self, service, mock_storage_service, tmp_path):
+        """Test NMS preserves overlapping detections of different classes."""
+        job_id = "test-job-multiclass"
+        
+        # Setup directories
+        raw_dir = tmp_path / "results" / job_id / "raw"
+        raw_dir.mkdir(parents=True)
+        
+        # Create prediction file with overlapping detections (different classes)
+        pred_file = raw_dir / "multiclass_test.txt"
+        pred_file.write_text(
+            "0 0.5 0.5 0.2 0.2 0.95\n"  # Class 0
+            "1 0.51 0.51 0.19 0.19 0.90\n"  # Class 1, overlapping location
+            "2 0.52 0.52 0.18 0.18 0.85\n"  # Class 2, overlapping location
+        )
+        
+        with patch('app.services.inference.settings') as mock_settings:
+            mock_settings.results_dir = tmp_path / "results"
+            
+            stats = service.apply_nms_post_processing(
+                job_id=job_id,
+                iou_threshold=0.5,
+                storage_service=mock_storage_service
+            )
+            
+            # All should be kept (different classes)
+            assert stats['total_before'] == 3
+            assert stats['total_after'] == 3
+            assert stats['reduction_count'] == 0
