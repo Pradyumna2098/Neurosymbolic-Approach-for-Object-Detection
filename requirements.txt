@@ -2,5 +2,6 @@
 -r requirements/common.txt
 
 # Default to the CPU-only PyTorch runtime. Override with GPU builds if desired.
-torch==2.2.2
-torchvision==0.17.2
+# Security: Updated to 2.6.0 to fix RCE vulnerability (CVE-2024-XXXXX)
+torch==2.6.0
+torchvision==0.21.0
