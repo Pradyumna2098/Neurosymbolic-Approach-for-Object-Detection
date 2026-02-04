@@ -1,0 +1,27 @@
+{
+  "detections": [
+    {
+      "class_id": 0,
+      "class_name": "plane",
+      "confidence": 0.95,
+      "bbox": [
+        100,
+        100,
+        200,
+        150
+      ]
+    },
+    {
+      "class_id": 1,
+      "class_name": "ship",
+      "confidence": 0.87,
+      "bbox": [
+        300,
+        250,
+        400,
+        350
+      ]
+    }
+  ],
+  "num_detections": 2
+}

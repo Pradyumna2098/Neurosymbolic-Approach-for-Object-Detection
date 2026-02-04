@@ -1,0 +1,17 @@
+{
+  "detections": [
+    {
+      "class_id": 0,
+      "class_name": "plane",
+      "confidence": 0.95,
+      "bbox": [
+        100,
+        100,
+        200,
+        150
+      ]
+    }
+  ],
+  "num_detections": 1,
+  "note": "One overlapping detection removed by NMS"
+}
