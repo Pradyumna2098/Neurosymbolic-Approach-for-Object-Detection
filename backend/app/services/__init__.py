@@ -1,3 +1,5 @@
-"""Services package placeholder."""
+"""Services package for business logic."""
 
-# Business logic services will be added here in future issues
+from app.services.storage import StorageService, storage_service, FileValidationError
+
+__all__ = ["StorageService", "storage_service", "FileValidationError"]
