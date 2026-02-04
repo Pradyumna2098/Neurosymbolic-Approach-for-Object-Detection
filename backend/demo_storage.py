@@ -12,8 +12,8 @@ import sys
 from io import BytesIO
 from pathlib import Path
 
-# Add backend to path
-sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
+# Add backend directory (where this script resides) to Python path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from PIL import Image
 

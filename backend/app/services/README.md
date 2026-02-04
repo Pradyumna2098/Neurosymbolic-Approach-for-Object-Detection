@@ -315,7 +315,7 @@ python demo_storage.py
 The storage service can be used in FastAPI endpoints:
 
 ```python
-from fastapi import FastAPI, UploadFile, HTTPException
+from fastapi import FastAPI, UploadFile, HTTPException, Path as FastAPIPath
 from app.services.storage import storage_service, FileValidationError
 
 app = FastAPI()
@@ -326,7 +326,11 @@ async def create_job():
     return {"job_id": job_id}
 
 @app.post("/jobs/{job_id}/upload")
-async def upload_file(job_id: str, file: UploadFile):
+async def upload_file(
+    job_id: str = FastAPIPath(..., regex=r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'),
+    file: UploadFile = None
+):
+    """Upload file for a job. job_id must be a valid UUID to prevent path traversal."""
     content = await file.read()
     
     try:
@@ -336,14 +340,27 @@ async def upload_file(job_id: str, file: UploadFile):
         return {"file_id": file_id, "metadata": metadata}
     except FileValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except ValueError as e:
+        # Catches invalid job_id or filename
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/jobs/{job_id}")
-async def get_job(job_id: str):
-    job = storage_service.get_job(job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-    return job
+async def get_job(
+    job_id: str = FastAPIPath(..., regex=r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
+):
+    """Get job details. job_id must be a valid UUID to prevent path traversal."""
+    try:
+        job = storage_service.get_job(job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        return job
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 ```
+
+**Security Note:** Always validate `job_id` as a strict UUID using FastAPI's path regex validation
+or Pydantic validators to prevent path traversal attacks. The storage service validates internally,
+but API layer validation provides defense in depth.
 
 ## Notes
 

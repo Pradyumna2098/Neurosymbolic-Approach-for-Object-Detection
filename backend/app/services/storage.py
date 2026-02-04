@@ -3,9 +3,15 @@
 This service provides file validation, storage management, and job tracking
 for the neurosymbolic object detection system. It uses local filesystem storage
 with organized directory structures and UUID-based file identification.
+
+Note: This service supersedes app.storage.local.LocalStorageService with enhanced
+features including PIL/Pillow validation, metadata extraction, and multi-stage
+result storage. The LocalStorageService is kept for backward compatibility but
+new code should use this StorageService implementation.
 """
 
 import json
+import re
 import uuid
 from datetime import datetime, timezone
 from io import BytesIO
@@ -15,6 +21,53 @@ from typing import Any, Dict, List, Optional, Tuple
 from PIL import Image
 
 from app.core import settings
+
+
+def _sanitize_filename(filename: str) -> str:
+    """Sanitize filename to prevent path traversal and other attacks.
+    
+    Args:
+        filename: Original filename
+        
+    Returns:
+        Sanitized filename safe for filesystem use
+        
+    Raises:
+        ValueError: If filename is invalid or contains dangerous patterns
+    """
+    # Extract basename to prevent path traversal
+    basename = Path(filename).name
+    
+    # Reject empty filenames or filenames starting with dots
+    if not basename or basename.startswith('.'):
+        raise ValueError(f"Invalid filename: {filename}")
+    
+    # Only allow alphanumeric, underscores, hyphens, and dots
+    # This prevents special characters and shell metacharacters
+    if not re.match(r'^[a-zA-Z0-9_\-\.]+$', basename):
+        raise ValueError(f"Filename contains invalid characters: {filename}")
+    
+    # Ensure there's an extension
+    if '.' not in basename:
+        raise ValueError(f"Filename must have an extension: {filename}")
+    
+    return basename
+
+
+def _validate_job_id(job_id: str) -> None:
+    """Validate job_id to prevent path traversal attacks.
+    
+    Args:
+        job_id: Job identifier to validate
+        
+    Raises:
+        ValueError: If job_id is not a valid UUID
+    """
+    try:
+        # Verify it's a valid UUID
+        uuid.UUID(job_id)
+    except (ValueError, AttributeError):
+        raise ValueError(f"Invalid job_id: must be a valid UUID, got: {job_id}")
 
 
 class FileValidationError(Exception):
@@ -27,7 +80,8 @@ class StorageService:
     """Service for managing file storage and job tracking."""
     
     # Supported image formats per specification
-    SUPPORTED_FORMATS = {'.jpg', '.jpeg', '.png', '.tiff', '.tif'}
+    # Note: BMP is not officially supported per specification but included for compatibility
+    SUPPORTED_FORMATS = {'.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp'}
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB per specification
     MIN_FILE_SIZE = 1024  # 1KB minimum
     MIN_DIMENSIONS = (64, 64)  # Minimum width, height
@@ -45,11 +99,15 @@ class StorageService:
         """Get upload directory for a specific job.
         
         Args:
-            job_id: Job identifier
+            job_id: Job identifier (must be valid UUID)
             
         Returns:
             Path to job's upload directory
+            
+        Raises:
+            ValueError: If job_id is not a valid UUID
         """
+        _validate_job_id(job_id)
         job_dir = settings.uploads_dir / job_id
         job_dir.mkdir(parents=True, exist_ok=True)
         return job_dir
@@ -58,12 +116,16 @@ class StorageService:
         """Get results directory for a specific job and stage.
         
         Args:
-            job_id: Job identifier
+            job_id: Job identifier (must be valid UUID)
             stage: Processing stage ('raw', 'nms', or 'refined')
             
         Returns:
             Path to job's results directory for the specified stage
+            
+        Raises:
+            ValueError: If job_id is not a valid UUID
         """
+        _validate_job_id(job_id)
         job_results_dir = settings.results_dir / job_id / stage
         job_results_dir.mkdir(parents=True, exist_ok=True)
         return job_results_dir
@@ -72,11 +134,15 @@ class StorageService:
         """Get visualization directory for a specific job.
         
         Args:
-            job_id: Job identifier
+            job_id: Job identifier (must be valid UUID)
             
         Returns:
             Path to job's visualization directory
+            
+        Raises:
+            ValueError: If job_id is not a valid UUID
         """
+        _validate_job_id(job_id)
         job_viz_dir = settings.visualizations_dir / job_id
         job_viz_dir.mkdir(parents=True, exist_ok=True)
         return job_viz_dir
@@ -164,7 +230,8 @@ class StorageService:
                 '.jpeg': ['JPEG'],
                 '.png': ['PNG'],
                 '.tiff': ['TIFF'],
-                '.tif': ['TIFF']
+                '.tif': ['TIFF'],
+                '.bmp': ['BMP']
             }
             
             if image_format not in expected_formats.get(file_ext, []):
@@ -323,7 +390,7 @@ class StorageService:
         """Save uploaded file for a specific job.
         
         Args:
-            job_id: Job identifier
+            job_id: Job identifier (must be valid UUID)
             filename: Original filename
             content: File content as bytes
             validate: Whether to validate the file (default: True)
@@ -336,22 +403,29 @@ class StorageService:
             
         Raises:
             FileValidationError: If validation fails
+            ValueError: If filename contains invalid characters or job_id is invalid
         """
+        # Sanitize filename to prevent path traversal and injection attacks
+        try:
+            sanitized_filename = _sanitize_filename(filename)
+        except ValueError as e:
+            raise FileValidationError(f"Invalid filename: {str(e)}")
+        
         # Validate file if requested
         metadata = None
         if validate:
-            is_valid, error_msg, metadata = self.validate_image_file(content, filename)
+            is_valid, error_msg, metadata = self.validate_image_file(content, sanitized_filename)
             if not is_valid:
                 raise FileValidationError(error_msg)
         
         # Generate unique file ID
         file_id = str(uuid.uuid4())
         
-        # Preserve original extension
-        file_ext = Path(filename).suffix.lower()
+        # Preserve original extension from sanitized filename
+        file_ext = Path(sanitized_filename).suffix.lower()
         safe_filename = f"{file_id}{file_ext}"
         
-        # Save to job's upload directory
+        # Save to job's upload directory (validates job_id internally)
         job_upload_dir = self._get_job_upload_dir(job_id)
         file_path = job_upload_dir / safe_filename
         
@@ -363,7 +437,7 @@ class StorageService:
         if job_data:
             job_data["files"].append({
                 "file_id": file_id,
-                "filename": filename,
+                "filename": sanitized_filename,  # Store sanitized filename
                 "stored_filename": safe_filename,
                 "size_bytes": len(content),
                 "uploaded_at": datetime.now(timezone.utc).isoformat(),

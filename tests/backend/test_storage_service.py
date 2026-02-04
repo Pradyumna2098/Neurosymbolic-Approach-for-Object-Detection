@@ -1,6 +1,5 @@
 """Unit tests for the storage service."""
 
-import json
 import sys
 from io import BytesIO
 from pathlib import Path
@@ -8,8 +7,9 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-# Add backend to path
-sys.path.append(str(Path(__file__).resolve().parents[2] / "backend"))
+# Add backend directory (project_root/backend) to Python path
+# Path structure: tests/backend/test_storage_service.py -> tests/ -> project root -> backend/
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend"))
 
 from app.services.storage import StorageService, FileValidationError
 
@@ -88,11 +88,23 @@ class TestFileValidation:
         assert metadata is not None
         assert metadata['format'] == 'TIFF'
     
+    def test_validate_valid_bmp(self, storage_service):
+        """Test validation of a valid BMP image."""
+        content = create_test_image(640, 480, "BMP")
+        is_valid, error_msg, metadata = storage_service.validate_image_file(
+            content, "test.bmp"
+        )
+        
+        assert is_valid is True
+        assert error_msg is None
+        assert metadata is not None
+        assert metadata['format'] == 'BMP'
+    
     def test_validate_unsupported_format(self, storage_service):
         """Test rejection of unsupported file format."""
         content = b"not an image"
         is_valid, error_msg, metadata = storage_service.validate_image_file(
-            content, "test.bmp"
+            content, "test.gif"  # GIF is not supported
         )
         
         assert is_valid is False
@@ -331,6 +343,63 @@ class TestFileManagement:
             storage_service.save_upload(job_id, "test.png", content, validate=True)
         
         assert "CORRUPTED_FILE" in str(exc_info.value)
+    
+    def test_save_upload_with_invalid_filename(self, storage_service):
+        """Test that filenames with shell metacharacters or invalid patterns are rejected."""
+        job_id = storage_service.create_job()
+        content = create_test_image(640, 480, "PNG")
+        
+        # Test filenames that should be rejected (after basename extraction)
+        # Note: Path traversal (../) is handled by Path().name extraction
+        malicious_filenames = [
+            "file;with;semicolon.png",  # Shell metacharacter
+            "file|pipe.png",            # Pipe character
+            "file&ampersand.png",       # Ampersand
+            ".hidden.png",              # Starts with dot
+            "noextension",              # No extension
+            "file with spaces.png",     # Spaces not allowed
+            "file$dollar.png",          # Dollar sign
+        ]
+        
+        for filename in malicious_filenames:
+            with pytest.raises(FileValidationError) as exc_info:
+                storage_service.save_upload(job_id, filename, content, validate=True)
+            assert "Invalid filename" in str(exc_info.value)
+    
+    def test_save_upload_sanitizes_path_traversal(self, storage_service):
+        """Test that path traversal in filenames is safely handled."""
+        job_id = storage_service.create_job()
+        content = create_test_image(640, 480, "PNG")
+        
+        # Path traversal attempts - basename extraction makes them safe
+        # The sanitize function extracts only the basename, preventing directory traversal
+        file_id, file_path, metadata = storage_service.save_upload(
+            job_id, "../../../etc/passwd.png", content, validate=True
+        )
+        
+        # Verify the file was saved with only the basename (passwd.png)
+        job = storage_service.get_job(job_id)
+        assert job["files"][0]["filename"] == "passwd.png"  # Path stripped
+        assert file_path.exists()
+        # Verify it's in the correct job directory, not in /etc/
+        assert str(job_id) in str(file_path)
+    
+    def test_save_upload_with_invalid_job_id(self, storage_service):
+        """Test that invalid job_id is rejected to prevent path traversal."""
+        content = create_test_image(640, 480, "PNG")
+        
+        # Test various malicious job_ids
+        malicious_job_ids = [
+            "../../../etc",
+            "../../data/evil",
+            "not-a-uuid",
+            "path/traversal",
+        ]
+        
+        for job_id in malicious_job_ids:
+            with pytest.raises(ValueError) as exc_info:
+                storage_service.save_upload(job_id, "test.png", content, validate=True)
+            assert "Invalid job_id" in str(exc_info.value) or "must be a valid UUID" in str(exc_info.value)
     
     def test_get_upload_path(self, storage_service):
         """Test retrieving upload path by file_id."""
