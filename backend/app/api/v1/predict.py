@@ -12,7 +12,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.services import storage_service
+from app.services import storage_service, inference_service
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -82,10 +82,10 @@ class PredictResponse(BaseModel):
 
 
 def run_inference(job_id: str, config: InferenceConfig) -> None:
-    """Placeholder inference function that runs in background thread.
+    """Run SAHI + YOLO inference in background thread.
     
-    This is a prototype implementation that simulates inference processing.
-    In production, this would be replaced by Celery tasks.
+    This function loads the YOLO model, runs SAHI sliced inference on all
+    uploaded images, and saves predictions to the job's results directory.
     
     Args:
         job_id: Job identifier
@@ -94,49 +94,22 @@ def run_inference(job_id: str, config: InferenceConfig) -> None:
     try:
         logger.info(f"Starting inference for job {job_id}")
         
-        # Update job progress
-        storage_service.update_job(
-            job_id,
-            progress={
-                "stage": "initializing",
-                "message": "Loading model and preparing inference"
-            }
-        )
-        
-        # Simulate inference processing
-        # In actual implementation, this would:
-        # 1. Load YOLO model from config.model_path
-        # 2. Load images from job upload directory
-        # 3. Run SAHI inference if enabled
-        # 4. Apply NMS filtering
-        # 5. Run symbolic reasoning if enabled
-        # 6. Generate visualizations if enabled
-        # 7. Save results to job results directory
-        
-        time.sleep(2)  # Simulate processing time
-        
-        # Simulate successful completion
-        storage_service.update_job(
-            job_id,
-            status="completed",
-            progress={
-                "stage": "completed",
-                "message": "Inference completed successfully"
-            }
+        # Run SAHI inference using the inference service
+        inference_service.run_inference(
+            job_id=job_id,
+            model_path=config.model_path,
+            confidence_threshold=config.confidence_threshold,
+            iou_threshold=config.iou_threshold,
+            sahi_config=config.sahi.model_dump(),
+            device=None  # Auto-detect GPU/CPU
         )
         
         logger.info(f"Inference completed for job {job_id}")
         
     except Exception as e:
-        # Handle errors and update job status
-        error_message = f"Inference failed: {str(e)}"
-        logger.error(f"Inference error for job {job_id}: {error_message}", exc_info=True)
-        
-        storage_service.update_job(
-            job_id,
-            status="failed",
-            error=error_message
-        )
+        # Error handling is done inside inference_service.run_inference
+        # This just logs at the endpoint level
+        logger.error(f"Inference error for job {job_id}: {str(e)}", exc_info=True)
 
 
 @router.post("/predict", response_model=PredictResponse, status_code=status.HTTP_202_ACCEPTED)
