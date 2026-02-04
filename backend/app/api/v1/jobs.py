@@ -224,6 +224,10 @@ def _parse_prediction_files(results_dir: Path) -> Dict[str, List[Detection]]:
         
         # Image name is the .txt filename with .png extension
         image_name = pred_file.stem + ".png"
+
+        # Ensure an entry exists even if the file has no valid detections
+        if image_name not in predictions:
+            predictions[image_name] = []
         
         with open(pred_file, "r", encoding="utf-8") as f:
             for line in f:
