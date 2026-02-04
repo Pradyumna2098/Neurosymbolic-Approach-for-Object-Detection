@@ -22,12 +22,21 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     
-    # CORS Settings - Allow Electron app
+    # CORS Settings - Allow Electron app and local development
+    # Note: FastAPI's CORSMiddleware doesn't support wildcard ports.
+    # For development, we allow common ports. Override via environment.
+    # In production, set specific origins via CORS_ORIGINS env var.
     cors_origins: List[str] = [
-        "http://localhost:*",
-        "http://127.0.0.1:*",
-        "file://*",  # For Electron apps
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "http://localhost:5173",  # Vite default
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8080",
+        "http://127.0.0.1:5173",
     ]
+    
+    # For Electron apps using file:// protocol, use allow_origin_regex in middleware
+    cors_allow_origin_regex: str = r"^(file://.*|http://localhost:\d+|http://127\.0\.0\.1:\d+)$"
     
     # Local Storage Paths (relative to project root)
     data_root: Path = Path("data")

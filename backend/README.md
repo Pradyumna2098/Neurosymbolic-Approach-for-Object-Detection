@@ -118,7 +118,7 @@ This project follows:
 
 | Component | Technology | Version |
 |-----------|-----------|---------|
-| **Web Framework** | FastAPI | 0.109.0 |
+| **Web Framework** | FastAPI | 0.109.1 |
 | **ASGI Server** | Uvicorn | 0.27.0 |
 | **Validation** | Pydantic | 2.5.3 |
 | **Config** | python-dotenv | 1.0.0 |

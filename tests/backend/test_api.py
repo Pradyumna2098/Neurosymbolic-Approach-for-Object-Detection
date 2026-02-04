@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 # Add backend to path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend"))
+sys.path.append(str(Path(__file__).resolve().parents[2] / "backend"))
 
 from app.main import app
 

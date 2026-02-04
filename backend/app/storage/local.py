@@ -6,12 +6,44 @@ PostgreSQL for metadata and S3/MinIO for files.
 """
 
 import json
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from app.core import settings
+
+
+def _sanitize_filename(filename: str) -> str:
+    """Sanitize filename to prevent path traversal and other attacks.
+    
+    Args:
+        filename: Original filename
+        
+    Returns:
+        Sanitized filename safe for filesystem use
+        
+    Raises:
+        ValueError: If filename is invalid or contains dangerous patterns
+    """
+    # Extract basename to prevent path traversal
+    basename = Path(filename).name
+    
+    # Reject empty filenames or filenames starting with dots
+    if not basename or basename.startswith('.'):
+        raise ValueError(f"Invalid filename: {filename}")
+    
+    # Only allow alphanumeric, underscores, hyphens, and dots
+    # This prevents special characters and shell metacharacters
+    if not re.match(r'^[a-zA-Z0-9_\-\.]+$', basename):
+        raise ValueError(f"Filename contains invalid characters: {filename}")
+    
+    # Ensure there's an extension
+    if '.' not in basename:
+        raise ValueError(f"Filename must have an extension: {filename}")
+    
+    return basename
 
 
 class LocalStorageService:
@@ -117,10 +149,16 @@ class LocalStorageService:
             
         Returns:
             Path to saved file
+            
+        Raises:
+            ValueError: If filename contains invalid characters or patterns
         """
+        # Sanitize filename to prevent path traversal and injection attacks
+        safe_basename = _sanitize_filename(filename)
+        
         # Generate unique filename to avoid collisions
         file_id = uuid.uuid4().hex[:8]
-        safe_filename = f"{file_id}_{Path(filename).name}"
+        safe_filename = f"{file_id}_{safe_basename}"
         file_path = settings.uploads_dir / safe_filename
         
         with open(file_path, "wb") as f:

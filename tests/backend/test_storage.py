@@ -1,27 +1,27 @@
 """Unit tests for local storage service."""
 
-import json
 import sys
 from pathlib import Path
 
 import pytest
 
 # Add backend to path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend"))
+sys.path.append(str(Path(__file__).resolve().parents[2] / "backend"))
 
 from app.storage import LocalStorageService
 
 
 @pytest.fixture
-def storage_service(tmp_path):
+def storage_service(tmp_path, monkeypatch):
     """Create a storage service with temporary directories."""
-    # Mock settings for testing
+    # Mock settings for testing using monkeypatch to avoid mutating globals
     from app.core import settings
-    settings.data_root = tmp_path
-    settings.uploads_dir = tmp_path / "uploads"
-    settings.jobs_dir = tmp_path / "jobs"
-    settings.results_dir = tmp_path / "results"
-    settings.visualizations_dir = tmp_path / "visualizations"
+    
+    monkeypatch.setattr(settings, "data_root", tmp_path)
+    monkeypatch.setattr(settings, "uploads_dir", tmp_path / "uploads")
+    monkeypatch.setattr(settings, "jobs_dir", tmp_path / "jobs")
+    monkeypatch.setattr(settings, "results_dir", tmp_path / "results")
+    monkeypatch.setattr(settings, "visualizations_dir", tmp_path / "visualizations")
     
     service = LocalStorageService()
     return service
@@ -100,6 +100,23 @@ def test_save_upload(storage_service):
     assert file_path.exists()
     assert file_path.name.endswith("test_image.jpg")
     assert file_path.read_bytes() == content
+
+
+def test_save_upload_with_invalid_filename(storage_service):
+    """Test that invalid filenames are rejected."""
+    invalid_filenames = [
+        "../etc/passwd",  # Path traversal
+        "file with spaces.jpg",  # Spaces not allowed
+        "file;with;semicolon.jpg",  # Shell metacharacter
+        ".hidden",  # Starts with dot
+        "noextension",  # No extension
+        "file|pipe.jpg",  # Pipe character
+        "file&ampersand.jpg",  # Ampersand
+    ]
+    
+    for filename in invalid_filenames:
+        with pytest.raises(ValueError):
+            storage_service.save_upload(filename, b"test")
 
 
 def test_save_result(storage_service):
