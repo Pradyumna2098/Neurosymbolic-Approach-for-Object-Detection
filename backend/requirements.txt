@@ -28,6 +28,7 @@ httpx==0.26.0  # For TestClient async support
 # Machine Learning & Computer Vision (for inference service)
 torch==2.6.0  # Security: Fixed RCE vulnerability (CVE-2024-XXXXX) - requires weights_only=True protection
 torchvision==0.21.0  # Compatible with torch 2.6.0
+torchmetrics==1.4.0.post0  # Required by pipeline.core.utils for NMS and evaluation
 sahi==0.11.36
 ultralytics==8.2.77
 opencv-python==4.10.0.84
