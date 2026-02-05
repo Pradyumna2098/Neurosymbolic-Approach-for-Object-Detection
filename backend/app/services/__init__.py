@@ -2,6 +2,7 @@
 
 from app.services.storage import StorageService, storage_service, FileValidationError
 from app.services.inference import InferenceService, inference_service, InferenceError
+from app.services.symbolic import SymbolicReasoningService, symbolic_reasoning_service, SymbolicReasoningError
 
 __all__ = [
     "StorageService", 
@@ -10,4 +11,7 @@ __all__ = [
     "InferenceService",
     "inference_service",
     "InferenceError",
+    "SymbolicReasoningService",
+    "symbolic_reasoning_service",
+    "SymbolicReasoningError",
 ]

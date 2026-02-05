@@ -121,6 +121,12 @@ def run_inference(job_id: str, config: InferenceConfig) -> None:
                 'overlap_ratio': 0.0,
             }
         
+        # Prepare symbolic reasoning configuration
+        symbolic_config = {
+            'enabled': config.symbolic_reasoning.enabled,
+            'rules_file': config.symbolic_reasoning.rules_file,
+        }
+        
         # Run inference using the inference service
         inference_stats = inference_service.run_inference(
             job_id=job_id,
@@ -129,6 +135,7 @@ def run_inference(job_id: str, config: InferenceConfig) -> None:
             iou_threshold=iou_threshold,
             sahi_config=sahi_config,
             storage_service=storage_service,
+            symbolic_config=symbolic_config,
         )
         
         logger.info(
