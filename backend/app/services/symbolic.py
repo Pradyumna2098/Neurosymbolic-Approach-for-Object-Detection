@@ -104,9 +104,9 @@ class SymbolicReasoningService:
         try:
             # Query all confidence_modifier facts
             for solution in prolog_engine.query("confidence_modifier(A, B, Weight)"):
-                class_a = solution["A"]
-                class_b = solution["B"]
-                weight = solution["Weight"]
+                class_a = str(solution["A"])  # Ensure string type
+                class_b = str(solution["B"])  # Ensure string type
+                weight = float(solution["Weight"])  # Ensure float type
                 modifier_map[(class_a, class_b)] = weight
             
             logger.info(f"Loaded {len(modifier_map)} confidence modifier rules from Prolog")

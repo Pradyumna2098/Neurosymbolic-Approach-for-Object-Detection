@@ -1,18 +1,18 @@
 # Feature Implementation Progress Tracking
 
-**Last Updated:** 2026-02-04 21:15:00 UTC
+**Last Updated:** 2026-02-05 10:30:00 UTC
 
 ---
 
 ## Overall Progress Summary
 
-**Total Issues:** 10  
-**Completed:** 10  
+**Total Issues:** 11  
+**Completed:** 11  
 **In Progress:** 0  
 **Not Started:** 0  
 **Blocked:** 0  
 
-**Overall Completion:** 100% (10/10 issues completed)
+**Overall Completion:** 100% (11/11 issues completed)
 
 ---
 
@@ -54,6 +54,7 @@
 |---------|-------|--------|----------------|-------|
 | 9 | Integrate SAHI Sliced Prediction Pipeline | Complete | 2026-02-04 | Full SAHI inference implementation with YOLO model loading |
 | 10 | Implement NMS Post-Processing | Complete | 2026-02-04 | Class-wise NMS filtering with IoU threshold from config, saves to data/results/{job_id}/nms/ |
+| 11 | Integrate Prolog Symbolic Reasoning | Complete | 2026-02-05 | Prolog-based confidence adjustment service, optional via config flag |
 
 ### Phase 4: Frontend Development (High Priority)
 
@@ -870,3 +871,114 @@ All Phase 2 Backend Infrastructure issues are now **complete**:
 ## Notes
 
 This document serves as the single source of truth for feature implementation progress. All developers and Copilot agents should reference and update this document to maintain synchronization across the project.
+
+---
+
+### Issue #11: Integrate Prolog Symbolic Reasoning
+
+**Priority:** 🟡 High  
+**Estimated Effort:** Large  
+**Phase:** ML Pipeline  
+**Status:** Complete  
+**Started:** 2026-02-05  
+**Completed:** 2026-02-05
+
+**Acceptance Criteria:**
+- [x] Prolog rules loaded from config
+- [x] Detections converted to Prolog facts
+- [x] Confidence adjustments applied
+- [x] Results saved to `data/results/{job_id}/refined/`
+- [x] Stage can be skipped via config
+
+**Implementation Checklist:**
+- [x] Create symbolic service in `backend/app/services/symbolic.py`
+- [x] Implement Prolog interface using pyswip
+- [x] Convert detections to Prolog facts
+- [x] Query for adjustments
+- [x] Save refined predictions
+- [x] Make stage optional (config flag)
+- [x] Comprehensive unit tests (21 test cases)
+- [x] Update PROGRESS.md documentation
+
+**Key Implementation Details:**
+- **Location:** `backend/app/services/symbolic.py`
+- **Main Class:** `SymbolicReasoningService`
+- **Key Methods:**
+  - `apply_symbolic_reasoning()`: Main entry point for applying Prolog reasoning
+  - `_load_prolog_engine()`: Loads Prolog engine and consults rules file
+  - `_load_modifier_map()`: Extracts confidence modifier rules from Prolog
+  - `_parse_predictions()`: Loads NMS-filtered predictions
+  - `_apply_modifiers()`: Applies boost/penalty modifiers based on spatial relationships
+  - `_save_predictions()`: Saves refined predictions in YOLO format
+  - `_save_explainability_report()`: Generates CSV report of adjustments
+
+**Integration:**
+- Integrated into `backend/app/services/inference.py`
+- Called automatically after NMS if `symbolic_reasoning.enabled=True` in config
+- Updated `backend/app/api/v1/predict.py` to pass symbolic config from request
+- Added to `backend/app/services/__init__.py` exports
+
+**Input/Output:**
+- **Input:** NMS-filtered predictions from `data/results/{job_id}/nms/*.txt`
+- **Output:** 
+  - Refined predictions to `data/results/{job_id}/refined/*.txt`
+  - Explainability report to `data/results/{job_id}/symbolic_reasoning_report.csv`
+- **Format:** YOLO normalized format: `class_id cx cy width height confidence`
+
+**Prolog Rules:**
+- Uses existing rules from `pipeline/prolog/rules.pl`
+- Supports custom rules file via config
+- Default class mapping for DOTA dataset (15 classes)
+- Modifier rules format: `confidence_modifier(ClassA, ClassB, Weight)`
+
+**Reasoning Logic:**
+- **Boost (weight > 1.0):** Increases confidence for nearby objects with positive co-occurrence
+  - Example: ship + harbor (1.25x boost when distance < 2×avg_diagonal)
+- **Penalty (weight < 1.0):** Decreases confidence for implausible combinations
+  - Example: plane + harbor (0.2x penalty when overlap > 50% of smaller box)
+- Proximity check for boosts: Objects must be within 2× average diagonal distance
+- Overlap check for penalties: Objects must have >50% overlap (IoU-based)
+
+**Statistics Tracked:**
+- `total_images`: Number of images processed
+- `refined_images`: Number of images with refined predictions
+- `total_adjustments`: Number of confidence modifications applied
+- `modifier_rules_loaded`: Number of Prolog rules loaded
+- `elapsed_time_seconds`: Time taken for symbolic reasoning
+
+**Error Handling:**
+- Missing Prolog rules file (logs warning, skips processing gracefully)
+- No modifier rules found (logs warning, skips processing)
+- PySwip not installed (raises `SymbolicReasoningError`)
+- Prolog engine errors (raises `SymbolicReasoningError`)
+- Stage is optional and won't fail entire inference job if errors occur
+
+**Testing:**
+- 21 comprehensive unit tests in `tests/backend/test_symbolic_service.py`
+- Test categories:
+  - Prolog engine loading (2 tests)
+  - Modifier map loading (1 test)
+  - Prediction parsing (3 tests)
+  - Geometric calculations (6 tests)
+  - Modifier application (3 tests)
+  - File I/O (2 tests)
+  - Integration tests (3 tests)
+  - Real Prolog integration (1 test, skipped by default)
+
+**Configuration:**
+- Enabled via `InferenceConfig.symbolic_reasoning.enabled` (default: True)
+- Optional custom rules file via `InferenceConfig.symbolic_reasoning.rules_file`
+- Uses default DOTA class mapping if not provided
+
+**Dependencies:**
+- PySwip (>=0.2.10) for Prolog interface
+- SWI-Prolog system installation required
+- Reuses existing utilities from `pipeline.core.utils` for consistency
+
+**Notes:**
+- Implements Stage 2b of the neurosymbolic pipeline as specified in `docs/feature_implementation/model_pipeline_integration.md`
+- Consistent with existing `pipeline/core/symbolic.py` implementation
+- Fully backward compatible - can be disabled without affecting other pipeline stages
+- Explainability report provides transparency into confidence adjustments
+- Default rules based on DOTA dataset domain knowledge
+
