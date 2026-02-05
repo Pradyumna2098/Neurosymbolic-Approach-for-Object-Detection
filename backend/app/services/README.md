@@ -371,3 +371,405 @@ but API layer validation provides defense in depth.
   - Redis for caching
 - The service is thread-safe for read operations
 - Write operations should be synchronized in multi-worker deployments
+
+---
+
+# Symbolic Reasoning Service Documentation
+
+## Overview
+
+The `SymbolicReasoningService` provides Prolog-based confidence adjustment for object detection predictions using domain knowledge rules. It implements Stage 2b of the neurosymbolic pipeline, applying symbolic reasoning to refine predictions based on spatial relationships between detected objects.
+
+## Key Features
+
+✅ **Prolog Integration** - PySwip interface to SWI-Prolog  
+✅ **Rule-Based Reasoning** - Load custom Prolog rules for confidence adjustment  
+✅ **Spatial Awareness** - Considers object proximity and overlap  
+✅ **Confidence Boost** - Increases confidence for positive co-occurrences  
+✅ **Confidence Penalty** - Decreases confidence for implausible combinations  
+✅ **Explainability** - Generates CSV reports documenting all adjustments  
+✅ **Optional Stage** - Can be disabled without affecting other stages  
+✅ **Error Handling** - Graceful degradation when Prolog is unavailable
+
+## How It Works
+
+### 1. Load Prolog Rules
+
+The service loads confidence modifier rules from a Prolog file:
+
+```prolog
+% Positive co-occurrence (boost confidence)
+confidence_modifier(ship, harbor, 1.25).
+confidence_modifier(harbor, ship, 1.25).
+
+% Implausible combination (penalize confidence)
+confidence_modifier(plane, harbor, 0.2).
+confidence_modifier(harbor, plane, 0.2).
+```
+
+### 2. Apply Spatial Reasoning
+
+For each pair of detected objects:
+
+**Boost Logic (weight > 1.0):**
+- Objects must be nearby (distance < 2× average diagonal)
+- Both confidences multiplied by weight
+- Example: ship + harbor → both boosted by 1.25×
+
+**Penalty Logic (weight < 1.0):**
+- Objects must significantly overlap (IoU > 50% of smaller box)
+- Lower confidence object penalized
+- Example: plane + harbor overlap → harbor (lower conf) × 0.2
+
+### 3. Save Results
+
+- Refined predictions saved to `data/results/{job_id}/refined/`
+- Explainability report saved to `data/results/{job_id}/symbolic_reasoning_report.csv`
+
+## Usage Examples
+
+### Basic Usage
+
+```python
+from app.services.symbolic import symbolic_reasoning_service
+from pathlib import Path
+
+# Apply symbolic reasoning to a job
+stats = symbolic_reasoning_service.apply_symbolic_reasoning(
+    job_id="abc-123",
+    rules_file=Path("pipeline/prolog/rules.pl"),
+    storage_service=storage_service
+)
+
+print(f"Processed {stats['total_images']} images")
+print(f"Applied {stats['total_adjustments']} confidence adjustments")
+```
+
+### With Custom Rules
+
+```python
+# Create custom rules file
+custom_rules = Path("custom_rules.pl")
+custom_rules.write_text("""
+% Custom domain rules
+confidence_modifier(car, road, 1.3).
+confidence_modifier(person, car, 1.2).
+confidence_modifier(boat, road, 0.1).
+""")
+
+# Apply with custom rules
+stats = symbolic_reasoning_service.apply_symbolic_reasoning(
+    job_id="abc-123",
+    rules_file=custom_rules
+)
+```
+
+### Integration with Inference Pipeline
+
+The service integrates automatically with the inference pipeline:
+
+```python
+from app.services.inference import inference_service
+from app.services.storage import storage_service
+
+# Run inference with symbolic reasoning enabled
+inference_stats = inference_service.run_inference(
+    job_id="abc-123",
+    model_path="/path/to/model.pt",
+    confidence_threshold=0.25,
+    iou_threshold=0.45,
+    sahi_config={
+        'slice_width': 640,
+        'slice_height': 640,
+        'overlap_ratio': 0.2,
+    },
+    storage_service=storage_service,
+    symbolic_config={
+        'enabled': True,  # Enable symbolic reasoning
+        'rules_file': 'pipeline/prolog/rules.pl'
+    }
+)
+
+# Check symbolic reasoning stats
+symbolic_stats = inference_stats.get('symbolic_reasoning', {})
+print(f"Adjustments: {symbolic_stats.get('total_adjustments', 0)}")
+```
+
+### Via REST API
+
+Enable symbolic reasoning in prediction request:
+
+```python
+import requests
+
+response = requests.post("http://localhost:8000/api/v1/predict", json={
+    "job_id": "abc-123",
+    "config": {
+        "model_path": "/path/to/model.pt",
+        "confidence_threshold": 0.25,
+        "iou_threshold": 0.45,
+        "sahi": {
+            "enabled": True,
+            "slice_width": 640,
+            "slice_height": 640,
+            "overlap_ratio": 0.2
+        },
+        "symbolic_reasoning": {
+            "enabled": True,  # Enable symbolic reasoning
+            "rules_file": "pipeline/prolog/rules.pl"  # Optional
+        }
+    }
+})
+```
+
+## Configuration
+
+### Default Configuration
+
+```python
+symbolic_config = {
+    'enabled': True,                        # Enable/disable stage
+    'rules_file': 'pipeline/prolog/rules.pl'  # Path to Prolog rules
+}
+```
+
+### Custom Class Mapping
+
+```python
+custom_class_map = {
+    0: "car",
+    1: "person",
+    2: "bike",
+    3: "truck"
+}
+
+stats = symbolic_reasoning_service.apply_symbolic_reasoning(
+    job_id="abc-123",
+    class_map=custom_class_map
+)
+```
+
+## Explainability Report
+
+The service generates a CSV report documenting all confidence adjustments:
+
+```csv
+image_name,action,rule_pair,object_1,conf_1_before,conf_1_after,object_2,conf_2_before,conf_2_after,suppressed_object,kept_object,kept_object_conf
+image001.png,BOOST,ship<->harbor,ship,0.70,0.88,harbor,0.60,0.75,,,
+image002.png,PENALTY,plane<->harbor,plane,0.90,0.90,harbor,0.30,0.06,harbor,plane,0.90
+```
+
+**Report Fields:**
+- `image_name`: Image file name
+- `action`: BOOST or PENALTY
+- `rule_pair`: Classes involved in the rule
+- `object_1`, `object_2`: Class names
+- `conf_*_before`, `conf_*_after`: Confidence values before/after adjustment
+- `suppressed_object`, `kept_object`: For penalties, which object was penalized
+
+## Prolog Rules Format
+
+### Rule Structure
+
+```prolog
+% confidence_modifier(ClassA, ClassB, Weight).
+confidence_modifier(ship, harbor, 1.25).  % Boost: weight > 1.0
+confidence_modifier(plane, harbor, 0.2).   % Penalty: weight < 1.0
+```
+
+### Rule Types
+
+**1. Fixed Rules:**
+```prolog
+confidence_modifier(ship, harbor, 1.25).
+confidence_modifier(large_vehicle, small_vehicle, 1.15).
+```
+
+**2. Category-Based Rules:**
+```prolog
+% Define categories
+vehicle(plane).
+vehicle(ship).
+infrastructure(harbor).
+
+% Apply to all in category
+confidence_modifier(V, Infra, 0.5) :-
+    vehicle(V),
+    infrastructure(Infra).
+```
+
+### Default Rules (DOTA Dataset)
+
+The service includes default rules for the DOTA aerial object detection dataset:
+
+**Positive Co-occurrences (Boost):**
+- ship + harbor (1.25×)
+- helicopter + ship (1.20×)
+- large_vehicle + small_vehicle (1.15×)
+- sports facilities together (1.10×)
+
+**Implausible Combinations (Penalty):**
+- ship + bridge (0.1×)
+- ship + roundabout (0.1×)
+- plane + harbor (0.2×)
+- plane + bridge (0.2×)
+- vehicles + sports facilities (0.5×)
+
+## API Reference
+
+### SymbolicReasoningService Class
+
+#### Main Method
+
+**`apply_symbolic_reasoning(job_id: str, rules_file: Optional[Path] = None, class_map: Optional[Dict[int, str]] = None, storage_service: Any = None) -> Dict[str, Any]`**
+
+Apply Prolog-based symbolic reasoning to NMS-filtered predictions.
+
+**Parameters:**
+- `job_id`: Job identifier
+- `rules_file`: Path to Prolog rules file (default: `pipeline/prolog/rules.pl`)
+- `class_map`: Class ID to name mapping (default: DOTA classes)
+- `storage_service`: Storage service for job updates
+
+**Returns:**
+Dictionary with statistics:
+```python
+{
+    'total_images': 10,
+    'refined_images': 10,
+    'total_adjustments': 25,
+    'modifier_rules_loaded': 12,
+    'elapsed_time_seconds': 0.45
+}
+```
+
+**Raises:**
+- `SymbolicReasoningError`: If processing fails
+
+#### Internal Methods
+
+**`_load_prolog_engine(rules_file: Path) -> Any`**
+- Loads Prolog engine and consults rules file
+- Returns initialized Prolog engine
+
+**`_load_modifier_map(prolog_engine: Any) -> Dict[Tuple[str, str], float]`**
+- Extracts modifier rules from Prolog
+- Returns mapping of (class_a, class_b) to weight
+
+**`_parse_predictions(predictions_dir: Path) -> Dict[str, List[Dict]]`**
+- Loads YOLO-format predictions from directory
+- Returns mapping of image names to predictions
+
+**`_apply_modifiers(objects: List[Dict], modifier_map: Dict, class_map: Dict) -> Tuple[List[Dict], List[Dict]]`**
+- Applies confidence modifiers to objects
+- Returns (modified_objects, explainability_log)
+
+**`_save_predictions(predictions: Dict, output_dir: Path) -> None`**
+- Saves refined predictions in YOLO format
+
+**`_save_explainability_report(report: List[Dict], report_file: Path) -> None`**
+- Saves CSV report of confidence adjustments
+
+## Error Handling
+
+The service handles errors gracefully:
+
+### Prolog Not Available
+
+```python
+# Service logs warning and skips processing
+stats = symbolic_reasoning_service.apply_symbolic_reasoning(job_id="abc-123")
+# Returns: {'skipped': True, 'reason': 'PySwip not installed'}
+```
+
+### Missing Rules File
+
+```python
+stats = symbolic_reasoning_service.apply_symbolic_reasoning(
+    job_id="abc-123",
+    rules_file=Path("/nonexistent/rules.pl")
+)
+# Returns: {'skipped': True, 'reason': 'Rules file not found'}
+```
+
+### No Modifier Rules
+
+```python
+# Rules file exists but has no confidence_modifier facts
+stats = symbolic_reasoning_service.apply_symbolic_reasoning(job_id="abc-123")
+# Returns: {'skipped': True, 'reason': 'No modifier rules found'}
+```
+
+### Integration with Pipeline
+
+```python
+# Symbolic reasoning errors don't fail the entire inference job
+inference_stats = inference_service.run_inference(...)
+symbolic_stats = inference_stats.get('symbolic_reasoning', {})
+
+if symbolic_stats.get('skipped'):
+    print(f"Symbolic reasoning skipped: {symbolic_stats['reason']}")
+else:
+    print(f"Applied {symbolic_stats['total_adjustments']} adjustments")
+```
+
+## Testing
+
+Run the test suite:
+
+```bash
+# Run all symbolic reasoning tests
+pytest tests/backend/test_symbolic_service.py -v
+
+# Run specific test
+pytest tests/backend/test_symbolic_service.py::TestSymbolicReasoningService::test_apply_modifiers_boost -v
+
+# Skip tests requiring real Prolog
+pytest tests/backend/test_symbolic_service.py -v -k "not real_prolog"
+```
+
+## Dependencies
+
+### Required
+- **PySwip** (>=0.2.10): Python-SWI-Prolog bridge
+- **SWI-Prolog**: System installation of Prolog
+
+### Installation
+
+```bash
+# Install PySwip
+pip install pyswip>=0.2.10
+
+# Install SWI-Prolog (Ubuntu/Debian)
+sudo apt-get install swi-prolog
+
+# Install SWI-Prolog (macOS)
+brew install swi-prolog
+
+# Install SWI-Prolog (Windows)
+# Download installer from https://www.swi-prolog.org/download/stable
+```
+
+## Performance Considerations
+
+- **Prolog Engine Loading:** One-time cost per service instance
+- **Rule Query:** O(n) where n = number of rules
+- **Pairwise Comparison:** O(m²) where m = objects per image
+- **Typical Performance:** ~0.5 seconds for 10 images with 5-10 objects each
+
+### Optimization Tips
+
+1. **Cache Prolog Engine:** Service caches engine instance
+2. **Filter Predictions First:** Apply NMS before symbolic reasoning
+3. **Limit Rule Complexity:** Keep Prolog rules simple for fast queries
+4. **Batch Processing:** Process multiple images in single call
+
+## Notes
+
+- Symbolic reasoning is **optional** and can be disabled without affecting other pipeline stages
+- The service is consistent with the existing `pipeline/core/symbolic.py` implementation
+- Default rules are tailored for aerial object detection (DOTA dataset)
+- Custom rules can be created for any domain
+- Explainability reports provide transparency into confidence adjustments
+- Service handles Prolog unavailability gracefully with informative logging
+
