@@ -4,7 +4,9 @@ This service provides Prolog-based symbolic reasoning to refine
 object detection predictions using domain knowledge rules.
 """
 
+import csv
 import logging
+import math
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -190,7 +192,6 @@ class SymbolicReasoningService:
         center_a = self._get_bbox_center(bbox_a)
         center_b = self._get_bbox_center(bbox_b)
         
-        import math
         return math.hypot(center_a[0] - center_b[0], center_a[1] - center_b[1])
     
     def _get_bbox_diagonal(self, bbox: List[float]) -> float:
@@ -203,7 +204,6 @@ class SymbolicReasoningService:
             Diagonal length
         """
         x_min, y_min, x_max, y_max = bbox
-        import math
         return math.hypot(x_max - x_min, y_max - y_min)
     
     def _get_bbox_area(self, bbox: List[float]) -> float:
@@ -338,10 +338,16 @@ class SymbolicReasoningService:
                             "object_2": class_b,
                             "conf_2_before": f"{original_conf_b:.2f}",
                             "conf_2_after": f"{obj_b['confidence']:.2f}",
-                            "suppressed_object": class_map[suppressed_obj["category_id"]],
+                            "suppressed_object": class_map.get(
+                                suppressed_obj["category_id"],
+                                f"class_{suppressed_obj['category_id']}",
+                            ),
                             "conf_before": f"{original_suppressed_conf:.2f}",
                             "conf_after": f"{suppressed_obj['confidence']:.2f}",
-                            "kept_object": class_map[kept_obj["category_id"]],
+                            "kept_object": class_map.get(
+                                kept_obj["category_id"],
+                                f"class_{kept_obj['category_id']}",
+                            ),
                             "kept_object_conf": f"{kept_obj['confidence']:.2f}",
                         }
                 
@@ -395,8 +401,6 @@ class SymbolicReasoningService:
         if not report:
             logger.info("No symbolic reasoning actions logged, skipping report")
             return
-        
-        import csv
         
         report_file.parent.mkdir(parents=True, exist_ok=True)
         

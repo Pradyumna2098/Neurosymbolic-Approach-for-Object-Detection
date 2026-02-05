@@ -6,7 +6,7 @@ adjustment, including rule loading, modifier application, and file I/O.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -455,15 +455,15 @@ vehicle(helicopter).
 
 % Infrastructure
 infrastructure(harbor).
-infrastructure(Bridge).
+infrastructure(bridge).
 
 % Confidence modifiers
 confidence_modifier(ship, harbor, 1.25).
 confidence_modifier(harbor, ship, 1.25).
 confidence_modifier(plane, harbor, 0.2).
 confidence_modifier(harbor, plane, 0.2).
-confidence_modifier(ship, Bridge, 0.1).
-confidence_modifier(Bridge, ship, 0.1).
+confidence_modifier(ship, bridge, 0.1).
+confidence_modifier(bridge, ship, 0.1).
 """
         rules_file.write_text(rules_content)
         return rules_file

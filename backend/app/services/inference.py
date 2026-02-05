@@ -399,7 +399,6 @@ class InferenceService:
                 logger.info(f"[Job {job_id}] Applying symbolic reasoning")
                 try:
                     from app.services.symbolic import symbolic_reasoning_service
-                    from pathlib import Path
                     
                     # Get rules file from config or use default
                     rules_file = symbolic_config.get('rules_file')
