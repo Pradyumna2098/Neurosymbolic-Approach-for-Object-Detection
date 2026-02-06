@@ -61,3 +61,13 @@ data/visualizations/*
 !data/results/.gitkeep
 !data/visualizations/.gitkeep
 
+# Frontend (Electron + React + TypeScript)
+frontend/node_modules/
+frontend/.webpack/
+frontend/out/
+frontend/dist/
+frontend/.cache/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
