@@ -14,6 +14,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import MenuIcon from '@mui/icons-material/Menu';
+import { Panel, Group, Separator } from 'react-resizable-panels';
 import { getDarkTheme, getLightTheme } from '../theme/theme';
 import UploadPanel from './UploadPanel';
 import ConfigPanel from './ConfigPanel';
@@ -23,7 +24,7 @@ import MonitoringPanel from './MonitoringPanel';
 /**
  * AppShell - Main application layout with theme provider
  * Implements four-panel layout: Upload, Config, Results, Monitoring
- * Includes menu bar and theme toggle
+ * Includes menu bar, theme toggle, and resizable panels
  */
 const AppShell: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = React.useState(true);
@@ -168,41 +169,73 @@ const AppShell: React.FC = () => {
           </Toolbar>
         </AppBar>
 
-        {/* Main Content Area */}
-        <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          {/* Left Panel Container */}
-          <Box
-            sx={{
-              width: 350,
-              minWidth: 300,
-              maxWidth: 500,
-              display: 'flex',
-              flexDirection: 'column',
-              borderRight: 1,
-              borderColor: 'divider',
-            }}
-          >
-            {/* Upload Panel (Top) */}
-            <Box sx={{ height: '50%', minHeight: 200, p: 1 }}>
-              <UploadPanel />
-            </Box>
+        {/* Main Content Area with Resizable Panels */}
+        <Box sx={{ flex: 1, overflow: 'hidden' }}>
+          <Group orientation="vertical">
+            {/* Top Section: Left panels and Results */}
+            <Panel defaultSize={75} minSize={30}>
+              <Group orientation="horizontal">
+                {/* Left Panel Container */}
+                <Panel defaultSize={25} minSize={15} maxSize={40}>
+                  <Group orientation="vertical">
+                    {/* Upload Panel (Top) */}
+                    <Panel defaultSize={50} minSize={20}>
+                      <Box sx={{ height: '100%', p: 1 }}>
+                        <UploadPanel />
+                      </Box>
+                    </Panel>
 
-            {/* Config Panel (Bottom) */}
-            <Box sx={{ height: '50%', minHeight: 200, p: 1 }}>
-              <ConfigPanel />
-            </Box>
-          </Box>
+                    {/* Resize Handle */}
+                    <Separator
+                      style={{
+                        height: '4px',
+                        background: theme.palette.divider,
+                        cursor: 'row-resize',
+                      }}
+                    />
 
-          {/* Right Panel Container (Results) */}
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <Box sx={{ flex: 1, p: 1 }}>
-              <ResultsPanel />
-            </Box>
-          </Box>
+                    {/* Config Panel (Bottom) */}
+                    <Panel defaultSize={50} minSize={20}>
+                      <Box sx={{ height: '100%', p: 1 }}>
+                        <ConfigPanel />
+                      </Box>
+                    </Panel>
+                  </Group>
+                </Panel>
+
+                {/* Vertical Resize Handle */}
+                <Separator
+                  style={{
+                    width: '4px',
+                    background: theme.palette.divider,
+                    cursor: 'col-resize',
+                  }}
+                />
+
+                {/* Right Panel Container (Results) */}
+                <Panel defaultSize={75} minSize={40}>
+                  <Box sx={{ height: '100%', p: 1 }}>
+                    <ResultsPanel />
+                  </Box>
+                </Panel>
+              </Group>
+            </Panel>
+
+            {/* Horizontal Resize Handle */}
+            <Separator
+              style={{
+                height: '4px',
+                background: theme.palette.divider,
+                cursor: 'row-resize',
+              }}
+            />
+
+            {/* Bottom Monitoring Panel */}
+            <Panel defaultSize={25} minSize={10} maxSize={50}>
+              <MonitoringPanel />
+            </Panel>
+          </Group>
         </Box>
-
-        {/* Bottom Monitoring Panel */}
-        <MonitoringPanel />
       </Box>
     </ThemeProvider>
   );
