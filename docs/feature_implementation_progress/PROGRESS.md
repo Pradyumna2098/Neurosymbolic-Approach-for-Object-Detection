@@ -1,18 +1,18 @@
 # Feature Implementation Progress Tracking
 
-**Last Updated:** 2026-02-06 21:31:00 UTC
+**Last Updated:** 2026-02-06 22:05:00 UTC
 
 ---
 
 ## Overall Progress Summary
 
-**Total Issues:** 14  
-**Completed:** 14  
+**Total Issues:** 15  
+**Completed:** 15  
 **In Progress:** 0  
 **Not Started:** 0  
 **Blocked:** 0  
 
-**Overall Completion:** 100% (14/14 issues completed)
+**Overall Completion:** 100% (15/15 issues completed)
 
 ---
 
@@ -63,6 +63,7 @@
 |---------|-------|--------|----------------|-------|
 | 13 | Initialize Electron + React + TypeScript Project | Complete | 2026-02-06 | Electron + React setup with TypeScript |
 | 14 | Set Up Redux Toolkit State Management | Complete | 2026-02-06 | Redux store with 4 slices, typed hooks, DevTools integration |
+| 15 | Implement Application Shell and Layout | Complete | 2026-02-06 | Material-UI four-panel layout with theme support, resizable panels, menu bar |
 
 ### Phase 5: Integration & Testing (Medium Priority)
 
@@ -1159,3 +1160,156 @@ This document serves as the single source of truth for feature implementation pr
 - All slices follow Redux Toolkit best practices
 - Comprehensive type safety throughout the store
 - Ready for component integration in subsequent issues
+
+---
+
+### Issue #15: Implement Application Shell and Layout
+
+**Priority:** 🔴 Critical  
+**Estimated Effort:** Medium  
+**Phase:** Frontend Foundation  
+**Status:** Complete  
+**Started:** 2026-02-06  
+**Completed:** 2026-02-06
+
+**Acceptance Criteria:**
+- [x] Window launches at 1400×900 minimum
+- [x] Four-panel layout implemented (Upload, Config, Results, Monitoring)
+- [x] Panels resizable
+- [x] Dark/light theme support
+
+**Implementation Details:**
+
+**Dependencies Installed:**
+- @mui/material@^7.3.7 - Material-UI core components
+- @emotion/react@^11.14.0 - CSS-in-JS styling engine
+- @emotion/styled@^11.14.1 - Styled components API
+- @mui/icons-material@^7.3.7 - Material Design icons
+- react-resizable-panels@^4.6.2 - Resizable panel layouts
+
+**Files Created:**
+- `frontend/src/renderer/theme/theme.ts` - Theme configuration with dark/light modes
+  - Dark theme with colors per visual_design_guidelines.md
+  - Light theme with appropriate contrast adjustments
+  - Typography configuration (Roboto font family)
+  - Component overrides for consistent styling
+  - 8-point spacing scale
+  - Border radius and transition settings
+- `frontend/src/renderer/components/AppShell.tsx` - Main application shell
+  - ThemeProvider wrapper with dark/light toggle
+  - Menu bar with File, Edit, View, Tools, Help menus
+  - Resizable panel layout using react-resizable-panels
+  - Four-panel structure: Upload, Config, Results, Monitoring
+  - Theme toggle button in toolbar
+- `frontend/src/renderer/components/UploadPanel.tsx` - Upload panel placeholder
+  - Material-UI Paper component
+  - CloudUpload icon
+  - Placeholder content for future file upload functionality
+- `frontend/src/renderer/components/ConfigPanel.tsx` - Configuration panel placeholder
+  - Material-UI Paper component
+  - Settings icon
+  - Placeholder for YOLO/SAHI parameter controls
+- `frontend/src/renderer/components/ResultsPanel.tsx` - Results panel placeholder
+  - Material-UI Paper component with tabs
+  - Four tabs: Input, Labels, Output, Compare
+  - Image icon placeholder
+  - Main content area for visualization
+- `frontend/src/renderer/components/MonitoringPanel.tsx` - Monitoring panel
+  - Collapsible panel with expand/collapse toggle
+  - Visibility icon
+  - Placeholder for Prometheus metrics and logs
+  - Default height with min/max constraints
+
+**Files Modified:**
+- `frontend/src/main/main.ts` - Updated window dimensions
+  - Changed from 1200×800 to 1400×900
+  - Set minimum window size to 1400×900
+- `frontend/src/renderer/App.tsx` - Simplified to render AppShell
+  - Removed demo UI
+  - Now renders AppShell component directly
+- `frontend/src/renderer/index.css` - Updated for proper layout
+  - Added height: 100% to html, body, #root
+  - Added overflow: hidden for full viewport usage
+  - Updated font-family to use Roboto
+- `frontend/package.json` - Added Material-UI dependencies
+
+**Layout Structure:**
+```
+┌─────────────────────────────────────────────────────────┐
+│  Menu Bar (File | Edit | View | Tools | Help) [Theme]  │
+├──────────────┬──────────────────────────────────────────┤
+│              │                                          │
+│   Upload     │         Results Viewer                   │
+│   Panel      │         [Input|Labels|Output|Compare]    │
+│              │                                          │
+│  (resizable) │  (main content area - resizable)         │
+├──────────────┤                                          │
+│              │                                          │
+│ Config       │                                          │
+│ Panel        │                                          │
+│              │                                          │
+│ (resizable)  │                                          │
+├──────────────┴──────────────────────────────────────────┤
+│  Monitoring Dashboard (collapsible, resizable)          │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Resizable Panel Configuration:**
+- Vertical split between top section and monitoring panel
+- Horizontal split between left panels and results panel
+- Vertical split between upload and config panels
+- Default sizes: 25% left panels, 75% results, 25% monitoring
+- Minimum sizes enforced to prevent panels from becoming too small
+- Drag handles styled with theme colors and appropriate cursors
+
+**Theme Features:**
+- Dark theme (default):
+  - Background: #121212 (primary), #1E1E1E (paper)
+  - Primary accent: #2196F3 (blue)
+  - Secondary accent: #FF9800 (orange)
+  - Success: #4CAF50, Error: #F44336, Warning: #FF9800
+- Light theme:
+  - Background: #FFFFFF (primary), #F5F5F5 (paper)
+  - Primary accent: #1976D2 (blue)
+  - Adjusted text colors for proper contrast
+- Theme toggle button in app bar
+- Smooth transitions between themes
+- Follows Material Design principles
+
+**Menu Bar Features:**
+- File menu: Open, Save, Exit
+- Edit menu: Cut, Copy, Paste
+- View menu: Zoom In, Zoom Out, Reset Zoom
+- Tools menu: Options, Settings
+- Help menu: Documentation, About
+- All menus functional with Material-UI Menu components
+- Menu items placeholder - ready for actual functionality
+
+**Validation:**
+- ✅ TypeScript type checking passes (tsc --noEmit)
+- ✅ ESLint passes with zero errors
+- ✅ Package build successful (electron-forge package)
+- ✅ All panels visible and properly sized
+- ✅ Resize handles functional
+- ✅ Theme toggle works correctly
+- ✅ Window dimensions meet requirements (1400×900 minimum)
+- ✅ Follows visual_design_guidelines.md specifications
+
+**Technical Notes:**
+- react-resizable-panels uses Group, Panel, and Separator components
+- Panels configured with defaultSize, minSize, maxSize percentages
+- orientation prop used for vertical/horizontal layouts
+- Material-UI theme accessed for consistent divider colors
+- All components fully typed with TypeScript
+- No runtime errors or console warnings
+- Ready for integration with actual functionality in subsequent issues
+
+**Dependencies:**
+- Issue #13 (Initialize Electron + React + TypeScript Project) - Completed
+- Issue #14 (Set Up Redux Toolkit State Management) - Completed
+
+**Next Steps:**
+- Implement Upload Panel functionality (Issue #16)
+- Implement Configuration Panel controls (Issue #17)
+- Implement Results Visualization (Issue #18)
+- Integrate Prometheus Monitoring Dashboard (Issue #19)
