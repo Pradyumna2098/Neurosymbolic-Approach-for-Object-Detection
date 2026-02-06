@@ -43,6 +43,7 @@ Manages file upload state.
 - `setUploading(boolean)` - Set uploading state
 - `setUploadProgress(number)` - Update upload progress
 - `setUploadError(message)` - Set upload error
+- `clearUploadError()` - Clear the current upload error
 
 ### Config Slice (`configSlice`)
 Manages detection configuration parameters.

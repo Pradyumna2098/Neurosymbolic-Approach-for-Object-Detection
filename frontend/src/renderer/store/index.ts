@@ -20,6 +20,7 @@ export const store = configureStore({
           'detection/startDetection',
           'detection/completeDetection',
           'detection/setDetectionError',
+          'results/setResults',
         ],
         // Ignore these field paths in all actions
         ignoredActionPaths: ['payload.uploadedAt', 'payload.timestamp'],

@@ -17,8 +17,8 @@ Successfully implemented Redux Toolkit state management for the Neurosymbolic Ob
 ### 1. Dependencies Installed
 ```json
 {
-  "@reduxjs/toolkit": "^2.0.0",
-  "react-redux": "^9.0.0"
+  "@reduxjs/toolkit": "^2.11.2",
+  "react-redux": "^9.2.0"
 }
 ```
 

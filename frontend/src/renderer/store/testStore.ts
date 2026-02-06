@@ -3,10 +3,11 @@
  * This can be run in the browser console or as a Node script
  */
 
+/* eslint-disable no-console */
+
 import { store } from './index';
 import {
   addFiles,
-  removeFile,
   clearFiles,
 } from './slices/uploadSlice';
 import { updateConfig } from './slices/configSlice';
