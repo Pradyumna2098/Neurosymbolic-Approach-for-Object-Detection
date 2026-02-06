@@ -1,5 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { Provider } from 'react-redux';
+import { store } from './store';
 import App from './App';
 import './index.css';
 
@@ -11,9 +13,11 @@ if (!container) {
 const root = createRoot(container);
 root.render(
   <React.StrictMode>
-    <App />
+    <Provider store={store}>
+      <App />
+    </Provider>
   </React.StrictMode>
 );
 
 // Log to confirm renderer process is running
-console.log('👋 React renderer is running with TypeScript!');
+console.log('👋 React renderer is running with TypeScript and Redux!');
