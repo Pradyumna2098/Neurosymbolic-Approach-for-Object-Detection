@@ -54,6 +54,38 @@ ipcMain.handle('dialog:openFile', async () => {
   return null;
 });
 
+ipcMain.handle('dialog:openModelFile', async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openFile'],
+    filters: [
+      { name: 'YOLO Models', extensions: ['pt', 'pth'] },
+      { name: 'All Files', extensions: ['*'] },
+    ],
+    title: 'Select YOLO Model File',
+  });
+
+  if (!result.canceled && result.filePaths.length > 0) {
+    return result.filePaths[0];
+  }
+  return null;
+});
+
+ipcMain.handle('dialog:openPrologFile', async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openFile'],
+    filters: [
+      { name: 'Prolog Files', extensions: ['pl', 'pro'] },
+      { name: 'All Files', extensions: ['*'] },
+    ],
+    title: 'Select Prolog Rules File',
+  });
+
+  if (!result.canceled && result.filePaths.length > 0) {
+    return result.filePaths[0];
+  }
+  return null;
+});
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.

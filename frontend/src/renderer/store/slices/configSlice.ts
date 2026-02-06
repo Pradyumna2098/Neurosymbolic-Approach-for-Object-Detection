@@ -19,7 +19,9 @@ const defaultConfig: DetectionConfig = {
   overlapHeight: 0.2,
   overlapWidth: 0.2,
   device: 'cuda',
+  batchSize: 8,
   enableProlog: false,
+  prologRulesPath: '',
   enableNMS: true,
 };
 

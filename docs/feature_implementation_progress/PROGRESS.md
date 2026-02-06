@@ -1403,3 +1403,165 @@ This document serves as the single source of truth for feature implementation pr
 - Implement Results Visualization (Issue #18)
 - Connect Upload Panel to backend API endpoints (later phase)
 - Add folder selection functionality (optional enhancement)
+
+---
+
+### Issue #17: Implement Configuration Panel Component
+
+**Priority:** 🔴 Critical  
+**Estimated Effort:** Medium  
+**Phase:** Frontend Components  
+**Status:** ✅ Complete  
+**Started:** 2026-02-06  
+**Completed:** 2026-02-06
+
+**Acceptance Criteria:**
+- [x] Model file selection
+- [x] Confidence/IoU sliders
+- [x] SAHI parameters
+- [x] Preset save/load
+- [x] Run Detection button
+
+**Implementation Details:**
+
+**Electron IPC Handlers:**
+- Extended `frontend/src/main/main.ts` with new IPC handlers:
+  * `dialog:openModelFile` - Opens file dialog for YOLO model selection (.pt, .pth files)
+  * `dialog:openPrologFile` - Opens file dialog for Prolog rules selection (.pl, .pro files)
+  * Both handlers use Electron's dialog API with appropriate file filters
+- Updated `frontend/src/preload/preload.ts`:
+  * Added `openModelFile()` and `openPrologFile()` methods to ElectronAPI
+  * Updated TypeScript interface definitions for type safety
+  * Maintained secure IPC communication through contextBridge
+
+**Type Definitions:**
+- Enhanced `frontend/src/renderer/types/index.ts`:
+  * Added `batchSize?: number` to DetectionConfig (optional, 1-32)
+  * Added `prologRulesPath?: string` to DetectionConfig (optional)
+  * Maintained backward compatibility with existing code
+
+**Redux State Updates:**
+- Updated `frontend/src/renderer/store/slices/configSlice.ts`:
+  * Added `batchSize: 8` to default config
+  * Added `prologRulesPath: ''` to default config
+  * All preset management actions already support new fields (via Object.assign)
+
+**ConfigPanel Component Implementation:**
+- Completely reimplemented `frontend/src/renderer/components/ConfigPanel.tsx`:
+  * **Model Selection Section:**
+    - File browser button with folder icon
+    - Displays selected model filename
+    - Calls `window.electronAPI.openModelFile()` via IPC
+  * **YOLO Parameters Section:**
+    - Confidence threshold slider (0.01-1.0, step 0.01)
+    - IoU threshold slider (0.01-1.0, step 0.01)
+    - Real-time value display with 2 decimal places
+    - Material-UI Slider components with auto value labels
+  * **SAHI Parameters Section:**
+    - Slice Height text field (256-2048 pixels)
+    - Slice Width text field (256-2048 pixels)
+    - Overlap Height slider (0.0-0.5, step 0.05)
+    - Overlap Width slider (0.0-0.5, step 0.05)
+    - Input adornments showing "px" units
+  * **Advanced Options (Collapsible Accordion):**
+    - Device dropdown (CUDA/CPU selection)
+    - Batch Size number field (1-32)
+    - Enable NMS toggle switch
+    - Enable Symbolic Reasoning toggle switch
+    - Conditional Prolog Rules file browser (only shown when Prolog enabled)
+  * **Preset Management:**
+    - "Save Preset" button in footer
+    - "Load Preset" button (bookmark icon) in header
+    - Save dialog with text input for preset name
+    - Load dialog showing list of saved presets
+    - Each preset shows confidence/IoU values as secondary text
+    - Delete button for each preset with confirmation
+    - Current preset indicator
+  * **Run Detection Button:**
+    - Prominent button in footer with play icon
+    - Disabled when: no files uploaded, no model selected, or job running
+    - Dispatches `startDetection()` action to Redux
+    - Validation alerts for missing requirements
+  
+**Redux Integration:**
+- Connected all controls to Redux configSlice actions:
+  * `updateConfig()` - Updates configuration values on change
+  * `savePreset()` - Saves current config with user-provided name
+  * `loadPreset()` - Loads saved preset by name
+  * `deletePreset()` - Removes preset from state
+- Integrated with detectionSlice:
+  * `startDetection()` - Triggers detection workflow
+  * Monitors `jobStatus` to disable Run button during execution
+- Reads from uploadSlice:
+  * Checks `files.length` to validate images are uploaded
+  * Shows alert if Run Detection clicked without images
+
+**UI/UX Features:**
+- Scrollable content area with fixed header/footer
+- All controls properly styled with Material-UI theme
+- Tooltips for icon buttons
+- Dividers separating sections for visual clarity
+- Icons for all actions (folder, play, save, delete, bookmark)
+- Responsive layout fitting in resizable left panel
+- Typography hierarchy (subtitle2 bold for sections, body2 for controls)
+- Proper spacing (padding, margins, gaps)
+- Dialog components for preset management
+- Input validation for numeric fields
+- Keyboard support (Enter to save preset)
+
+**TypeScript Type Safety:**
+- All event handlers properly typed
+- Redux state access with type annotations
+- Proper typing for Material-UI component props
+- No implicit 'any' types remaining
+- Type-safe IPC communication via ElectronAPI interface
+
+**Validation & Error Handling:**
+- Run Detection validates:
+  * At least one image uploaded
+  * Model file selected
+  * Not already running detection
+- Numeric input fields enforce min/max/step constraints
+- Preset name required before saving
+- Delete confirmation prevents accidental deletion
+- File path parsing handles Windows/Unix path separators
+
+**Visual Design:**
+- Matches specifications from `docs/feature_implementation/frontend_ui_design.md`
+- Consistent with Upload Panel styling
+- Material-UI Paper component for container
+- Icons from @mui/icons-material
+- Theme-aware colors (dark/light mode support)
+- Proper contrast and readability
+
+**Files Modified:**
+- `frontend/src/main/main.ts` - Added 2 new IPC handlers
+- `frontend/src/preload/preload.ts` - Extended ElectronAPI interface
+- `frontend/src/renderer/types/index.ts` - Enhanced DetectionConfig
+- `frontend/src/renderer/store/slices/configSlice.ts` - Updated defaults
+- `frontend/src/renderer/components/ConfigPanel.tsx` - Full implementation (524 lines)
+
+**Technical Highlights:**
+- Properly handles async IPC communication with await
+- Uses React hooks (useState, useCallback via redux hooks)
+- Efficient re-renders via Redux selectors
+- Material-UI controlled components pattern
+- Accordion for advanced options reduces visual clutter
+- Dialog modals for better UX in preset management
+- Conditional rendering (Prolog file selector)
+- Helper functions for display formatting (getModelFileName)
+- Proper event propagation (stopPropagation for delete buttons)
+
+**Dependencies:**
+- Issue #13 (Initialize Electron + React + TypeScript Project) - Completed
+- Issue #14 (Set Up Redux Toolkit State Management) - Completed
+- Issue #15 (Implement Application Shell and Layout) - Completed
+- Issue #16 (Implement Upload Panel Component) - Completed
+
+**Next Steps:**
+- Implement Results Visualization (Issue #18)
+- Integrate Prometheus Monitoring Dashboard (Issue #19)
+- Connect Configuration Panel to backend API for actual detection execution
+- Add model info display (mAP, training date) when available from backend
+- Add preset import/export functionality (optional enhancement)
+- Add parameter tooltips with descriptions (optional enhancement)

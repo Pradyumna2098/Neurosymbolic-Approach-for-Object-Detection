@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // File system operations
   openFile: () => ipcRenderer.invoke('dialog:openFile'),
+  openModelFile: () => ipcRenderer.invoke('dialog:openModelFile'),
+  openPrologFile: () => ipcRenderer.invoke('dialog:openPrologFile'),
 
   // Event listeners with unsubscribe capability
   onUpdateAvailable: (callback: () => void) => {
@@ -31,6 +33,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 export interface ElectronAPI {
   ping: () => Promise<string>;
   openFile: () => Promise<string | null>;
+  openModelFile: () => Promise<string | null>;
+  openPrologFile: () => Promise<string | null>;
   onUpdateAvailable: (callback: () => void) => () => void;
   removeAllListeners: (channel: string) => void;
 }
