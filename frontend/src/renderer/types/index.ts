@@ -29,7 +29,9 @@ export interface DetectionConfig {
   
   // Advanced options
   device: 'cuda' | 'cpu';
+  batchSize?: number;
   enableProlog: boolean;
+  prologRulesPath?: string;
   enableNMS: boolean;
 }
 
