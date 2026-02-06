@@ -229,6 +229,7 @@ class InferenceService:
         sahi_config: Dict[str, Any],
         storage_service: Any,
         symbolic_config: Optional[Dict[str, Any]] = None,
+        visualization_config: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Run SAHI sliced inference on all images in job.
         
@@ -240,6 +241,7 @@ class InferenceService:
             sahi_config: SAHI configuration dict with slice_width, slice_height, overlap_ratio
             storage_service: Storage service instance for file operations
             symbolic_config: Optional symbolic reasoning configuration
+            visualization_config: Optional visualization configuration
             
         Returns:
             Dictionary with inference results and statistics
@@ -433,6 +435,65 @@ class InferenceService:
             else:
                 logger.info(f"[Job {job_id}] Symbolic reasoning disabled")
                 inference_stats["symbolic_reasoning"] = {
+                    "skipped": True,
+                    "reason": "Disabled in configuration"
+                }
+            
+            # Generate visualizations if enabled
+            if visualization_config and visualization_config.get('enabled', True):
+                logger.info(f"[Job {job_id}] Generating visualizations")
+                try:
+                    # Update progress
+                    storage_service.update_job(
+                        job_id,
+                        progress={
+                            "stage": "visualization",
+                            "message": "Generating annotated images",
+                            "percentage": 95
+                        }
+                    )
+                    
+                    from app.services.visualization import visualization_service
+                    
+                    # Determine which stage to visualize
+                    # Priority: refined > nms > raw
+                    viz_stage = "refined"
+                    refined_dir = settings.results_dir / job_id / "refined"
+                    nms_dir = settings.results_dir / job_id / "nms"
+                    raw_dir = settings.results_dir / job_id / "raw"
+                    
+                    if refined_dir.exists() and list(refined_dir.glob("*.txt")):
+                        viz_stage = "refined"
+                    elif nms_dir.exists() and list(nms_dir.glob("*.txt")):
+                        viz_stage = "nms"
+                    else:
+                        viz_stage = "raw"
+                    
+                    # Generate visualizations
+                    viz_stats = visualization_service.visualize_job(
+                        job_id=job_id,
+                        stage=viz_stage,
+                        show_labels=visualization_config.get('show_labels', True),
+                        show_confidence=visualization_config.get('confidence_display', True),
+                        storage_service=storage_service
+                    )
+                    inference_stats["visualization"] = viz_stats
+                    
+                    logger.info(
+                        f"[Job {job_id}] Visualization completed. "
+                        f"Generated {viz_stats['visualized_images']} annotated images"
+                    )
+                except Exception as e:
+                    logger.error(f"[Job {job_id}] Visualization generation failed: {e}", exc_info=True)
+                    # Don't fail the entire job if visualization fails
+                    inference_stats["visualization"] = {
+                        "error": str(e),
+                        "skipped": True,
+                        "reason": "Error during visualization generation"
+                    }
+            else:
+                logger.info(f"[Job {job_id}] Visualization disabled")
+                inference_stats["visualization"] = {
                     "skipped": True,
                     "reason": "Disabled in configuration"
                 }
