@@ -243,7 +243,7 @@ console.log(store.getState());
 
 ## Performance Considerations
 
-- The store is configured with `serializableCheck` disabled for File objects and Date objects
+- The store keeps `serializableCheck` enabled and uses `ignoredActions` and `ignoredPaths` to exclude fields that legitimately contain `File` and `Date` objects
 - Redux DevTools is only enabled in development mode
 - Use `React.memo()` and `useMemo()` in components that read from store frequently
 - Consider creating selector hooks for expensive computations
