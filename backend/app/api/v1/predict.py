@@ -127,6 +127,13 @@ def run_inference(job_id: str, config: InferenceConfig) -> None:
             'rules_file': config.symbolic_reasoning.rules_file,
         }
         
+        # Prepare visualization configuration
+        visualization_config = {
+            'enabled': config.visualization.enabled,
+            'show_labels': config.visualization.show_labels,
+            'confidence_display': config.visualization.confidence_display,
+        }
+        
         # Run inference using the inference service
         inference_stats = inference_service.run_inference(
             job_id=job_id,
@@ -136,6 +143,7 @@ def run_inference(job_id: str, config: InferenceConfig) -> None:
             sahi_config=sahi_config,
             storage_service=storage_service,
             symbolic_config=symbolic_config,
+            visualization_config=visualization_config,
         )
         
         logger.info(
