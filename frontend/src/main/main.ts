@@ -14,10 +14,10 @@ if (require('electron-squirrel-startup')) {
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    height: 800,
-    width: 1200,
-    minHeight: 600,
-    minWidth: 800,
+    height: 900,
+    width: 1400,
+    minHeight: 900,
+    minWidth: 1400,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       contextIsolation: true,
