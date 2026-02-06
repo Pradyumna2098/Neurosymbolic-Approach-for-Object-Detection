@@ -3,15 +3,15 @@
  * This can be run in the browser console or as a Node script
  */
 
-import { store } from './store';
+import { store } from './index';
 import {
   addFiles,
   removeFile,
   clearFiles,
-} from './store/slices/uploadSlice';
-import { updateConfig } from './store/slices/configSlice';
-import { startDetection } from './store/slices/detectionSlice';
-import { setResults } from './store/slices/resultsSlice';
+} from './slices/uploadSlice';
+import { updateConfig } from './slices/configSlice';
+import { startDetection } from './slices/detectionSlice';
+import { setResults } from './slices/resultsSlice';
 
 // Test the store configuration
 console.log('Testing Redux store...');
