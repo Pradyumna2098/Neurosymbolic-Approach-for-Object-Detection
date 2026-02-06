@@ -228,6 +228,7 @@ class InferenceService:
         iou_threshold: float,
         sahi_config: Dict[str, Any],
         storage_service: Any,
+        symbolic_config: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Run SAHI sliced inference on all images in job.
         
@@ -238,6 +239,7 @@ class InferenceService:
             iou_threshold: IoU threshold for NMS
             sahi_config: SAHI configuration dict with slice_width, slice_height, overlap_ratio
             storage_service: Storage service instance for file operations
+            symbolic_config: Optional symbolic reasoning configuration
             
         Returns:
             Dictionary with inference results and statistics
@@ -390,6 +392,49 @@ class InferenceService:
                     "error": str(e),
                     "total_before": 0,
                     "total_after": 0
+                }
+            
+            # Apply symbolic reasoning if enabled
+            if symbolic_config and symbolic_config.get('enabled', False):
+                logger.info(f"[Job {job_id}] Applying symbolic reasoning")
+                try:
+                    from app.services.symbolic import symbolic_reasoning_service
+                    
+                    # Get rules file from config or use default
+                    rules_file = symbolic_config.get('rules_file')
+                    if rules_file:
+                        rules_file = Path(rules_file)
+                    
+                    symbolic_stats = symbolic_reasoning_service.apply_symbolic_reasoning(
+                        job_id=job_id,
+                        rules_file=rules_file,
+                        storage_service=storage_service
+                    )
+                    inference_stats["symbolic_reasoning"] = symbolic_stats
+                    
+                    if symbolic_stats.get('skipped'):
+                        logger.warning(
+                            f"[Job {job_id}] Symbolic reasoning skipped: "
+                            f"{symbolic_stats.get('reason', 'Unknown reason')}"
+                        )
+                    else:
+                        logger.info(
+                            f"[Job {job_id}] Symbolic reasoning completed. "
+                            f"Applied {symbolic_stats.get('total_adjustments', 0)} adjustments"
+                        )
+                except Exception as e:
+                    logger.error(f"[Job {job_id}] Symbolic reasoning failed: {e}", exc_info=True)
+                    # Don't fail the entire job if symbolic reasoning fails
+                    inference_stats["symbolic_reasoning"] = {
+                        "error": str(e),
+                        "skipped": True,
+                        "reason": "Error during processing"
+                    }
+            else:
+                logger.info(f"[Job {job_id}] Symbolic reasoning disabled")
+                inference_stats["symbolic_reasoning"] = {
+                    "skipped": True,
+                    "reason": "Disabled in configuration"
                 }
             
             # Update job with completion
