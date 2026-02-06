@@ -1181,11 +1181,11 @@ This document serves as the single source of truth for feature implementation pr
 **Implementation Details:**
 
 **Dependencies Installed:**
-- @mui/material@^6.3.1 - Material-UI core components
+- @mui/material@^7.3.7 - Material-UI core components
 - @emotion/react@^11.14.0 - CSS-in-JS styling engine
-- @emotion/styled@^11.14.0 - Styled components API
-- @mui/icons-material@^6.3.1 - Material Design icons
-- react-resizable-panels@^2.1.7 - Resizable panel layouts
+- @emotion/styled@^11.14.1 - Styled components API
+- @mui/icons-material@^7.3.7 - Material Design icons
+- react-resizable-panels@^4.6.2 - Resizable panel layouts
 
 **Files Created:**
 - `frontend/src/renderer/theme/theme.ts` - Theme configuration with dark/light modes

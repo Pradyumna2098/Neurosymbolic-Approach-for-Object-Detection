@@ -150,8 +150,8 @@ All resize handles are styled with:
 ## Technical Implementation
 
 ### Technologies Used
-- **UI Framework:** Material-UI (MUI) v6
-- **Layout System:** react-resizable-panels v2
+- **UI Framework:** Material-UI (MUI) v7
+- **Layout System:** react-resizable-panels v4
 - **Styling:** Emotion (CSS-in-JS)
 - **Icons:** Material Design Icons
 - **Theme Management:** MUI ThemeProvider

@@ -155,7 +155,34 @@ const lightTheme: ThemeOptions = {
   typography: darkTheme.typography,
   spacing: darkTheme.spacing,
   shape: darkTheme.shape,
-  components: darkTheme.components,
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: '4px',
+          padding: '8px 16px',
+          transition: 'background 0.2s ease',
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: '8px',
+          border: '1px solid #E0E0E0',
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '4px',
+          },
+        },
+      },
+    },
+  },
 };
 
 export const getDarkTheme = () => createTheme(darkTheme);

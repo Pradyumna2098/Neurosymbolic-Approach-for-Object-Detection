@@ -19,6 +19,7 @@ const MonitoringPanel: React.FC = () => {
   return (
     <Paper
       sx={{
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         borderTop: 1,
@@ -34,12 +35,27 @@ const MonitoringPanel: React.FC = () => {
           cursor: 'pointer',
         }}
         onClick={handleToggle}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleToggle();
+          }
+        }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <VisibilityIcon sx={{ mr: 1 }} />
           <Typography variant="h6">Monitoring Dashboard</Typography>
         </Box>
-        <IconButton size="small" aria-label="toggle monitoring panel">
+        <IconButton
+          size="small"
+          aria-label="toggle monitoring panel"
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation();
+            handleToggle();
+          }}
+        >
           {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         </IconButton>
       </Box>

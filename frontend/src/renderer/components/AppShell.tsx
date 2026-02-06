@@ -42,18 +42,28 @@ const AppShell: React.FC = () => {
     help: null,
   });
 
-  const theme = isDarkMode ? getDarkTheme() : getLightTheme();
+  const theme = React.useMemo(
+    () => (isDarkMode ? getDarkTheme() : getLightTheme()),
+    [isDarkMode],
+  );
 
   const handleThemeToggle = () => {
     setIsDarkMode(!isDarkMode);
   };
 
   const handleMenuOpen = (menuType: keyof typeof menuAnchor) => (event: React.MouseEvent<HTMLElement>) => {
-    setMenuAnchor({ ...menuAnchor, [menuType]: event.currentTarget });
+    setMenuAnchor((prev: typeof menuAnchor) => ({
+      file: null,
+      edit: null,
+      view: null,
+      tools: null,
+      help: null,
+      [menuType]: event.currentTarget,
+    }));
   };
 
   const handleMenuClose = (menuType: keyof typeof menuAnchor) => () => {
-    setMenuAnchor({ ...menuAnchor, [menuType]: null });
+    setMenuAnchor((prev: typeof menuAnchor) => ({ ...prev, [menuType]: null }));
   };
 
   return (
