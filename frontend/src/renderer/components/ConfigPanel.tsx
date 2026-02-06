@@ -50,9 +50,9 @@ import { startDetection } from '../store/slices/detectionSlice';
  */
 const ConfigPanel: React.FC = () => {
   const dispatch = useAppDispatch();
-  const config = useAppSelector((state: any) => state.config);
-  const uploadedFiles = useAppSelector((state: any) => state.upload.files);
-  const jobStatus = useAppSelector((state: any) => state.detection.jobStatus);
+  const config = useAppSelector((state) => state.config);
+  const uploadedFiles = useAppSelector((state) => state.upload.files);
+  const jobStatus = useAppSelector((state) => state.detection.status);
 
   const [presetDialogOpen, setPresetDialogOpen] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
@@ -122,7 +122,8 @@ const ConfigPanel: React.FC = () => {
       alert('Please select a YOLO model file first.');
       return;
     }
-    dispatch(startDetection());
+    const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    dispatch(startDetection(jobId));
   };
 
   // Handler for saving preset
@@ -172,7 +173,7 @@ const ConfigPanel: React.FC = () => {
     return parts[parts.length - 1];
   };
 
-  const isRunDisabled = uploadedFiles.length === 0 || !config.modelPath || jobStatus === 'running';
+  const isRunDisabled = uploadedFiles.length === 0 || !config.modelPath || jobStatus === 'running' || jobStatus === 'pending';
 
   return (
     <Paper
@@ -198,7 +199,11 @@ const ConfigPanel: React.FC = () => {
           Configuration
         </Typography>
         <Tooltip title="Load Preset">
-          <IconButton size="small" onClick={() => setPresetDialogOpen(true)}>
+          <IconButton
+            size="small"
+            aria-label="load preset"
+            onClick={() => setPresetDialogOpen(true)}
+          >
             <BookmarkIcon />
           </IconButton>
         </Tooltip>
