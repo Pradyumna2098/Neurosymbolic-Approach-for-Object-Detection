@@ -439,6 +439,7 @@ class VisualizationService:
             if not detections:
                 logger.info(f"No detections found for {image_path.name}, saving original image")
                 # Save original image if no detections
+                output_path.parent.mkdir(parents=True, exist_ok=True)
                 image.save(output_path)
                 return {
                     'image_name': image_path.name,
