@@ -76,7 +76,7 @@ frontend/
 ## 🏗️ Technology Stack
 
 ### Core Framework
-- **Electron**: v40.x - Cross-platform desktop application framework
+- **Electron**: v28.x - Cross-platform desktop application framework
 - **React**: v18.x - UI component library
 - **TypeScript**: v5.3.x - Type-safe JavaScript
 

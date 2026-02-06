@@ -12,9 +12,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // File system operations
   openFile: () => ipcRenderer.invoke('dialog:openFile'),
 
-  // Event listeners
+  // Event listeners with unsubscribe capability
   onUpdateAvailable: (callback: () => void) => {
     ipcRenderer.on('update-available', callback);
+    // Return unsubscribe function
+    return () => {
+      ipcRenderer.removeListener('update-available', callback);
+    };
   },
 
   // Remove listeners
@@ -26,8 +30,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 // Type definitions for TypeScript
 export interface ElectronAPI {
   ping: () => Promise<string>;
-  openFile: () => Promise<string>;
-  onUpdateAvailable: (callback: () => void) => void;
+  openFile: () => Promise<string | null>;
+  onUpdateAvailable: (callback: () => void) => () => void;
   removeAllListeners: (channel: string) => void;
 }
 

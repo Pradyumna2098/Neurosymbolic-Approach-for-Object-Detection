@@ -1009,8 +1009,8 @@ This document serves as the single source of truth for feature implementation pr
   - `src/preload/` - IPC bridge with contextBridge
   - `src/renderer/` - React application
 - Installed and configured core dependencies:
-  - **Electron**: 40.2.1 (latest stable)
-  - **React**: 18.3.1 with React DOM
+  - **Electron**: 28.x (as per specification)
+  - **React**: 18.2.x with React DOM
   - **TypeScript**: 5.3.3 (upgraded from 4.5.4)
   - **Electron Forge**: 7.11.1 with Webpack plugin
 - Configured TypeScript with strict mode and JSX support (react-jsx)
@@ -1050,11 +1050,11 @@ This document serves as the single source of truth for feature implementation pr
 - ✅ All acceptance criteria met
 
 **Technical Notes:**
-- Used latest Electron 40.x instead of 28.x (requirement updated for better compatibility)
+- Uses Electron 28.x and React 18.x as specified in the UI implementation guide
 - Webpack hot module replacement configured for development
 - Context isolation and secure IPC patterns implemented per Electron security guidelines
 - Project structure follows electron-forge best practices
-- TypeScript strict mode enabled for type safety
+- TypeScript strict mode enabled with ESNext module format
 - Ready for Phase 2 implementation (UI components, state management)
 
 **Files Created/Modified:**
