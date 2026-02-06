@@ -8,6 +8,7 @@ import {
   Typography,
   Alert,
   IconButton,
+  useTheme,
 } from '@mui/material';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
@@ -16,7 +17,6 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   nextImage,
   previousImage,
-  setCurrentImageIndex,
 } from '../../store/slices/resultsSlice';
 import FilterControls from './FilterControls';
 import ImageCanvas from './ImageCanvas';
@@ -36,9 +36,8 @@ type ViewMode = 'input' | 'labels' | 'output' | 'compare';
  */
 const ResultsViewer: React.FC = () => {
   const dispatch = useAppDispatch();
+  const theme = useTheme();
   const [viewMode, setViewMode] = React.useState<ViewMode>('input');
-  const [showLabels, setShowLabels] = React.useState(true);
-  const [showConfidence, setShowConfidence] = React.useState(true);
 
   const results = useAppSelector((state) => state.results.results);
   const currentImageIndex = useAppSelector(
@@ -46,6 +45,10 @@ const ResultsViewer: React.FC = () => {
   );
   const isLoading = useAppSelector((state) => state.results.isLoading);
   const error = useAppSelector((state) => state.results.error);
+  const showLabels = useAppSelector((state) => state.results.filters.showLabels);
+  const showConfidence = useAppSelector(
+    (state) => state.results.filters.showConfidence
+  );
 
   const currentResult = results[currentImageIndex];
 
@@ -209,6 +212,7 @@ const ResultsViewer: React.FC = () => {
             size="small"
             onClick={handlePreviousImage}
             disabled={currentImageIndex === 0}
+            aria-label="Previous image"
           >
             <NavigateBeforeIcon />
           </IconButton>
@@ -219,6 +223,7 @@ const ResultsViewer: React.FC = () => {
             size="small"
             onClick={handleNextImage}
             disabled={currentImageIndex === results.length - 1}
+            aria-label="Next image"
           >
             <NavigateNextIcon />
           </IconButton>
@@ -248,7 +253,7 @@ const ResultsViewer: React.FC = () => {
           <PanelResizeHandle
             style={{
               width: '4px',
-              background: '#ddd',
+              background: theme.palette.divider,
               cursor: 'col-resize',
             }}
           />

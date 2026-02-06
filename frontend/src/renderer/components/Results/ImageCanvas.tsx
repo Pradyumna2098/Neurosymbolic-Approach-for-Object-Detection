@@ -34,6 +34,7 @@ const ImageCanvas: React.FC<ImageCanvasProps> = ({
   const [pan, setPan] = React.useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = React.useState(false);
   const [dragStart, setDragStart] = React.useState({ x: 0, y: 0 });
+  const [hasDragged, setHasDragged] = React.useState(false);
 
   const results = useAppSelector((state) => state.results.results);
   const currentImageIndex = useAppSelector(
@@ -161,15 +162,24 @@ const ImageCanvas: React.FC<ImageCanvasProps> = ({
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDragging(true);
+    setHasDragged(false);
     setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isDragging) {
-      setPan({
+      const newPan = {
         x: e.clientX - dragStart.x,
         y: e.clientY - dragStart.y,
-      });
+      };
+      // Track if we've moved more than 5 pixels (drag threshold)
+      const dragDistance = Math.sqrt(
+        Math.pow(newPan.x - pan.x, 2) + Math.pow(newPan.y - pan.y, 2)
+      );
+      if (dragDistance > 5) {
+        setHasDragged(true);
+      }
+      setPan(newPan);
     }
   };
 
@@ -178,7 +188,8 @@ const ImageCanvas: React.FC<ImageCanvasProps> = ({
   };
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (isDragging || viewMode === 'input') return;
+    // Don't select if we just dragged or in input mode
+    if (hasDragged || viewMode === 'input') return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -218,13 +229,13 @@ const ImageCanvas: React.FC<ImageCanvasProps> = ({
         }}
       >
         <ButtonGroup orientation="vertical" variant="contained" size="small">
-          <IconButton onClick={handleZoomIn} size="small">
+          <IconButton onClick={handleZoomIn} size="small" aria-label="Zoom in">
             <ZoomInIcon />
           </IconButton>
-          <IconButton onClick={handleZoomReset} size="small">
+          <IconButton onClick={handleZoomReset} size="small" aria-label="Reset zoom">
             <ZoomOutMapIcon />
           </IconButton>
-          <IconButton onClick={handleZoomOut} size="small">
+          <IconButton onClick={handleZoomOut} size="small" aria-label="Zoom out">
             <ZoomOutIcon />
           </IconButton>
         </ButtonGroup>

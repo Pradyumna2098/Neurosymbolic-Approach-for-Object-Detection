@@ -9,6 +9,8 @@ interface ResultsState {
     classIds: number[];
     minConfidence: number;
     maxConfidence: number;
+    showLabels: boolean;
+    showConfidence: boolean;
   };
   viewMode: 'single' | 'grid' | 'compare';
   compareImageIndices: [number, number] | null;
@@ -24,6 +26,8 @@ const initialState: ResultsState = {
     classIds: [],
     minConfidence: 0.0,
     maxConfidence: 1.0,
+    showLabels: true,
+    showConfidence: true,
   },
   viewMode: 'single',
   compareImageIndices: null,
@@ -94,6 +98,8 @@ const resultsSlice = createSlice({
         classIds: [],
         minConfidence: 0.0,
         maxConfidence: 1.0,
+        showLabels: true,
+        showConfidence: true,
       };
     },
     setViewMode(state, action: PayloadAction<ResultsState['viewMode']>) {

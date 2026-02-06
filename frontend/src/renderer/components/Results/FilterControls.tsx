@@ -42,12 +42,15 @@ const FilterControls: React.FC = () => {
     });
   }, [results]);
 
-  const [showLabels, setShowLabels] = React.useState(true);
-  const [showConfidence, setShowConfidence] = React.useState(true);
-
   const handleClassChange = (event: SelectChangeEvent<number[]>) => {
     const value = event.target.value;
-    const classIds = typeof value === 'string' ? [] : value;
+    const classIds: number[] =
+      typeof value === 'string'
+        ? value
+            .split(',')
+            .map((v) => Number(v.trim()))
+            .filter((n) => !Number.isNaN(n))
+        : value;
     dispatch(updateFilters({ classIds }));
   };
 
@@ -66,6 +69,14 @@ const FilterControls: React.FC = () => {
 
   const handleResetFilters = () => {
     dispatch(resetFilters());
+  };
+
+  const handleShowLabelsChange = (checked: boolean) => {
+    dispatch(updateFilters({ showLabels: checked }));
+  };
+
+  const handleShowConfidenceChange = (checked: boolean) => {
+    dispatch(updateFilters({ showConfidence: checked }));
   };
 
   return (
@@ -142,8 +153,8 @@ const FilterControls: React.FC = () => {
       <FormControlLabel
         control={
           <Switch
-            checked={showLabels}
-            onChange={(e) => setShowLabels(e.target.checked)}
+            checked={filters.showLabels}
+            onChange={(e) => handleShowLabelsChange(e.target.checked)}
             size="small"
           />
         }
@@ -154,8 +165,8 @@ const FilterControls: React.FC = () => {
       <FormControlLabel
         control={
           <Switch
-            checked={showConfidence}
-            onChange={(e) => setShowConfidence(e.target.checked)}
+            checked={filters.showConfidence}
+            onChange={(e) => handleShowConfidenceChange(e.target.checked)}
             size="small"
           />
         }
@@ -165,7 +176,9 @@ const FilterControls: React.FC = () => {
       {/* Reset Button */}
       {(filters.classIds.length > 0 ||
         filters.minConfidence > 0 ||
-        filters.maxConfidence < 1) && (
+        filters.maxConfidence < 1 ||
+        !filters.showLabels ||
+        !filters.showConfidence) && (
         <Chip
           label="Reset Filters"
           onClick={handleResetFilters}
