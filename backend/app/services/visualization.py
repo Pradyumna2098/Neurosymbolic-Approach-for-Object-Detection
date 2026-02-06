@@ -1,13 +1,12 @@
 """Visualization service for generating annotated images with bounding boxes.
 
 This service provides functionality to draw bounding boxes and labels on images
-for object detection visualization. It supports both YOLO normalized format
-and oriented bounding boxes (OBB) format commonly used in aerial imagery.
+for object detection visualization. Currently supports YOLO normalized format
+with axis-aligned bounding boxes.
 """
 
 import hashlib
 import logging
-from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -128,7 +127,7 @@ def get_class_color(class_name: str) -> Color:
     return generate_color_from_name(class_name)
 
 
-def get_line_width(confidence: float, base_width: int = 2) -> int:
+def get_line_width(confidence: float, base_width: int = 2, max_width: int = 4) -> int:
     """Calculate line width based on confidence level.
     
     High confidence = Thicker lines
@@ -137,18 +136,21 @@ def get_line_width(confidence: float, base_width: int = 2) -> int:
     Args:
         confidence: Detection confidence (0.0 to 1.0)
         base_width: Base line width
+        max_width: Maximum line width to prevent excessive thickness
         
     Returns:
-        Line width in pixels
+        Line width in pixels (capped at max_width)
     """
     if confidence >= 0.9:
-        return base_width * 2      # Very confident
+        width = base_width * 2      # Very confident
     elif confidence >= 0.7:
-        return base_width          # Confident
+        width = base_width          # Confident
     elif confidence >= 0.5:
-        return max(1, base_width - 1)  # Moderately confident
+        width = max(1, base_width - 1)  # Moderately confident
     else:
-        return 1                   # Low confidence
+        width = 1                   # Low confidence
+    
+    return min(width, max_width)
 
 
 def adapt_style_to_image_size(img_width: int, img_height: int) -> Dict[str, int]:
@@ -425,11 +427,14 @@ class VisualizationService:
             if not image_path.exists():
                 raise VisualizationError(f"Image file not found: {image_path}")
             
-            image = Image.open(image_path)
-            
-            # Convert to RGB if needed
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
+            # Use context manager to ensure file is closed
+            with Image.open(image_path) as img:
+                # Convert to RGB if needed
+                if img.mode != 'RGB':
+                    image = img.convert('RGB')
+                else:
+                    # Copy image so we can close the file handle
+                    image = img.copy()
             
             img_width, img_height = image.size
             

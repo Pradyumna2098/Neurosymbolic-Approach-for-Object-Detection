@@ -6,9 +6,7 @@ with bounding boxes and labels.
 
 import importlib.util
 import sys
-from io import BytesIO
 from pathlib import Path
-from unittest.mock import Mock
 
 import pytest
 from PIL import Image
@@ -17,18 +15,37 @@ from PIL import Image
 backend_path = Path(__file__).resolve().parents[2] / "backend"
 sys.path.insert(0, str(backend_path))
 
-# Mock app.core before any imports
-mock_settings = Mock()
-mock_settings.results_dir = Path("/tmp/results")
-mock_settings.uploads_dir = Path("/tmp/uploads")
-mock_settings.visualizations_dir = Path("/tmp/visualizations")
 
-# Create mock modules to avoid heavy dependencies
-sys.modules['app'] = Mock()
-sys.modules['app.core'] = Mock(settings=mock_settings)
-sys.modules['app.services'] = Mock()
+@pytest.fixture(autouse=True)
+def mock_settings(tmp_path):
+    """Mock app.core.settings for all tests."""
+    from unittest.mock import Mock
+    
+    mock_settings_obj = Mock()
+    mock_settings_obj.results_dir = tmp_path / "results"
+    mock_settings_obj.uploads_dir = tmp_path / "uploads"
+    mock_settings_obj.visualizations_dir = tmp_path / "visualizations"
+    
+    # Ensure directories exist
+    mock_settings_obj.results_dir.mkdir(parents=True, exist_ok=True)
+    mock_settings_obj.uploads_dir.mkdir(parents=True, exist_ok=True)
+    mock_settings_obj.visualizations_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Mock app.core module to avoid importing pydantic_settings
+    mock_core = Mock()
+    mock_core.settings = mock_settings_obj
+    sys.modules['app.core'] = mock_core
+    
+    # Reload the visualization module to pick up the mocked settings
+    if 'app.services.visualization' in sys.modules:
+        viz_module = sys.modules['app.services.visualization']
+        # Update the settings reference in the already loaded module
+        viz_module.settings = mock_settings_obj
+    
+    return mock_settings_obj
 
-# Load visualization module directly, bypassing __init__.py
+
+# Load visualization module directly to avoid importing heavy dependencies
 viz_spec = importlib.util.spec_from_file_location(
     "app.services.visualization",
     backend_path / "app" / "services" / "visualization.py"
@@ -37,7 +54,7 @@ viz_module = importlib.util.module_from_spec(viz_spec)
 sys.modules['app.services.visualization'] = viz_module
 viz_spec.loader.exec_module(viz_module)
 
-# Import functions from the loaded module
+# Import what we need from the loaded module
 CLASS_COLORS = viz_module.CLASS_COLORS
 DEFAULT_CLASS_MAP = viz_module.DEFAULT_CLASS_MAP
 VisualizationError = viz_module.VisualizationError
@@ -97,7 +114,13 @@ class TestLineWidthFunction:
     def test_line_width_very_high_confidence(self):
         """Test line width for very high confidence."""
         width = get_line_width(0.95, base_width=2)
-        assert width == 4  # base_width * 2
+        assert width == 4  # base_width * 2, capped at max_width
+    
+    def test_line_width_capped_at_max(self):
+        """Test that line width is capped at max_width."""
+        # With base_width=4, confidence 0.95 would give 8, but should be capped at 4
+        width = get_line_width(0.95, base_width=4, max_width=4)
+        assert width == 4
     
     def test_line_width_high_confidence(self):
         """Test line width for high confidence."""
@@ -417,7 +440,7 @@ class TestVisualizationService:
         output_path = tmp_path / "output" / "annotated.png"
         
         # Visualize
-        stats = service.visualize_image(image_path, pred_file, output_path)
+        service.visualize_image(image_path, pred_file, output_path)
         
         # Verify output is RGB
         assert output_path.exists()
@@ -425,49 +448,111 @@ class TestVisualizationService:
         assert output_img.mode == 'RGB'
 
 
-class TestVisualizationIntegration:
-    """Integration tests for visualization pipeline."""
+class TestVisualizationJobProcessing:
+    """Tests for visualize_job method."""
     
     @pytest.fixture
-    def mock_job_structure(self, tmp_path):
-        """Create mock job directory structure."""
+    def service(self):
+        """Create visualization service instance."""
+        return VisualizationService()
+    
+    def test_visualize_job_with_multiple_images(self, service, mock_settings, tmp_path):
+        """Test visualizing multiple images in a job."""
         job_id = "test-job-123"
         
         # Create directories
-        upload_dir = tmp_path / "uploads" / job_id
+        upload_dir = mock_settings.uploads_dir / job_id
         upload_dir.mkdir(parents=True)
         
-        predictions_dir = tmp_path / "results" / job_id / "refined"
+        predictions_dir = mock_settings.results_dir / job_id / "refined"
         predictions_dir.mkdir(parents=True)
         
-        viz_dir = tmp_path / "visualizations" / job_id
-        viz_dir.mkdir(parents=True)
-        
-        # Create test images
+        # Create test images and predictions
         for i in range(3):
             img = Image.new('RGB', (640, 480), color='white')
-            img_path = upload_dir / f"image_{i}.png"
+            img_path = upload_dir / f"test-{i}.png"
             img.save(img_path)
             
             # Create predictions
-            pred_file = predictions_dir / f"image_{i}.txt"
+            pred_file = predictions_dir / f"test-{i}.txt"
             pred_content = [
                 f"0 0.5 0.5 0.2 0.3 0.{90 + i}",
                 f"1 0.3 0.3 0.15 0.2 0.{85 + i}"
             ]
             pred_file.write_text("\n".join(pred_content))
         
-        return {
-            'job_id': job_id,
-            'upload_dir': upload_dir,
-            'predictions_dir': predictions_dir,
-            'viz_dir': viz_dir,
-            'base_dir': tmp_path
+        # Create mock storage service
+        from unittest.mock import Mock
+        mock_storage = Mock()
+        mock_storage.get_job.return_value = {
+            'files': [
+                {'stored_filename': f'test-{i}.png', 'file_id': f'test-{i}'} 
+                for i in range(3)
+            ]
         }
+        
+        # Visualize job
+        stats = service.visualize_job(
+            job_id=job_id,
+            stage="refined",
+            storage_service=mock_storage
+        )
+        
+        # Verify statistics
+        assert stats['total_images'] == 3
+        assert stats['visualized_images'] == 3
+        assert stats['failed_images'] == 0
+        assert stats['total_detections'] == 6  # 2 detections per image
+        
+        # Verify output files exist
+        viz_dir = mock_settings.visualizations_dir / job_id
+        assert viz_dir.exists()
+        assert len(list(viz_dir.glob("*.png"))) == 3
     
+    def test_visualize_job_with_missing_predictions(self, service, mock_settings, tmp_path):
+        """Test handling of missing prediction files."""
+        job_id = "test-job-456"
+        
+        # Create directories
+        upload_dir = mock_settings.uploads_dir / job_id
+        upload_dir.mkdir(parents=True)
+        
+        predictions_dir = mock_settings.results_dir / job_id / "nms"
+        predictions_dir.mkdir(parents=True)
+        
+        # Create image but no prediction file
+        img = Image.new('RGB', (640, 480), color='white')
+        img_path = upload_dir / "test.png"
+        img.save(img_path)
+        
+        # Create mock storage service
+        from unittest.mock import Mock
+        mock_storage = Mock()
+        mock_storage.get_job.return_value = {
+            'files': [{'stored_filename': 'test.png', 'file_id': 'test'}]
+        }
+        
+        # Visualize job (should handle missing prediction gracefully)
+        stats = service.visualize_job(
+            job_id=job_id,
+            stage="nms",
+            storage_service=mock_storage
+        )
+        
+        # Should report failed image
+        assert stats['total_images'] == 1
+        assert stats['visualized_images'] == 0
+        assert stats['failed_images'] == 1
+
+
+class TestVisualizationIntegration:
+    """Integration tests for visualization pipeline."""
+    
+    @pytest.mark.skip(reason="Full integration test covered in test_visualization_endpoint.py")
     def test_visualize_multiple_images(self, mock_job_structure):
-        """Test visualizing multiple images in a job."""
-        # This test would require mocking settings and storage_service
-        # For now, we test the individual components above
-        # Full integration test would be in test_visualization_endpoint.py
+        """Test visualizing multiple images in a job.
+        
+        This placeholder is skipped as full integration testing
+        for multi-image visualization is covered in the endpoint tests.
+        """
         pass

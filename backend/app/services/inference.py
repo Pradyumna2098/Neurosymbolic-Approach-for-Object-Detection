@@ -457,14 +457,12 @@ class InferenceService:
                     
                     # Determine which stage to visualize
                     # Priority: refined > nms > raw
-                    viz_stage = "refined"
                     refined_dir = settings.results_dir / job_id / "refined"
                     nms_dir = settings.results_dir / job_id / "nms"
-                    raw_dir = settings.results_dir / job_id / "raw"
                     
-                    if refined_dir.exists() and list(refined_dir.glob("*.txt")):
+                    if refined_dir.exists() and any(refined_dir.glob("*.txt")):
                         viz_stage = "refined"
-                    elif nms_dir.exists() and list(nms_dir.glob("*.txt")):
+                    elif nms_dir.exists() and any(nms_dir.glob("*.txt")):
                         viz_stage = "nms"
                     else:
                         viz_stage = "raw"
