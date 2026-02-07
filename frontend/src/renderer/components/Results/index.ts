@@ -7,3 +7,4 @@ export { default as ImageCanvas } from './ImageCanvas';
 export { default as InfoPanel } from './InfoPanel';
 export { default as DetectionStats } from './DetectionStats';
 export { default as BoundingBox } from './BoundingBox';
+export { default as ExportDialog } from './ExportDialog';

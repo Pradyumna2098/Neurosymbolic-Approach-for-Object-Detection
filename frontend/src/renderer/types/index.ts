@@ -72,3 +72,22 @@ export interface JobProgress {
   progress: number; // 0-100
   message: string;
 }
+
+// Export-related types
+export type ExportFormat = 'jpg' | 'png' | 'csv' | 'json';
+
+export interface ExportOptions {
+  format: ExportFormat;
+  includeOverlays?: boolean; // For image exports
+  includeLabels?: boolean; // For image exports
+  includeConfidence?: boolean; // For image exports
+  singleFile?: boolean; // For batch exports (aggregate vs individual)
+}
+
+export interface ExportProgress {
+  current: number;
+  total: number;
+  fileName: string;
+  completed: boolean;
+  error?: string;
+}

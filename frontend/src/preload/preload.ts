@@ -14,6 +14,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openModelFile: () => ipcRenderer.invoke('dialog:openModelFile'),
   openPrologFile: () => ipcRenderer.invoke('dialog:openPrologFile'),
 
+  // Export file dialogs
+  saveFile: (options: {
+    title?: string;
+    defaultPath?: string;
+    filters?: { name: string; extensions: string[] }[];
+  }) => ipcRenderer.invoke('dialog:saveFile', options),
+  saveImage: (defaultPath?: string) => ipcRenderer.invoke('dialog:saveImage', defaultPath),
+  saveCSV: (defaultPath?: string) => ipcRenderer.invoke('dialog:saveCSV', defaultPath),
+  saveJSON: (defaultPath?: string) => ipcRenderer.invoke('dialog:saveJSON', defaultPath),
+
   // Event listeners with unsubscribe capability
   onUpdateAvailable: (callback: () => void) => {
     ipcRenderer.on('update-available', callback);
@@ -35,6 +45,14 @@ export interface ElectronAPI {
   openFile: () => Promise<string | null>;
   openModelFile: () => Promise<string | null>;
   openPrologFile: () => Promise<string | null>;
+  saveFile: (options: {
+    title?: string;
+    defaultPath?: string;
+    filters?: { name: string; extensions: string[] }[];
+  }) => Promise<string | null>;
+  saveImage: (defaultPath?: string) => Promise<string | null>;
+  saveCSV: (defaultPath?: string) => Promise<string | null>;
+  saveJSON: (defaultPath?: string) => Promise<string | null>;
   onUpdateAvailable: (callback: () => void) => () => void;
   removeAllListeners: (channel: string) => void;
 }
