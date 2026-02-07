@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   nextImage,
@@ -235,7 +235,7 @@ const ResultsViewer: React.FC = () => {
 
       {/* Main Content Area */}
       <Box sx={{ flex: 1, overflow: 'hidden' }}>
-        <PanelGroup direction="horizontal">
+        <PanelGroup orientation="horizontal">
           {/* Image Canvas */}
           <Panel defaultSize={75} minSize={50}>
             <Box sx={{ height: '100%', p: 2 }}>
