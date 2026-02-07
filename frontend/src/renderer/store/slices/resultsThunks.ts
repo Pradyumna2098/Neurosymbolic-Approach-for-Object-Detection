@@ -6,6 +6,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import apiService from '../../services/api';
 import { DetectionResult, Detection, BoundingBox } from '../../types';
+import { parseApiError } from '../../utils/errorHandling';
+import { showError, showWarning } from './notificationSlice';
 
 /**
  * Transform backend detection format to frontend format
@@ -58,7 +60,7 @@ function transformDetection(
  */
 export const fetchResultsThunk = createAsyncThunk(
   'results/fetchResults',
-  async (jobId: string, { rejectWithValue }) => {
+  async (jobId: string, { rejectWithValue, dispatch }) => {
     try {
       const response = await apiService.getResults(jobId);
       
@@ -94,7 +96,18 @@ export const fetchResultsThunk = createAsyncThunk(
       };
     } catch (error: any) {
       console.error('[Results Thunk] Fetch failed:', error);
-      return rejectWithValue(error.message || 'Failed to fetch results');
+      
+      // Parse error and show notification
+      const parsedError = parseApiError(error);
+      dispatch(
+        showError({
+          message: parsedError.message,
+          errorCode: parsedError.code,
+          canRetry: parsedError.canRetry,
+        })
+      );
+      
+      return rejectWithValue(parsedError.message);
     }
   }
 );
@@ -104,7 +117,7 @@ export const fetchResultsThunk = createAsyncThunk(
  */
 export const fetchVisualizationsThunk = createAsyncThunk(
   'results/fetchVisualizations',
-  async (jobId: string, { rejectWithValue }) => {
+  async (jobId: string, { rejectWithValue, dispatch }) => {
     try {
       const response = await apiService.getBase64Visualizations(jobId);
       
@@ -119,8 +132,14 @@ export const fetchVisualizationsThunk = createAsyncThunk(
       return visualizations;
     } catch (error: any) {
       console.error('[Results Thunk] Fetch visualizations failed:', error);
-      // Don't fail the whole process if visualization fetch fails
-      // Return empty array instead
+      
+      // Show warning but don't fail - visualizations are optional
+      const parsedError = parseApiError(error);
+      dispatch(
+        showWarning(`Failed to load visualizations: ${parsedError.message}`)
+      );
+      
+      // Return empty array instead of failing
       return [];
     }
   }

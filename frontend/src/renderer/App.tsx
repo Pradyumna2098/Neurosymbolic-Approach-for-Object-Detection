@@ -1,5 +1,6 @@
 import React from 'react';
 import AppShell from './components/AppShell';
+import GlobalNotifications from './components/GlobalNotifications';
 import { useJobStatusPolling, useAutoFetchResults } from './store/hooks';
 
 /**
@@ -14,7 +15,11 @@ const App: React.FC = () => {
   // Enable automatic results fetching when job completes
   useAutoFetchResults();
 
-  return <AppShell />;
+  return (
+    <GlobalNotifications>
+      <AppShell />
+    </GlobalNotifications>
+  );
 };
 
 export default App;

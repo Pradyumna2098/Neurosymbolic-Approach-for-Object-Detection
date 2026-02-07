@@ -6,6 +6,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import apiService from '../../services/api';
 import { UploadedFile } from '../../types';
+import { parseApiError } from '../../utils/errorHandling';
+import { showError, showSuccess } from './notificationSlice';
 
 /**
  * Upload images to backend API
@@ -15,7 +17,7 @@ import { UploadedFile } from '../../types';
  */
 export const uploadImagesThunk = createAsyncThunk(
   'upload/uploadImages',
-  async (files: File[], { rejectWithValue }) => {
+  async (files: File[], { rejectWithValue, dispatch }) => {
     try {
       // Call API service to upload files
       const response = await apiService.uploadImages(files);
@@ -31,6 +33,23 @@ export const uploadImagesThunk = createAsyncThunk(
         // Frontend generates previews locally before upload
       }));
 
+      // Show success notification
+      dispatch(
+        showSuccess(`Successfully uploaded ${uploadedFiles.length} file(s)`)
+      );
+
+      // Show warnings if any
+      if (response.warnings && response.warnings.length > 0) {
+        response.warnings.forEach((warning) => {
+          dispatch(
+            showError({
+              message: `${warning.filename}: ${warning.error}`,
+              canRetry: false,
+            })
+          );
+        });
+      }
+
       return {
         jobId: response.job_id,
         files: uploadedFiles,
@@ -38,7 +57,24 @@ export const uploadImagesThunk = createAsyncThunk(
       };
     } catch (error: any) {
       console.error('[Upload Thunk] Failed:', error);
-      return rejectWithValue(error.message || 'Upload failed');
+      
+      // Parse error and show notification
+      const parsedError = parseApiError(error);
+      dispatch(
+        showError({
+          message: parsedError.message,
+          errorCode: parsedError.code,
+          canRetry: parsedError.canRetry,
+          retryAction: parsedError.canRetry
+            ? () => {
+                // Retry would need to be triggered from the component
+                console.log('Retry upload requested');
+              }
+            : undefined,
+        })
+      );
+      
+      return rejectWithValue(parsedError.message);
     }
   }
 );
