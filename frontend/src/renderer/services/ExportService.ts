@@ -6,6 +6,19 @@
 import { DetectionResult, Detection, ExportOptions, ExportProgress } from '../types';
 
 /**
+ * Escapes a string for CSV output by doubling quotes and wrapping in quotes if needed
+ */
+const escapeCsvField = (value: string | number): string => {
+  const str = String(value);
+  // If the field contains quotes, commas, or newlines, it needs to be quoted and quotes doubled
+  if (str.includes('"') || str.includes(',') || str.includes('\n')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  // Otherwise, just wrap in quotes for safety
+  return `"${str}"`;
+};
+
+/**
  * Converts detections data to CSV format
  */
 export const exportToCSV = (
@@ -31,10 +44,10 @@ export const exportToCSV = (
   results.forEach((result) => {
     result.detections.forEach((detection) => {
       const row = [
-        `"${result.imageName}"`,
-        `"${detection.id}"`,
+        escapeCsvField(result.imageName),
+        escapeCsvField(detection.id),
         detection.classId,
-        `"${detection.className}"`,
+        escapeCsvField(detection.className),
         detection.confidence.toFixed(4),
         detection.bbox.x.toFixed(2),
         detection.bbox.y.toFixed(2),
@@ -79,7 +92,8 @@ export const exportToJSON = (results: DetectionResult[]): string => {
  * Exports aggregated metrics across all detection results
  */
 export const exportMetricsToJSON = (results: DetectionResult[]): string => {
-  const classStats = new Map<string, { count: number; totalConfidence: number }>();
+  // Use classId as key, store className in the value object
+  const classStats = new Map<number, { className: string; count: number; totalConfidence: number }>();
   let totalDetections = 0;
   let totalProcessingTime = 0;
 
@@ -88,11 +102,14 @@ export const exportMetricsToJSON = (results: DetectionResult[]): string => {
     totalDetections += result.detections.length;
 
     result.detections.forEach((detection) => {
-      const key = `${detection.classId}-${detection.className}`;
-      const stats = classStats.get(key) || { count: 0, totalConfidence: 0 };
+      const stats = classStats.get(detection.classId) || { 
+        className: detection.className, 
+        count: 0, 
+        totalConfidence: 0 
+      };
       stats.count++;
       stats.totalConfidence += detection.confidence;
-      classStats.set(key, stats);
+      classStats.set(detection.classId, stats);
     });
   });
 
@@ -100,14 +117,17 @@ export const exportMetricsToJSON = (results: DetectionResult[]): string => {
     summary: {
       totalImages: results.length,
       totalDetections,
-      averageDetectionsPerImage: (totalDetections / results.length).toFixed(2),
-      averageProcessingTime: (totalProcessingTime / results.length).toFixed(2),
+      averageDetectionsPerImage: results.length > 0 
+        ? (totalDetections / results.length).toFixed(2) 
+        : '0.00',
+      averageProcessingTime: results.length > 0 
+        ? (totalProcessingTime / results.length).toFixed(2) 
+        : '0.00',
     },
-    classCounts: Array.from(classStats.entries()).map(([key, stats]) => {
-      const [classId, className] = key.split('-');
+    classCounts: Array.from(classStats.entries()).map(([classId, stats]) => {
       return {
-        classId: parseInt(classId),
-        className,
+        classId,
+        className: stats.className,
         count: stats.count,
         averageConfidence: (stats.totalConfidence / stats.count).toFixed(4),
       };
@@ -127,26 +147,29 @@ export const exportMetricsToJSON = (results: DetectionResult[]): string => {
  * Exports metrics to CSV format
  */
 export const exportMetricsToCSV = (results: DetectionResult[]): string => {
-  const classStats = new Map<string, { count: number; totalConfidence: number }>();
+  // Use classId as key, store className in the value object
+  const classStats = new Map<number, { className: string; count: number; totalConfidence: number }>();
   let totalDetections = 0;
 
   results.forEach((result) => {
     totalDetections += result.detections.length;
     result.detections.forEach((detection) => {
-      const key = `${detection.classId}-${detection.className}`;
-      const stats = classStats.get(key) || { count: 0, totalConfidence: 0 };
+      const stats = classStats.get(detection.classId) || { 
+        className: detection.className, 
+        count: 0, 
+        totalConfidence: 0 
+      };
       stats.count++;
       stats.totalConfidence += detection.confidence;
-      classStats.set(key, stats);
+      classStats.set(detection.classId, stats);
     });
   });
 
   const rows: string[] = ['Class ID,Class Name,Count,Average Confidence'];
 
-  Array.from(classStats.entries()).forEach(([key, stats]) => {
-    const [classId, className] = key.split('-');
+  Array.from(classStats.entries()).forEach(([classId, stats]) => {
     const avgConfidence = (stats.totalConfidence / stats.count).toFixed(4);
-    rows.push(`${classId},"${className}",${stats.count},${avgConfidence}`);
+    rows.push(`${classId},${escapeCsvField(stats.className)},${stats.count},${avgConfidence}`);
   });
 
   return rows.join('\n');
@@ -261,11 +284,31 @@ const getColorForClass = (classId: number): string => {
 };
 
 /**
+ * Helper to determine MIME type from file name
+ */
+const getMimeTypeFromFileName = (fileName: string): string => {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  switch (extension) {
+    case 'csv':
+      return 'text/csv;charset=utf-8';
+    case 'json':
+      return 'application/json;charset=utf-8';
+    case 'png':
+      return 'image/png';
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    default:
+      return 'text/plain;charset=utf-8';
+  }
+};
+
+/**
  * Helper to trigger browser download
  */
 export const triggerDownload = (content: string | Blob, fileName: string): void => {
   const blob = typeof content === 'string'
-    ? new Blob([content], { type: 'text/plain;charset=utf-8' })
+    ? new Blob([content], { type: getMimeTypeFromFileName(fileName) })
     : content;
 
   const url = URL.createObjectURL(blob);

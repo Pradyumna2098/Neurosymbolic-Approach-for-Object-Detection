@@ -28,8 +28,6 @@ import { ExportFormat, ExportOptions, DetectionResult, ExportProgress } from '..
 import {
   exportToCSV,
   exportToJSON,
-  exportMetricsToJSON,
-  exportMetricsToCSV,
   triggerDownload,
   batchExportImages,
 } from '../../services/ExportService';
@@ -96,8 +94,10 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
       
       // Close dialog after successful export
       setTimeout(() => {
-        handleClose();
         setExporting(false);
+        setError(null);
+        setProgress(null);
+        onClose();
       }, 500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Export failed');
@@ -120,15 +120,10 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
     }
 
     if (resultsToExport.length === 1) {
-      // Single image export - use save dialog
+      // Single image export
       const result = resultsToExport[0];
       const extension = format === 'png' ? 'png' : 'jpg';
       const defaultFileName = result.imageName.replace(/\.[^/.]+$/, '') + `_annotated.${extension}`;
-      
-      const savePath = await window.electronAPI.saveImage(defaultFileName);
-      if (!savePath) {
-        throw new Error('Export cancelled');
-      }
 
       // Export single image directly
       const canvas = document.createElement('canvas');
@@ -161,15 +156,6 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
       defaultFileName = 'detections.json';
     } else {
       throw new Error('Invalid format for metrics export');
-    }
-
-    // Show save dialog
-    const savePath = format === 'csv'
-      ? await window.electronAPI.saveCSV(defaultFileName)
-      : await window.electronAPI.saveJSON(defaultFileName);
-
-    if (!savePath) {
-      throw new Error('Export cancelled');
     }
 
     // Trigger download

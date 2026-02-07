@@ -56,7 +56,7 @@ Export detection metrics in structured data formats:
 2. **View Results**: Navigate to the Results Viewer to see detections
 3. **Click Export**: Click the "Export" button in the navigation bar
 4. **Configure Options**: Choose export type, format, and options
-5. **Select Location**: Choose where to save the file(s)
+5. **Confirm Download**: Files will be downloaded to your browser's default download location
 6. **Export**: Click "Export" to start the export process
 
 ### Export Dialog Options
@@ -93,7 +93,7 @@ When exporting multiple images:
 - Progress bar shows completion percentage
 - File count displays current/total (e.g., "3 / 10")
 - Current filename being exported is displayed
-- Cancel button allows stopping the export
+- Exports run to completion once started (cancellation is not supported in the current version)
 
 ## Technical Details
 
