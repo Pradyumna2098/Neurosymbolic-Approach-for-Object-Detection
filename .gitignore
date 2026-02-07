@@ -82,3 +82,9 @@ venv_package/
 *.manifest
 *.spec.bak
 
+# Inno Setup installer artifacts
+installer_output/
+*.exe
+!installer_assets/*.exe
+Output/
+
