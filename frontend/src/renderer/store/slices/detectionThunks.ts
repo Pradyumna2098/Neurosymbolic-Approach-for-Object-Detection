@@ -7,6 +7,8 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import apiService from '../../services/api';
 import { InferenceConfig as APIInferenceConfig } from '../../services/api/types';
 import { DetectionConfig } from '../../types';
+import { parseApiError } from '../../utils/errorHandling';
+import { showError, showSuccess, showInfo } from './notificationSlice';
 
 /**
  * Transform frontend DetectionConfig to backend InferenceConfig
@@ -44,7 +46,7 @@ export const startDetectionThunk = createAsyncThunk(
   'detection/startDetection',
   async (
     { jobId, config }: { jobId: string; config: DetectionConfig },
-    { rejectWithValue }
+    { rejectWithValue, dispatch }
   ) => {
     try {
       // Transform frontend config to backend format
@@ -53,6 +55,9 @@ export const startDetectionThunk = createAsyncThunk(
       // Call API to start detection
       const response = await apiService.runDetection(jobId, apiConfig);
       
+      // Show success notification
+      dispatch(showInfo('Detection job started. Processing images...'));
+      
       return {
         jobId: response.job_id,
         jobStatus: response.job_status,
@@ -60,7 +65,18 @@ export const startDetectionThunk = createAsyncThunk(
       };
     } catch (error: any) {
       console.error('[Detection Thunk] Start failed:', error);
-      return rejectWithValue(error.message || 'Failed to start detection');
+      
+      // Parse error and show notification
+      const parsedError = parseApiError(error);
+      dispatch(
+        showError({
+          message: parsedError.message,
+          errorCode: parsedError.code,
+          canRetry: parsedError.canRetry,
+        })
+      );
+      
+      return rejectWithValue(parsedError.message);
     }
   }
 );
@@ -72,9 +88,22 @@ export const startDetectionThunk = createAsyncThunk(
  */
 export const pollStatusThunk = createAsyncThunk(
   'detection/pollStatus',
-  async (jobId: string, { rejectWithValue }) => {
+  async (jobId: string, { rejectWithValue, dispatch }) => {
     try {
       const response = await apiService.getJobStatus(jobId);
+      
+      // Show notification when job completes
+      if (response.data.status === 'completed') {
+        dispatch(showSuccess('Detection completed successfully!'));
+      } else if (response.data.status === 'failed' && response.data.error) {
+        dispatch(
+          showError({
+            message: `Job failed: ${response.data.error.message}`,
+            errorCode: response.data.error.code as any,
+            canRetry: false,
+          })
+        );
+      }
       
       return {
         status: response.data.status,
@@ -85,6 +114,10 @@ export const pollStatusThunk = createAsyncThunk(
       };
     } catch (error: any) {
       console.error('[Detection Thunk] Poll status failed:', error);
+      
+      // Don't show notification for poll errors (they're silent)
+      // The polling will retry automatically
+      
       return rejectWithValue(error.message || 'Failed to get job status');
     }
   }

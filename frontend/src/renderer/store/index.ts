@@ -4,6 +4,7 @@ import configReducer from './slices/configSlice';
 import detectionReducer from './slices/detectionSlice';
 import resultsReducer from './slices/resultsSlice';
 import monitoringReducer from './slices/monitoringSlice';
+import notificationReducer from './slices/notificationSlice';
 import { monitoringMiddleware } from './middleware/monitoringMiddleware';
 
 export const store = configureStore({
@@ -13,11 +14,12 @@ export const store = configureStore({
     detection: detectionReducer,
     results: resultsReducer,
     monitoring: monitoringReducer,
+    notification: notificationReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        // Ignore these action types with non-serializable values (Date, File objects)
+        // Ignore these action types with non-serializable values (Date, File objects, functions)
         ignoredActions: [
           'upload/addFiles',
           'detection/startDetection',
@@ -26,9 +28,16 @@ export const store = configureStore({
           'results/setResults',
           'monitoring/addLog',
           'monitoring/updateMetrics',
+          'notification/enqueueNotification',
+          'notification/showError',
         ],
         // Ignore these field paths in all actions
-        ignoredActionPaths: ['payload.uploadedAt', 'payload.timestamp'],
+        ignoredActionPaths: [
+          'payload.uploadedAt',
+          'payload.timestamp',
+          'payload.retryAction',
+          'payload.options',
+        ],
         // Ignore these paths in the state
         ignoredPaths: [
           'upload.files',
@@ -37,6 +46,7 @@ export const store = configureStore({
           'results.results',
           'monitoring.logs',
           'monitoring.metrics.lastUpdated',
+          'notification.notifications',
         ],
       },
     }).concat(monitoringMiddleware),

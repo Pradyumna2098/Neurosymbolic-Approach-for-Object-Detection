@@ -6,11 +6,18 @@ This prototype uses local filesystem storage instead of PostgreSQL/Redis.
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import ValidationError
 
 from app.api.v1 import api_router
 from app.core import settings
+from app.core.exception_handlers import (
+    general_exception_handler,
+    http_exception_handler,
+    validation_exception_handler,
+)
 
 
 @asynccontextmanager
@@ -50,6 +57,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register exception handlers for standardized error responses
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(ValidationError, validation_exception_handler)
+app.add_exception_handler(Exception, general_exception_handler)
 
 # Include API v1 routes with versioning prefix
 app.include_router(api_router, prefix=settings.api_v1_prefix)

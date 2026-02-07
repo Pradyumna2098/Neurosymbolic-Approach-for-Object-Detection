@@ -264,11 +264,11 @@ class TestVisualizationEndpoint:
         assert response.status_code == 404
         data = response.json()
         
-        assert "detail" in data
-        detail = data["detail"]
-        assert detail["status"] == "error"
-        assert "Job not found" in detail["message"]
-        assert detail["error_code"] == "JOB_NOT_FOUND"
+        assert "error" in data
+        error = data["error"]
+        assert data["status"] == "error"
+        assert "Job not found" in error["message"]
+        assert error["code"] == "JOB_NOT_FOUND"
     
     def test_get_visualizations_job_not_completed(self, client, processing_job):
         """Test 404 response for incomplete job."""
@@ -281,12 +281,12 @@ class TestVisualizationEndpoint:
         assert response.status_code == 404
         data = response.json()
         
-        assert "detail" in data
-        detail = data["detail"]
-        assert detail["status"] == "error"
-        assert "Visualizations not available" in detail["message"]
-        assert detail["error_code"] == "VISUALIZATIONS_NOT_READY"
-        assert "processing" in detail["details"]
+        assert "error" in data
+        error = data["error"]
+        assert data["status"] == "error"
+        assert "Visualizations not available" in error["message"]
+        assert error["code"] == "VISUALIZATIONS_NOT_READY"
+        assert "processing" in error["details"]
     
     def test_get_visualizations_no_files(self, client, completed_job_no_visualizations):
         """Test 404 response when no visualization files exist."""
@@ -299,11 +299,11 @@ class TestVisualizationEndpoint:
         assert response.status_code == 404
         data = response.json()
         
-        assert "detail" in data
-        detail = data["detail"]
-        assert detail["status"] == "error"
-        assert "Visualizations not available" in detail["message"]
-        assert detail["error_code"] == "VISUALIZATIONS_NOT_FOUND"
+        assert "error" in data
+        error = data["error"]
+        assert data["status"] == "error"
+        assert "Visualizations not available" in error["message"]
+        assert error["code"] == "VISUALIZATIONS_NOT_FOUND"
     
     def test_get_visualizations_invalid_format(self, client, completed_job_with_visualizations):
         """Test 400 response for invalid format parameter."""
@@ -316,11 +316,11 @@ class TestVisualizationEndpoint:
         assert response.status_code == 400
         data = response.json()
         
-        assert "detail" in data
-        detail = data["detail"]
-        assert detail["status"] == "error"
-        assert "Invalid format parameter" in detail["message"]
-        assert detail["error_code"] == "INVALID_FORMAT"
+        assert "error" in data
+        error = data["error"]
+        assert data["status"] == "error"
+        assert "Invalid format parameter" in error["message"]
+        assert error["code"] == "INVALID_FORMAT"
     
     def test_get_visualizations_invalid_file_id(self, client, completed_job_with_visualizations):
         """Test 404 response for non-existent file_id."""
@@ -336,11 +336,11 @@ class TestVisualizationEndpoint:
         assert response.status_code == 404
         data = response.json()
         
-        assert "detail" in data
-        detail = data["detail"]
-        assert detail["status"] == "error"
-        assert "Visualization not found" in detail["message"]
-        assert detail["error_code"] == "VISUALIZATION_NOT_FOUND"
+        assert "error" in data
+        error = data["error"]
+        assert data["status"] == "error"
+        assert "Visualization not found" in error["message"]
+        assert error["code"] == "VISUALIZATION_NOT_FOUND"
     
     def test_base64_format_requires_file_id(self, client, completed_job_with_visualizations):
         """Test that base64 format without file_id returns URL format."""
@@ -411,8 +411,8 @@ class TestFileServingEndpoints:
         
         assert response.status_code == 404
         data = response.json()
-        assert "detail" in data
-        assert data["detail"]["error_code"] == "ORIGINAL_IMAGE_NOT_FOUND"
+        assert "error" in data
+        assert data["error"]["code"] == "ORIGINAL_IMAGE_NOT_FOUND"
     
     def test_get_annotated_image_not_found(self, client, completed_job_with_visualizations):
         """Test 404 for non-existent annotated image."""
@@ -423,6 +423,6 @@ class TestFileServingEndpoints:
         
         assert response.status_code == 404
         data = response.json()
-        assert "detail" in data
+        assert "error" in data
         # Should be FILE_NOT_FOUND since file_id doesn't exist in job
-        assert data["detail"]["error_code"] == "FILE_NOT_FOUND"
+        assert data["error"]["code"] == "FILE_NOT_FOUND"

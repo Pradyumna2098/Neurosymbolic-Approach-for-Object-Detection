@@ -207,11 +207,11 @@ class TestJobResultsEndpoint:
         assert response.status_code == 404
         data = response.json()
         
-        assert "detail" in data
-        detail = data["detail"]
-        assert detail["status"] == "error"
-        assert "Job not found" in detail["message"]
-        assert detail["error_code"] == "JOB_NOT_FOUND"
+        assert "error" in data
+        error = data["error"]
+        assert data["status"] == "error"
+        assert "Job not found" in error["message"]
+        assert error["code"] == "JOB_NOT_FOUND"
     
     def test_get_results_job_not_completed(self, client, processing_job):
         """Test 404 response for incomplete job."""
@@ -224,12 +224,12 @@ class TestJobResultsEndpoint:
         assert response.status_code == 404
         data = response.json()
         
-        assert "detail" in data
-        detail = data["detail"]
-        assert detail["status"] == "error"
-        assert "Results not available" in detail["message"]
-        assert detail["error_code"] == "RESULTS_NOT_READY"
-        assert "processing" in detail["details"]
+        assert "error" in data
+        error = data["error"]
+        assert data["status"] == "error"
+        assert "Results not available" in error["message"]
+        assert error["code"] == "RESULTS_NOT_READY"
+        assert "processing" in error["details"]
     
     def test_get_results_no_prediction_files(self, client, completed_job_no_results):
         """Test 404 response when no prediction files exist."""
@@ -242,11 +242,11 @@ class TestJobResultsEndpoint:
         assert response.status_code == 404
         data = response.json()
         
-        assert "detail" in data
-        detail = data["detail"]
-        assert detail["status"] == "error"
-        assert "Results not available" in detail["message"]
-        assert detail["error_code"] == "RESULTS_NOT_FOUND"
+        assert "error" in data
+        error = data["error"]
+        assert data["status"] == "error"
+        assert "Results not available" in error["message"]
+        assert error["code"] == "RESULTS_NOT_FOUND"
     
     def test_get_results_response_schema(self, client, completed_job_with_results):
         """Test that response matches the expected schema."""
