@@ -233,7 +233,7 @@ Display Toggles:
 {
   "konva": "9.3.15",              // Canvas library
   "react-konva": "18.2.10",       // React bindings
-  "use-image": "latest",          // Image loading hook
+  "use-image": "^1.1.4",          // Image loading hook
   "@mui/material": "^7.3.7",      // UI components
   "@mui/icons-material": "^7.3.7", // Icons
   "react-redux": "^9.2.0",        // Redux hooks

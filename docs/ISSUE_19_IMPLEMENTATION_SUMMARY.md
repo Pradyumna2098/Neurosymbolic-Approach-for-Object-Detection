@@ -95,7 +95,7 @@ Colors cycle based on class ID modulo 10.
 {
   "konva": "9.3.15",
   "react-konva": "18.2.10",
-  "use-image": "latest"
+  "use-image": "^1.1.4"
 }
 ```
 

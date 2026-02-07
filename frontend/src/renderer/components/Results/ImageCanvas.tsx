@@ -88,8 +88,16 @@ const ImageCanvas: React.FC<ImageCanvasProps> = ({
     };
 
     updateSize();
-    window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
+    
+    // Use ResizeObserver to detect container size changes (not just window resize)
+    const resizeObserver = new ResizeObserver(updateSize);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
   }, []);
 
   // Center image when it loads
@@ -140,6 +148,9 @@ const ImageCanvas: React.FC<ImageCanvasProps> = ({
 
     const oldScale = stage.scaleX();
     const pointer = stage.getPointerPosition();
+    
+    // getPointerPosition() can return null
+    if (!pointer) return;
 
     const mousePointTo = {
       x: (pointer.x - stage.x()) / oldScale,
@@ -223,7 +234,8 @@ const ImageCanvas: React.FC<ImageCanvasProps> = ({
         y={position.y}
         draggable
         onWheel={handleWheel}
-        onDragEnd={(e) => {
+        onDragMove={(e) => {
+          // Update position during drag to prevent snap-back on re-render
           setPosition({
             x: e.target.x(),
             y: e.target.y(),

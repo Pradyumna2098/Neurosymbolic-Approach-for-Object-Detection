@@ -69,8 +69,24 @@ const BoundingBox: React.FC<BoundingBoxProps> = ({
   const fontSize = 14;
   const labelHeight = 20;
 
+  // Measure actual text width for accurate label background
+  const labelWidth = React.useMemo(() => {
+    if (!labelText) return 0;
+    // Create a temporary canvas context to measure text
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) return labelText.length * 7; // Fallback
+    context.font = `bold ${fontSize}px Arial`;
+    return context.measureText(labelText).width;
+  }, [labelText, fontSize]);
+
   return (
-    <Group>
+    <Group
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onTap={onClick}
+    >
       {/* Bounding Box Rectangle */}
       <Rect
         x={bbox.x}
@@ -80,10 +96,6 @@ const BoundingBox: React.FC<BoundingBoxProps> = ({
         stroke={strokeColor}
         strokeWidth={strokeWidth}
         fill="transparent"
-        onClick={onClick}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        onTap={onClick}
         hitStrokeWidth={10} // Larger hit area for easier interaction
       />
 
@@ -93,10 +105,11 @@ const BoundingBox: React.FC<BoundingBoxProps> = ({
           <Rect
             x={bbox.x}
             y={bbox.y - labelHeight}
-            width={labelText.length * 7 + padding * 2} // Approximate width
+            width={labelWidth + padding * 2}
             height={labelHeight}
             fill={strokeColor}
             opacity={0.8}
+            listening={false}
           />
           <Text
             x={bbox.x + padding}
@@ -106,6 +119,7 @@ const BoundingBox: React.FC<BoundingBoxProps> = ({
             fontFamily="Arial"
             fill="#FFFFFF"
             fontStyle="bold"
+            listening={false}
           />
         </>
       )}
