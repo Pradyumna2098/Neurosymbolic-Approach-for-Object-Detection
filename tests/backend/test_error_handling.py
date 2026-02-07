@@ -61,11 +61,11 @@ class TestGetErrorMessage:
         assert base_message in message
         assert custom in message
 
-    def test_get_error_message_unknown_code(self):
-        """Test error message for unknown error code."""
-        # Create a mock error code (this would be invalid in practice)
+    def test_get_error_message_with_internal_error(self):
+        """Test error message retrieval for internal error code."""
         message = get_error_message(ErrorCode.INTERNAL_ERROR)
         assert "error" in message.lower()
+        assert len(message) > 0
 
 
 class TestShouldRetry:
@@ -188,7 +188,3 @@ class TestErrorCodeCategories:
         for code in resource_errors:
             message = get_error_message(code)
             assert any(word in message.lower() for word in ["memory", "storage", "gpu"])
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

@@ -4,6 +4,7 @@ This module provides centralized exception handling for the API,
 converting exceptions to standardized ErrorResponse format.
 """
 
+import logging
 from datetime import datetime, timezone
 from typing import Union
 
@@ -14,6 +15,9 @@ from pydantic import ValidationError
 
 from app.core.errors import ErrorCode, get_error_message
 from app.models.responses import ErrorDetail, ErrorResponse
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
@@ -33,8 +37,21 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     
     # Check if detail is a dict with error info
     if isinstance(exc.detail, dict):
-        error_code = ErrorCode(exc.detail.get("code", ErrorCode.INTERNAL_ERROR))
-        error_message = exc.detail.get("message", get_error_message(error_code))
+        # Support both "code" and legacy "error_code" keys and handle unknown values safely
+        raw_code = exc.detail.get("code")
+        if raw_code is None:
+            raw_code = exc.detail.get("error_code")
+        
+        if isinstance(raw_code, ErrorCode):
+            error_code = raw_code
+        elif raw_code is not None:
+            try:
+                error_code = ErrorCode(raw_code)
+            except (ValueError, TypeError):
+                error_code = ErrorCode.INTERNAL_ERROR
+        
+        # Prefer explicit message, otherwise fall back to default for the resolved error_code
+        error_message = exc.detail.get("message") or get_error_message(error_code)
         error_details = exc.detail.get("details")
     elif isinstance(exc.detail, str):
         # Try to map common HTTP status codes to error codes
@@ -64,7 +81,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     
     return JSONResponse(
         status_code=exc.status_code,
-        content=error_response.model_dump()
+        content=error_response.model_dump(mode="json")
     )
 
 
@@ -111,7 +128,7 @@ async def validation_exception_handler(
     )
     
     # Add field errors to response
-    response_data = error_response.model_dump()
+    response_data = error_response.model_dump(mode="json")
     response_data["field_errors"] = errors
     
     return JSONResponse(
@@ -131,9 +148,7 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
         JSONResponse with ErrorResponse format
     """
     # Log the exception for debugging
-    import traceback
-    print(f"[ERROR] Uncaught exception: {exc}")
-    print(traceback.format_exc())
+    logger.exception("Uncaught exception in request handler")
     
     error_response = ErrorResponse(
         status="error",
@@ -147,7 +162,7 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
     
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=error_response.model_dump()
+        content=error_response.model_dump(mode="json")
     )
 
 

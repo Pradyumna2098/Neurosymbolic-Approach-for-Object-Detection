@@ -58,10 +58,20 @@ export function parseApiError(error: unknown): ParsedError {
 
     // Check if response has standardized error format
     if (data && data.error) {
-      const errorCode = (data.error.code as ErrorCode) || ErrorCode.INTERNAL_ERROR;
+      // Validate that we have a known error code, otherwise fall back to INTERNAL_ERROR
+      let errorCode = ErrorCode.INTERNAL_ERROR;
+      const rawCode = data.error.code;
+      
+      if (rawCode && Object.values(ErrorCode).includes(rawCode as ErrorCode)) {
+        errorCode = rawCode as ErrorCode;
+      }
+      
+      // Always ensure message is non-empty
+      const message = data.error.message || ERROR_MESSAGES[errorCode] || 'An unexpected error occurred.';
+      
       return {
         code: errorCode,
-        message: data.error.message || ERROR_MESSAGES[errorCode],
+        message,
         details: data.error.details,
         fieldErrors: data.field_errors,
         canRetry: shouldRetry(errorCode),

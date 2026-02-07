@@ -42,10 +42,7 @@ export const uploadImagesThunk = createAsyncThunk(
       if (response.warnings && response.warnings.length > 0) {
         response.warnings.forEach((warning) => {
           dispatch(
-            showError({
-              message: `${warning.filename}: ${warning.error}`,
-              canRetry: false,
-            })
+            showWarning(`${warning.filename}: ${warning.error}`)
           );
         });
       }
@@ -65,12 +62,6 @@ export const uploadImagesThunk = createAsyncThunk(
           message: parsedError.message,
           errorCode: parsedError.code,
           canRetry: parsedError.canRetry,
-          retryAction: parsedError.canRetry
-            ? () => {
-                // Retry would need to be triggered from the component
-                console.log('Retry upload requested');
-              }
-            : undefined,
         })
       );
       
