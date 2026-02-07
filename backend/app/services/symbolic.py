@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from app.core import settings
+from app.core.resource_path import get_resource_path
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -472,7 +473,7 @@ class SymbolicReasoningService:
             
             # Use default rules file if not provided
             if rules_file is None:
-                rules_file = Path("pipeline/prolog/rules.pl")
+                rules_file = get_resource_path("pipeline/prolog/rules.pl")
             
             # Use default class map if not provided
             if class_map is None:
