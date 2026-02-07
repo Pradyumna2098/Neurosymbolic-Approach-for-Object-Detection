@@ -27,7 +27,8 @@ LicenseFile=LICENSE
 ; Output configuration
 OutputDir=installer_output
 OutputBaseFilename=NeurosymbolicApp_Setup_v{#MyAppVersion}
-SetupIconFile=frontend\src\assets\icon.ico
+; SetupIconFile=frontend\src\assets\icon.ico
+; Uncomment the line above when icon file is created
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
