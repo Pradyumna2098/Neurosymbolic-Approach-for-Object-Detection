@@ -71,3 +71,14 @@ frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
 
+# PyInstaller build artifacts
+build/
+dist/
+*.spec.tmp
+venv_build/
+venv_package/
+
+# PyInstaller output
+*.manifest
+*.spec.bak
+
