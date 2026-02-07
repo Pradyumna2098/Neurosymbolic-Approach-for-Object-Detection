@@ -223,7 +223,7 @@ const SystemLogs: React.FC<SystemLogsProps> = ({ logs, onClearLogs }) => {
           Showing {filteredLogs.length} of {logs.length} logs
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          Max {100} logs retained
+          Older logs are automatically removed
         </Typography>
       </Box>
     </Box>

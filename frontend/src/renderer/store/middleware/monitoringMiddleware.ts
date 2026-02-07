@@ -1,5 +1,5 @@
 import { Middleware, UnknownAction } from '@reduxjs/toolkit';
-import { addLog, updateMetrics } from '../slices/monitoringSlice';
+import { addLog, updateMetrics, clearMetrics } from '../slices/monitoringSlice';
 
 /**
  * Redux middleware that automatically logs detection events
@@ -13,6 +13,9 @@ export const monitoringMiddleware: Middleware = (store) => (next) => (action: Un
   if (action.type.startsWith('detection/')) {
     switch (action.type) {
       case 'detection/startDetection':
+        // Reset metrics for new detection run
+        store.dispatch(clearMetrics());
+        
         store.dispatch(addLog({
           level: 'info',
           message: `Detection started for job: ${(action as any).payload}`,
@@ -52,14 +55,25 @@ export const monitoringMiddleware: Middleware = (store) => (next) => (action: Un
         const startedAt = state.detection.startedAt;
         if (completedAt && startedAt) {
           const inferenceTime = new Date(completedAt).getTime() - new Date(startedAt).getTime();
-          const processingSpeed = state.upload.files.length / (inferenceTime / 1000);
           
-          store.dispatch(updateMetrics({
-            inferenceTime,
-            processingSpeed,
-            imagesProcessed: state.upload.files.length,
-            totalImages: state.upload.files.length,
-          }));
+          // Guard against divide-by-zero: only calculate speed if inferenceTime > 0
+          if (inferenceTime > 0) {
+            const processingSpeed = state.upload.files.length / (inferenceTime / 1000);
+            
+            store.dispatch(updateMetrics({
+              inferenceTime,
+              processingSpeed,
+              imagesProcessed: state.upload.files.length,
+              totalImages: state.upload.files.length,
+            }));
+          } else {
+            // If inferenceTime is 0 or negative, don't calculate speed
+            store.dispatch(updateMetrics({
+              inferenceTime,
+              imagesProcessed: state.upload.files.length,
+              totalImages: state.upload.files.length,
+            }));
+          }
         }
         break;
 
@@ -120,17 +134,20 @@ export const monitoringMiddleware: Middleware = (store) => (next) => (action: Un
             (sum: number, result: any) => sum + (result.detections?.length ?? 0),
             0
           );
-          const avgConfidence = results.reduce(
+          
+          // Calculate weighted average confidence: sum of all confidences / total detections
+          const totalConfidenceSum = results.reduce(
             (sum: number, result: any) => {
               const detections = result.detections ?? [];
               const confidenceSum = detections.reduce(
                 (s: number, d: any) => s + (d.confidence ?? 0),
                 0
               );
-              return sum + (detections.length > 0 ? confidenceSum / detections.length : 0);
+              return sum + confidenceSum;
             },
             0
-          ) / results.length;
+          );
+          const avgConfidence = totalDetections > 0 ? totalConfidenceSum / totalDetections : 0;
 
           store.dispatch(updateMetrics({
             totalDetections,

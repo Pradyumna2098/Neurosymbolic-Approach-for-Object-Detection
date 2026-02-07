@@ -52,11 +52,11 @@ const monitoringSlice = createSlice({
         timestamp: new Date(),
       };
       
-      state.logs.unshift(newLog); // Add to beginning
+      state.logs.push(newLog); // Add to end so newest logs appear last
       
-      // Keep only maxLogs entries
+      // Keep only maxLogs entries (retain the most recent logs at the end)
       if (state.logs.length > state.maxLogs) {
-        state.logs = state.logs.slice(0, state.maxLogs);
+        state.logs = state.logs.slice(-state.maxLogs);
       }
     },
     
