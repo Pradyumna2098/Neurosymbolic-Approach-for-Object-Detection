@@ -27,6 +27,8 @@ class ErrorCode(str, Enum):
     JOB_ALREADY_RUNNING = "JOB_ALREADY_RUNNING"
     JOB_FAILED = "JOB_FAILED"
     INVALID_JOB_STATUS = "INVALID_JOB_STATUS"
+    NO_FILES = "NO_FILES"
+    INVALID_STATUS = "INVALID_STATUS"
     
     # Model/Inference errors
     MODEL_NOT_FOUND = "MODEL_NOT_FOUND"
@@ -43,6 +45,13 @@ class ErrorCode(str, Enum):
     RESULTS_NOT_FOUND = "RESULTS_NOT_FOUND"
     RESULTS_NOT_READY = "RESULTS_NOT_READY"
     VISUALIZATION_ERROR = "VISUALIZATION_ERROR"
+    VISUALIZATIONS_NOT_READY = "VISUALIZATIONS_NOT_READY"
+    VISUALIZATIONS_NOT_FOUND = "VISUALIZATIONS_NOT_FOUND"
+    VISUALIZATION_NOT_FOUND = "VISUALIZATION_NOT_FOUND"
+    NO_VISUALIZATIONS = "NO_VISUALIZATIONS"
+    ORIGINAL_IMAGE_NOT_FOUND = "ORIGINAL_IMAGE_NOT_FOUND"
+    ANNOTATED_IMAGE_NOT_FOUND = "ANNOTATED_IMAGE_NOT_FOUND"
+    INVALID_FORMAT = "INVALID_FORMAT"
     
     # Rate limiting
     RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED"
@@ -63,6 +72,8 @@ ERROR_MESSAGES = {
     ErrorCode.JOB_ALREADY_RUNNING: "A detection job is already running for these files.",
     ErrorCode.JOB_FAILED: "The detection job failed to complete.",
     ErrorCode.INVALID_JOB_STATUS: "The job is not in a valid state for this operation.",
+    ErrorCode.NO_FILES: "The job has no uploaded files.",
+    ErrorCode.INVALID_STATUS: "The job status is invalid for this operation.",
     
     ErrorCode.MODEL_NOT_FOUND: "The requested model was not found.",
     ErrorCode.MODEL_LOAD_ERROR: "Failed to load the detection model. Please check the model path.",
@@ -76,6 +87,13 @@ ERROR_MESSAGES = {
     ErrorCode.RESULTS_NOT_FOUND: "Results for this job were not found.",
     ErrorCode.RESULTS_NOT_READY: "Results are not yet available. The job may still be processing.",
     ErrorCode.VISUALIZATION_ERROR: "Failed to generate visualization images.",
+    ErrorCode.VISUALIZATIONS_NOT_READY: "Visualizations are not yet available. The job may still be processing.",
+    ErrorCode.VISUALIZATIONS_NOT_FOUND: "No visualizations were found for this job.",
+    ErrorCode.VISUALIZATION_NOT_FOUND: "The requested visualization was not found.",
+    ErrorCode.NO_VISUALIZATIONS: "No visualizations are available for this job.",
+    ErrorCode.ORIGINAL_IMAGE_NOT_FOUND: "The original image was not found.",
+    ErrorCode.ANNOTATED_IMAGE_NOT_FOUND: "The annotated image was not found.",
+    ErrorCode.INVALID_FORMAT: "Invalid format parameter specified.",
     
     ErrorCode.RATE_LIMIT_EXCEEDED: "Too many requests. Please wait before trying again.",
 }
