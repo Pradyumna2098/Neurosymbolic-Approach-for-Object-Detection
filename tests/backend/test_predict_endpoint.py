@@ -186,9 +186,9 @@ class TestPredictEndpoint:
         # Verify error response
         assert response.status_code == 404
         data = response.json()
-        assert data["detail"]["status"] == "error"
-        assert data["detail"]["code"] == "JOB_NOT_FOUND"
-        assert fake_job_id in data["detail"]["message"]
+        assert data["status"] == "error"
+        assert data["error"]["code"] == "JOB_NOT_FOUND"
+        assert fake_job_id in data["error"]["message"]
     
     def test_trigger_inference_no_files(self, client):
         """Test triggering inference on job with no uploaded files."""
@@ -208,9 +208,9 @@ class TestPredictEndpoint:
         # Verify error response
         assert response.status_code == 400
         data = response.json()
-        assert data["detail"]["status"] == "error"
-        assert data["detail"]["code"] == "NO_FILES"
-        assert job_id in data["detail"]["message"]
+        assert data["status"] == "error"
+        assert data["error"]["code"] == "NO_FILES"
+        assert job_id in data["error"]["message"]
     
     def test_trigger_inference_invalid_status(self, client, uploaded_job):
         """Test triggering inference on job with invalid status."""
@@ -232,9 +232,9 @@ class TestPredictEndpoint:
         # Verify error response
         assert response.status_code == 400
         data = response.json()
-        assert data["detail"]["status"] == "error"
-        assert data["detail"]["code"] == "INVALID_STATUS"
-        assert "processing" in data["detail"]["message"]
+        assert data["status"] == "error"
+        assert data["error"]["code"] == "INVALID_STATUS"
+        assert "processing" in data["error"]["message"]
     
     def test_trigger_inference_invalid_confidence_threshold(self, client, uploaded_job):
         """Test validation of confidence threshold."""

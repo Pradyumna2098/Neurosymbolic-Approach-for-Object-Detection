@@ -124,8 +124,8 @@ class TestUploadEndpoint:
         assert response.status_code == 400
         data = response.json()
         
-        assert data["detail"]["status"] == "error"
-        assert "validation" in data["detail"]["message"].lower()
+        assert data["status"] == "error"
+        assert "validation" in data["error"]["message"].lower()
     
     def test_upload_image_too_small(self, client):
         """Test uploading an image that's too small."""
@@ -142,7 +142,7 @@ class TestUploadEndpoint:
         assert response.status_code == 400
         data = response.json()
         
-        assert data["detail"]["status"] == "error"
+        assert data["status"] == "error"
     
     def test_upload_empty_file(self, client):
         """Test uploading an empty file."""
@@ -159,7 +159,7 @@ class TestUploadEndpoint:
         assert response.status_code == 400
         data = response.json()
         
-        assert data["detail"]["status"] == "error"
+        assert data["status"] == "error"
     
     def test_upload_too_many_files(self, client):
         """Test uploading more than the maximum allowed files."""
@@ -176,8 +176,8 @@ class TestUploadEndpoint:
         assert response.status_code == 400
         data = response.json()
         
-        assert data["detail"]["status"] == "error"
-        assert "too many" in data["detail"]["message"].lower()
+        assert data["status"] == "error"
+        assert "too many" in data["error"]["message"].lower()
     
     def test_upload_creates_job(self, client):
         """Test that upload creates a job with correct status."""
@@ -282,8 +282,8 @@ class TestUploadEndpoint:
         assert response.status_code == 400
         data = response.json()
         
-        assert data["detail"]["status"] == "error"
-        assert "validation" in data["detail"]["message"].lower() or "failed" in data["detail"]["message"].lower()
+        assert data["status"] == "error"
+        assert "validation" in data["error"]["message"].lower() or "failed" in data["error"]["message"].lower()
     
     def test_upload_image_dimensions_too_large(self, client):
         """Test uploading an image with dimensions exceeding 8192x8192."""
@@ -300,7 +300,7 @@ class TestUploadEndpoint:
         assert response.status_code == 400
         data = response.json()
         
-        assert data["detail"]["status"] == "error"
+        assert data["status"] == "error"
     
     def test_upload_partial_success_includes_warnings(self, client):
         """Test that partial failures include warnings in response."""

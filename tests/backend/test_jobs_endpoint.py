@@ -229,11 +229,11 @@ class TestJobStatusEndpoint:
         assert response.status_code == 404
         data = response.json()
         
-        assert "detail" in data
-        detail = data["detail"]
-        assert detail["status"] == "error"
-        assert "Job not found" in detail["message"]
-        assert detail["error_code"] == "JOB_NOT_FOUND"
+        assert "error" in data
+        error = data["error"]
+        assert data["status"] == "error"
+        assert "Job not found" in error["message"]
+        assert error["code"] == "JOB_NOT_FOUND"
     
     def test_get_status_response_format(self, client, uploaded_job):
         """Test that the response format matches the specification."""
