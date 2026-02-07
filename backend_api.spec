@@ -16,8 +16,8 @@ from pathlib import Path
 
 block_cipher = None
 
-# Determine the root directory
-ROOT_DIR = Path('.').absolute()
+# Determine the root directory based on spec file location
+ROOT_DIR = Path(__file__).resolve().parent
 
 # Hidden imports required for the application
 # These modules are dynamically imported and need to be explicitly included

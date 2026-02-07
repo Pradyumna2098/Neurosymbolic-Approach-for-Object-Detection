@@ -7,7 +7,6 @@ for Windows, Linux, and macOS with proper environment detection.
 """
 
 import argparse
-import os
 import platform
 import shutil
 import subprocess
@@ -40,18 +39,34 @@ def check_python_version() -> bool:
         return False
 
 
-def run_command(cmd: list, description: str) -> bool:
-    """Run a command and handle errors."""
+def run_command(cmd: list, description: str, stream_output: bool = False) -> bool:
+    """Run a command and handle errors.
+    
+    Args:
+        cmd: Command and arguments to run
+        description: Human-readable description
+        stream_output: If True, stream output to console instead of capturing
+    
+    Returns:
+        True if command succeeded, False otherwise
+    """
     try:
         print(f"  Running: {' '.join(cmd)}")
-        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
-        if result.stdout:
-            print(result.stdout)
-        return True
+        
+        if stream_output:
+            # Stream output for long-running commands like PyInstaller
+            result = subprocess.run(cmd, check=True, text=True)
+            return True
+        else:
+            # Capture output for quick commands
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+            if result.stdout:
+                print(result.stdout)
+            return True
     except subprocess.CalledProcessError as e:
         print(f"✗ {description} failed")
         print(f"  Error: {e}")
-        if e.stderr:
+        if hasattr(e, 'stderr') and e.stderr:
             print(f"  stderr: {e.stderr}")
         return False
 
@@ -145,8 +160,9 @@ def run_pyinstaller(venv_python: Path, spec_file: Path) -> bool:
     print_step(7, 7, "Building executable with PyInstaller")
     print("  This will take 10-30 minutes depending on your system...")
     
+    # Stream output for PyInstaller (large output)
     if not run_command([str(venv_python), "-m", "PyInstaller", str(spec_file)],
-                      "PyInstaller build"):
+                      "PyInstaller build", stream_output=True):
         return False
     
     return True

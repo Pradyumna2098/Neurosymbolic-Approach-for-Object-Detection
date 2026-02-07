@@ -51,14 +51,29 @@ echo This may take several minutes...
 
 REM Install PyInstaller first
 pip install pyinstaller==6.3.0
+if %errorlevel% neq 0 (
+    echo ERROR: Failed to install PyInstaller
+    pause
+    exit /b 1
+)
 
 REM Install backend requirements
 if exist "backend\requirements.txt" (
     echo Installing backend requirements...
     pip install -r backend\requirements.txt
+    if %errorlevel% neq 0 (
+        echo ERROR: Failed to install backend requirements
+        pause
+        exit /b 1
+    )
 ) else if exist "requirements.txt" (
     echo Installing common requirements...
     pip install -r requirements.txt
+    if %errorlevel% neq 0 (
+        echo ERROR: Failed to install common requirements
+        pause
+        exit /b 1
+    )
 ) else (
     echo ERROR: No requirements.txt found
     pause
@@ -104,14 +119,9 @@ echo.
 echo Executable location: dist\neurosymbolic-backend\
 echo.
 
-REM Test the executable
-echo Testing executable...
-dist\neurosymbolic-backend\neurosymbolic-backend.exe --help >nul 2>&1
-if %errorlevel% equ 0 (
-    echo ✓ Executable runs successfully
-) else (
-    echo ! Executable may have issues - check manually
-)
+REM Note: Skip executable test as it may start the server and block
+echo Note: Executable test skipped (would start server)
+echo Please test manually by running the executable
 
 echo.
 echo Build size:

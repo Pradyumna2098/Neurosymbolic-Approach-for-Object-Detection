@@ -10,7 +10,6 @@ import argparse
 import shutil
 import sys
 from pathlib import Path
-from typing import List
 
 
 def print_step(message: str) -> None:
@@ -89,10 +88,10 @@ def copy_configs(source_dir: Path, dest_dir: Path) -> None:
     """
     print_step("Copying configuration examples")
     
-    # Copy .env.example
+    # Copy .env.example to configs directory
     env_example = source_dir / '.env.example'
     if env_example.exists():
-        shutil.copy2(env_example, dest_dir.parent / '.env.example')
+        shutil.copy2(env_example, dest_dir / '.env.example')
         print(f"  ✓ Copied: .env.example")
     
     # Copy sample configs from shared/configs if they exist
@@ -318,7 +317,8 @@ def main():
     print(f"\nLocation: {dist_root.absolute()}")
     
     if not args.no_archive:
-        print(f"Archive: {dist_root.with_suffix('.zip').absolute()}")
+        archive_path = dist_root.parent / f"{dist_root.name}.zip"
+        print(f"Archive: {archive_path.absolute()}")
     
     print("\nContents:")
     print("  neurosymbolic-backend/  - Executable and dependencies")

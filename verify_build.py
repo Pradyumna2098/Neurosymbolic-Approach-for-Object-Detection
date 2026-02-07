@@ -6,7 +6,6 @@ and can run in a clean environment.
 """
 
 import json
-import os
 import subprocess
 import sys
 import time
@@ -24,10 +23,17 @@ def print_section(title: str) -> None:
 def print_check(message: str, passed: bool, details: str = "") -> None:
     """Print a check result."""
     status = "✓" if passed else "✗"
-    color = "\033[92m" if passed else "\033[91m"  # Green or Red
-    reset = "\033[0m"
     
-    print(f"{color}{status}{reset} {message}")
+    # Only use ANSI colors if stdout is a TTY and not on Windows without colorama
+    use_colors = sys.stdout.isatty() and (platform.system() != 'Windows' or 'ANSICON' in __import__('os').environ)
+    
+    if use_colors:
+        color = "\033[92m" if passed else "\033[91m"  # Green or Red
+        reset = "\033[0m"
+        print(f"{color}{status}{reset} {message}")
+    else:
+        print(f"{status} {message}")
+    
     if details:
         print(f"    {details}")
 
@@ -105,14 +111,15 @@ def test_executable_help(exe_path: Path) -> bool:
         
         # FastAPI/Uvicorn might not support --help, so we check for any output
         has_output = bool(result.stdout or result.stderr)
-        print_check("Executable runs without errors", result.returncode == 0 or has_output)
+        passed = result.returncode == 0 or has_output
+        print_check("Executable runs without errors", passed)
         
         if result.stdout:
             print(f"    stdout: {result.stdout[:200]}")
         if result.stderr:
             print(f"    stderr: {result.stderr[:200]}")
         
-        return True
+        return passed
     except subprocess.TimeoutExpired:
         print_check("Executable runs (timeout)", False, "Command timed out after 30 seconds")
         return False
@@ -220,7 +227,8 @@ def main():
         print_section("Testing Executable Functionality")
         print("  ⚠ Skipping executable test (would start server)")
         print("  Manually test by running the executable")
-        results['executable_runs'] = True  # Assume it works if built
+        # Mark as None instead of True to indicate it wasn't tested
+        results['executable_runs'] = None
     
     check_external_dependencies()
     
@@ -231,12 +239,19 @@ def main():
     # Final summary
     print_section("Verification Summary")
     
-    passed_checks = sum(1 for v in results.values() if v)
+    # Count only True values (exclude None for skipped tests)
+    passed_checks = sum(1 for v in results.values() if v is True)
+    testable_checks = sum(1 for v in results.values() if v is not None)
     total_checks = len(results)
     
-    print(f"\n  Passed: {passed_checks}/{total_checks} checks")
+    print(f"\n  Passed: {passed_checks}/{testable_checks} checks")
+    if testable_checks < total_checks:
+        print(f"  Skipped: {total_checks - testable_checks} checks")
     
-    if all(results.values()):
+    # Check if all testable checks passed
+    all_passed = all(v is True or v is None for v in results.values())
+    
+    if all_passed:
         print("\n  ✓ All checks passed! Executable appears to be correctly built.")
         print("\n  Next steps:")
         print(f"    1. cd {dist_dir}")

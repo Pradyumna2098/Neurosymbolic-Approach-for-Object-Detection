@@ -4,7 +4,6 @@ This module provides helpers to locate resources (files, directories) in both
 development and PyInstaller-bundled environments.
 """
 
-import os
 import sys
 from pathlib import Path
 from typing import Union
@@ -44,6 +43,8 @@ def get_data_path(relative_path: Union[str, Path] = '') -> Path:
     writable location. This returns the path relative to the executable
     or script location.
     
+    Environment variable DATA_ROOT can be used to override the default location.
+    
     Args:
         relative_path: Path relative to data root.
     
@@ -54,8 +55,15 @@ def get_data_path(relative_path: Union[str, Path] = '') -> Path:
         >>> uploads_dir = get_data_path('uploads')
         >>> results_dir = get_data_path('results/job_001')
     """
-    if getattr(sys, 'frozen', False):
+    # Check for environment variable override
+    env_data_root = sys.modules.get('os', __import__('os')).environ.get('DATA_ROOT')
+    
+    if env_data_root:
+        base_path = Path(env_data_root)
+    elif getattr(sys, 'frozen', False):
         # Running as executable - use directory where exe is located
+        # Note: This may not be writable in protected locations (e.g., Program Files)
+        # Users should set DATA_ROOT environment variable for such cases
         base_path = Path(sys.executable).parent / 'data'
     else:
         # Running in development - use backend/data or root data
@@ -169,7 +177,7 @@ def check_swipl_available() -> bool:
         from pyswip import Prolog
         
         # Try to create a Prolog instance
-        prolog = Prolog()
+        Prolog()
         return True
     except Exception:
         return False

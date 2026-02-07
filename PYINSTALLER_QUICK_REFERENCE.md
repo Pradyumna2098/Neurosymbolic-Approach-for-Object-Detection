@@ -45,7 +45,7 @@ Repository Root/
 ├── verify_build.py               # Build verification
 ├── create_distribution.py        # Distribution packager
 ├── EXECUTABLE_README.txt         # User guide
-├── PYINSTALLER_IMPLEMENTATION_SUMMARY.md  # This file
+├── PYINSTALLER_QUICK_REFERENCE.md         # This file
 │
 ├── backend/
 │   └── app/
