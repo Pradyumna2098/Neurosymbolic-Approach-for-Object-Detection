@@ -2355,3 +2355,374 @@ Image Name,Detection ID,Class ID,Class Name,Confidence,BBox X,BBox Y,BBox Width,
 - Backend must be running on localhost:8000 for testing
 - CORS configured in backend for local development
 - Ready for end-to-end testing with actual YOLO models
+
+---
+
+## Issue 23: Implement End-to-End Error Handling ✅
+
+**Status:** Complete  
+**Priority:** High  
+**Date:** 2026-02-07
+
+**Overview:**
+Implemented comprehensive error handling across the entire application, with centralized error management, toast notifications, retry logic, and user-friendly error displays.
+
+### Backend Implementation
+
+**1. Centralized Error Codes (`backend/app/core/errors.py`):**
+- Created `ErrorCode` enum with all standard error types:
+  - General: `INTERNAL_ERROR`, `INVALID_REQUEST`, `VALIDATION_ERROR`
+  - File/Upload: `FILE_NOT_FOUND`, `FILE_TOO_LARGE`, `INVALID_FILE_FORMAT`, `UPLOAD_FAILED`
+  - Job: `JOB_NOT_FOUND`, `JOB_ALREADY_RUNNING`, `JOB_FAILED`, `INVALID_JOB_STATUS`
+  - Model/Inference: `MODEL_NOT_FOUND`, `MODEL_LOAD_ERROR`, `INFERENCE_ERROR`, `INVALID_CONFIG`
+  - Resource: `STORAGE_ERROR`, `MEMORY_ERROR`, `CUDA_OOM`
+  - Results: `RESULTS_NOT_FOUND`, `RESULTS_NOT_READY`, `VISUALIZATION_ERROR`
+  - Rate Limiting: `RATE_LIMIT_EXCEEDED`
+- Mapped error codes to user-friendly messages
+- Implemented `should_retry()` to identify transient errors
+- Implemented `get_retry_delay()` with exponential backoff (5s, 15s, 45s)
+- Fixed 60-second delay for rate limiting
+
+**2. Exception Handlers (`backend/app/core/exception_handlers.py`):**
+- `http_exception_handler`: Converts HTTPException to standardized ErrorResponse
+  - Maps HTTP status codes to appropriate error codes
+  - Extracts structured error details from exception
+- `validation_exception_handler`: Handles Pydantic validation errors
+  - Formats field-level validation errors
+  - Returns list of field errors with detailed messages
+- `general_exception_handler`: Catches all uncaught exceptions
+  - Logs full stack trace for debugging
+  - Returns generic error response to client
+  - Prevents sensitive server details from leaking
+- `create_http_exception`: Helper for creating structured exceptions
+
+**3. FastAPI Integration (`backend/app/main.py`):**
+- Registered all exception handlers with FastAPI app
+- Exception handlers apply to all routes
+- Ensures consistent error response format across API
+
+### Frontend Implementation
+
+**1. Error Utilities:**
+
+**Error Codes (`frontend/src/renderer/utils/errorCodes.ts`):**
+- `ErrorCode` enum matching backend error codes
+- Added client-side only codes: `NETWORK_ERROR`, `TIMEOUT_ERROR`
+- `ERROR_MESSAGES` mapping for user-friendly messages
+- `shouldRetry()` determines retriable errors
+- `getRetryDelay()` calculates exponential backoff
+- `MAX_RETRY_ATTEMPTS = 3`
+
+**Error Handling (`frontend/src/renderer/utils/errorHandling.ts`):**
+- `parseApiError()`: Parses Axios errors into standardized `ParsedError` format
+  - Handles network errors (no response)
+  - Handles timeout errors
+  - Extracts error details from API responses
+  - Maps HTTP status codes to error codes
+  - Identifies retriable errors
+- `formatFieldErrors()`: Formats validation field errors for display
+- `isNetworkError()`: Checks for connectivity issues
+- `isValidationError()`: Checks for validation errors with field details
+- `getErrorTitle()`: Returns user-friendly error titles
+
+**Retry Logic (`frontend/src/renderer/utils/retryUtils.ts`):**
+- `retryWithBackoff()`: Generic retry function with exponential backoff
+  - Configurable max attempts
+  - Optional retry callback
+  - Custom retry condition
+  - Automatic delay calculation
+- `createRetryWrapper()`: Wraps async functions with retry logic
+- `formatRetryDelay()`: Formats delay for user display
+
+**2. Notification System:**
+
+**Notification Slice (`frontend/src/renderer/store/slices/notificationSlice.ts`):**
+- Redux slice for managing toast notifications
+- Notification types: `success`, `error`, `warning`, `info`
+- Actions:
+  - `enqueueNotification`: Add notification to queue
+  - `closeNotification`: Dismiss notification
+  - `removeNotification`: Remove from store
+  - `clearNotifications`: Clear all
+  - `showSuccess`, `showError`, `showWarning`, `showInfo`: Convenience actions
+- Error notifications support:
+  - Error code tracking
+  - Retry action callbacks
+  - Persistent display for retriable errors
+  - Auto-dismiss for non-critical messages
+
+**Redux Integration:**
+- Added `notification` reducer to store
+- Updated serializableCheck to ignore notification functions and options
+- Integrated with GlobalNotifications component
+
+**3. UI Components:**
+
+**GlobalNotifications (`frontend/src/renderer/components/GlobalNotifications.tsx`):**
+- Wraps application with notistack `SnackbarProvider`
+- `Notifier` component consumes Redux notification state
+- Automatically displays notifications from store
+- Configuration:
+  - Max 3 simultaneous notifications
+  - Bottom-right positioning
+  - Auto-hide after 5 seconds (configurable per notification)
+  - Prevent duplicate notifications
+- Action buttons:
+  - Close button on all notifications
+  - Retry button for retriable errors
+- Cleans up notifications after display
+
+**ErrorDisplay (`frontend/src/renderer/components/ErrorDisplay.tsx`):**
+- Detailed error information component
+- Two modes: compact and full
+- Displays:
+  - Error title (mapped from error code)
+  - Error message
+  - Optional details (expandable)
+  - Field validation errors (if present)
+  - Error code and HTTP status
+- Actions:
+  - Retry button (if error is retriable)
+  - Dismiss button
+- Expandable details section with smooth animation
+
+**JobErrorCard (`frontend/src/renderer/components/JobErrorCard.tsx`):**
+- Specialized card for displaying failed job information
+- Displays:
+  - Job ID
+  - Error code chip
+  - Error message and details
+  - Failure timestamp
+- Highlights retriable errors with retry button
+- Dismiss action for non-retriable errors
+- Visual styling with error theme colors
+
+**ErrorBoundary (`frontend/src/renderer/components/ErrorBoundary.tsx`):**
+- React error boundary for catching component errors
+- Prevents entire app crash from component failures
+- Displays fallback UI with:
+  - Error message and stack trace
+  - Component stack (in development mode)
+  - Try Again button (resets error state)
+  - Reload Application button (full page reload)
+- Custom fallback support via props
+
+**4. Redux Thunk Integration:**
+
+Updated all thunks to dispatch notifications:
+
+**Upload Thunks:**
+- Success: "Successfully uploaded X file(s)"
+- Warnings: Individual file validation errors
+- Errors: Parsed error with retry option if applicable
+
+**Detection Thunks:**
+- Start: Info notification "Detection job started"
+- Success: "Detection completed successfully!"
+- Failed job: Error with job failure message
+- Errors: Parsed error with retry option
+
+**Results Thunks:**
+- Errors: Parsed error with retry option
+- Visualization errors: Warning (non-critical)
+
+**5. Application Integration:**
+
+- Wrapped `App` with `GlobalNotifications` provider
+- Wrapped root with `ErrorBoundary` in `index.tsx`
+- All API calls now trigger appropriate notifications
+- Error states visible to users through toasts
+- Failed jobs display detailed error information
+
+### Features Implemented
+
+**Error Mapping:**
+- ✅ All backend error codes mapped to user-friendly messages
+- ✅ Consistent error format across backend and frontend
+- ✅ Field-level validation errors highlighted
+- ✅ HTTP status codes mapped to error codes
+
+**Network Error Handling:**
+- ✅ Network connectivity failures detected
+- ✅ Timeout errors identified
+- ✅ Retry option shown for network errors
+- ✅ Exponential backoff for retries (5s, 15s, 45s)
+- ✅ Fixed 60s delay for rate limiting
+
+**Validation Errors:**
+- ✅ Field-level validation errors extracted
+- ✅ Multiple field errors displayed
+- ✅ Field names highlighted in error messages
+- ✅ Validation errors prevent retry (not transient)
+
+**Failed Jobs:**
+- ✅ Job error details displayed in `JobErrorCard`
+- ✅ Error code, message, and details shown
+- ✅ Failure timestamp included
+- ✅ Retry option for retriable job failures
+- ✅ Dismiss action available
+
+**Toast Notifications:**
+- ✅ Success notifications for completed actions
+- ✅ Error notifications with retry buttons
+- ✅ Warning notifications for non-critical issues
+- ✅ Info notifications for status updates
+- ✅ Auto-dismiss with configurable duration
+- ✅ Persistent display for errors requiring action
+- ✅ Max 3 simultaneous notifications
+- ✅ Bottom-right positioning
+
+**Retry Logic:**
+- ✅ Automatic retry with exponential backoff
+- ✅ Configurable max attempts (default: 3)
+- ✅ Retry callbacks for progress tracking
+- ✅ Custom retry conditions supported
+- ✅ Manual retry via UI buttons
+- ✅ Retry delay display formatting
+
+### Technical Details
+
+**Error Response Format (Backend):**
+```json
+{
+  "status": "error",
+  "error": {
+    "code": "MODEL_LOAD_ERROR",
+    "message": "Failed to load the detection model. Please check the model path.",
+    "details": "File not found: /path/to/model.pt",
+    "field": null,
+    "timestamp": "2026-02-07T13:30:00Z"
+  },
+  "field_errors": [
+    {
+      "field": "config.confidence_threshold",
+      "message": "Value must be between 0 and 1",
+      "type": "value_error"
+    }
+  ]
+}
+```
+
+**ParsedError Interface (Frontend):**
+```typescript
+interface ParsedError {
+  code: ErrorCode;
+  message: string;
+  details?: string;
+  fieldErrors?: Array<{ field: string; message: string }>;
+  canRetry: boolean;
+  statusCode?: number;
+}
+```
+
+**Notification Interface:**
+```typescript
+interface Notification {
+  key: SnackbarKey;
+  message: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  dismissed?: boolean;
+  errorCode?: ErrorCode;
+  canRetry?: boolean;
+  retryAction?: () => void;
+  options?: OptionsObject;
+}
+```
+
+### Error Code Categories
+
+**Retriable Errors (Auto-retry or manual retry available):**
+- `INTERNAL_ERROR` - Server errors (5xx)
+- `STORAGE_ERROR` - Filesystem issues
+- `MEMORY_ERROR` - Out of memory
+- `CUDA_OOM` - GPU memory exceeded
+- `RATE_LIMIT_EXCEEDED` - Too many requests (60s delay)
+- `INFERENCE_ERROR` - Detection failures (may be transient)
+- `NETWORK_ERROR` - Connection failures
+- `TIMEOUT_ERROR` - Request timeouts
+
+**Non-Retriable Errors (Display only, no retry):**
+- `VALIDATION_ERROR` - Input validation failures
+- `FILE_NOT_FOUND` - Missing files
+- `FILE_TOO_LARGE` - File size exceeded
+- `INVALID_FILE_FORMAT` - Unsupported file types
+- `JOB_NOT_FOUND` - Job doesn't exist
+- `MODEL_NOT_FOUND` - Model file missing
+- `INVALID_CONFIG` - Configuration errors
+- `RESULTS_NOT_FOUND` - Results unavailable
+
+### Testing Recommendations
+
+**Backend Testing:**
+1. Test each exception handler with various error types
+2. Verify validation error field extraction
+3. Test error code mapping for different HTTP statuses
+4. Verify error response format consistency
+
+**Frontend Testing:**
+1. Test error parsing for network errors
+2. Test retry logic with mock failures
+3. Test notification display and dismissal
+4. Test ErrorBoundary with intentional component errors
+5. Test JobErrorCard with various error types
+6. Verify field validation error display
+
+**Integration Testing:**
+1. Upload invalid files (validation errors)
+2. Trigger network timeout (disconnect backend)
+3. Submit invalid configuration (validation errors)
+4. Trigger inference error (model not found)
+5. Test rate limiting (rapid requests)
+6. Verify retry behavior for transient errors
+7. Verify error persistence and dismissal
+8. Test error display in different UI states
+
+### Files Modified/Created
+
+**Backend:**
+- ✅ `backend/app/core/errors.py` - Error codes and utilities
+- ✅ `backend/app/core/exception_handlers.py` - Exception handlers
+- ✅ `backend/app/main.py` - Registered exception handlers
+
+**Frontend:**
+- ✅ `frontend/package.json` - Added notistack dependency
+- ✅ `frontend/src/renderer/utils/errorCodes.ts` - Error codes
+- ✅ `frontend/src/renderer/utils/errorHandling.ts` - Error parsing
+- ✅ `frontend/src/renderer/utils/retryUtils.ts` - Retry logic
+- ✅ `frontend/src/renderer/store/slices/notificationSlice.ts` - Notification state
+- ✅ `frontend/src/renderer/store/index.ts` - Added notification reducer
+- ✅ `frontend/src/renderer/components/GlobalNotifications.tsx` - Toast provider
+- ✅ `frontend/src/renderer/components/ErrorDisplay.tsx` - Error display
+- ✅ `frontend/src/renderer/components/JobErrorCard.tsx` - Job error display
+- ✅ `frontend/src/renderer/components/ErrorBoundary.tsx` - React error boundary
+- ✅ `frontend/src/renderer/App.tsx` - Wrapped with GlobalNotifications
+- ✅ `frontend/src/renderer/index.tsx` - Wrapped with ErrorBoundary
+- ✅ `frontend/src/renderer/store/slices/uploadThunks.ts` - Added notifications
+- ✅ `frontend/src/renderer/store/slices/detectionThunks.ts` - Added notifications
+- ✅ `frontend/src/renderer/store/slices/resultsThunks.ts` - Added notifications
+
+### Acceptance Criteria
+
+- ✅ All errors mapped to user messages
+- ✅ Network errors show retry option
+- ✅ Validation errors highlight fields
+- ✅ Failed jobs show detailed error information
+- ✅ Toast notifications for errors with retry buttons
+- ✅ Exponential backoff for retries
+- ✅ Error codes synchronized between backend and frontend
+- ✅ Consistent error response format
+- ✅ Field-level validation error display
+- ✅ React component error catching
+- ✅ Graceful error recovery options
+
+**Notes:**
+- Complete end-to-end error handling infrastructure in place
+- Backend provides structured error responses
+- Frontend parses and displays errors consistently
+- Toast notifications inform users of all errors
+- Retry logic handles transient failures automatically
+- Manual retry available through UI for user control
+- ErrorBoundary prevents app crashes from component failures
+- Production-ready error handling system
+- Ready for integration testing with full workflow
+
