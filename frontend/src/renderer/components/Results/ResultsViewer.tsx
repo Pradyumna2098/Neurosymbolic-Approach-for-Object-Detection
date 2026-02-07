@@ -8,10 +8,12 @@ import {
   Typography,
   Alert,
   IconButton,
+  Button,
   useTheme,
 } from '@mui/material';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -22,6 +24,7 @@ import FilterControls from './FilterControls';
 import ImageCanvas from './ImageCanvas';
 import InfoPanel from './InfoPanel';
 import DetectionStats from './DetectionStats';
+import ExportDialog from './ExportDialog';
 
 type ViewMode = 'input' | 'labels' | 'output' | 'compare';
 
@@ -38,6 +41,7 @@ const ResultsViewer: React.FC = () => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const [viewMode, setViewMode] = React.useState<ViewMode>('input');
+  const [exportDialogOpen, setExportDialogOpen] = React.useState(false);
 
   const results = useAppSelector((state) => state.results.results);
   const currentImageIndex = useAppSelector(
@@ -208,6 +212,15 @@ const ResultsViewer: React.FC = () => {
 
         {/* Image Navigation */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pr: 2 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<FileDownloadIcon />}
+            onClick={() => setExportDialogOpen(true)}
+            sx={{ mr: 2 }}
+          >
+            Export
+          </Button>
           <IconButton
             size="small"
             onClick={handlePreviousImage}
@@ -271,6 +284,14 @@ const ResultsViewer: React.FC = () => {
 
       {/* Statistics Footer */}
       {viewMode !== 'input' && <DetectionStats />}
+
+      {/* Export Dialog */}
+      <ExportDialog
+        open={exportDialogOpen}
+        onClose={() => setExportDialogOpen(false)}
+        results={results}
+        currentResult={currentResult}
+      />
     </Paper>
   );
 };

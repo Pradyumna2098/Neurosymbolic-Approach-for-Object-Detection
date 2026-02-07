@@ -86,6 +86,73 @@ ipcMain.handle('dialog:openPrologFile', async () => {
   return null;
 });
 
+// Export file dialog handlers
+ipcMain.handle('dialog:saveFile', async (_event, options: {
+  title?: string;
+  defaultPath?: string;
+  filters?: { name: string; extensions: string[] }[];
+}) => {
+  const result = await dialog.showSaveDialog({
+    title: options.title || 'Save File',
+    defaultPath: options.defaultPath,
+    filters: options.filters || [{ name: 'All Files', extensions: ['*'] }],
+  });
+
+  if (!result.canceled && result.filePath) {
+    return result.filePath;
+  }
+  return null;
+});
+
+ipcMain.handle('dialog:saveImage', async (_event, defaultPath?: string) => {
+  const result = await dialog.showSaveDialog({
+    title: 'Save Annotated Image',
+    defaultPath: defaultPath,
+    filters: [
+      { name: 'PNG Image', extensions: ['png'] },
+      { name: 'JPEG Image', extensions: ['jpg', 'jpeg'] },
+      { name: 'All Files', extensions: ['*'] },
+    ],
+  });
+
+  if (!result.canceled && result.filePath) {
+    return result.filePath;
+  }
+  return null;
+});
+
+ipcMain.handle('dialog:saveCSV', async (_event, defaultPath?: string) => {
+  const result = await dialog.showSaveDialog({
+    title: 'Save Metrics as CSV',
+    defaultPath: defaultPath || 'metrics.csv',
+    filters: [
+      { name: 'CSV File', extensions: ['csv'] },
+      { name: 'All Files', extensions: ['*'] },
+    ],
+  });
+
+  if (!result.canceled && result.filePath) {
+    return result.filePath;
+  }
+  return null;
+});
+
+ipcMain.handle('dialog:saveJSON', async (_event, defaultPath?: string) => {
+  const result = await dialog.showSaveDialog({
+    title: 'Save Metrics as JSON',
+    defaultPath: defaultPath || 'metrics.json',
+    filters: [
+      { name: 'JSON File', extensions: ['json'] },
+      { name: 'All Files', extensions: ['*'] },
+    ],
+  });
+
+  if (!result.canceled && result.filePath) {
+    return result.filePath;
+  }
+  return null;
+});
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
