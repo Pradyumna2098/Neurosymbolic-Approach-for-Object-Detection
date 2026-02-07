@@ -1,8 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { UploadedFile } from '../../types';
+import { uploadImagesThunk } from './uploadThunks';
 
 interface UploadState {
   files: UploadedFile[];
+  jobId: string | null;
   isUploading: boolean;
   uploadProgress: number;
   error: string | null;
@@ -10,6 +12,7 @@ interface UploadState {
 
 const initialState: UploadState = {
   files: [],
+  jobId: null,
   isUploading: false,
   uploadProgress: 0,
   error: null,
@@ -49,6 +52,27 @@ const uploadSlice = createSlice({
     clearUploadError(state) {
       state.error = null;
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      // Upload images thunk
+      .addCase(uploadImagesThunk.pending, (state) => {
+        state.isUploading = true;
+        state.uploadProgress = 0;
+        state.error = null;
+      })
+      .addCase(uploadImagesThunk.fulfilled, (state, action) => {
+        state.isUploading = false;
+        state.uploadProgress = 100;
+        state.jobId = action.payload.jobId;
+        // Files are already added via addFiles action before upload
+        state.error = null;
+      })
+      .addCase(uploadImagesThunk.rejected, (state, action) => {
+        state.isUploading = false;
+        state.uploadProgress = 0;
+        state.error = (action.payload as string) || 'Upload failed';
+      });
   },
 });
 

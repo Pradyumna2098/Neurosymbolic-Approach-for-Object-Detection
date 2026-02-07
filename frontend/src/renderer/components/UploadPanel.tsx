@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import {
   Box,
@@ -7,11 +7,12 @@ import {
   Button,
   List,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import FolderIcon from '@mui/icons-material/Folder';
+import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store';
+import { RootState, AppDispatch } from '../store';
 import {
   addFiles,
   removeFile,
@@ -19,6 +20,7 @@ import {
   setUploadError,
   clearUploadError,
 } from '../store/slices/uploadSlice';
+import { uploadImagesThunk } from '../store/slices/uploadThunks';
 import { UploadedFile } from '../types';
 import FileListItem from './FileListItem';
 
@@ -40,12 +42,14 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024;
  * - Click to browse files
  * - Thumbnail gallery
  * - File validation
+ * - Upload to server
  * - Clear/remove files
  * Location: Top-left panel
  */
 const UploadPanel: React.FC = () => {
-  const dispatch = useDispatch();
-  const { files, error } = useSelector((state: RootState) => state.upload);
+  const dispatch = useDispatch<AppDispatch>();
+  const { files, jobId, isUploading, error } = useSelector((state: RootState) => state.upload);
+  const [rawFiles, setRawFiles] = useState<File[]>([]); // Store raw File objects for upload
 
   /**
    * Handle file drop/selection
@@ -55,6 +59,9 @@ const UploadPanel: React.FC = () => {
     (acceptedFiles: File[]) => {
       // Clear any previous errors
       dispatch(clearUploadError());
+
+      // Store raw File objects for later upload
+      setRawFiles((prev) => [...prev, ...acceptedFiles]);
 
       // Validate and process accepted files
       const validFiles: UploadedFile[] = [];
@@ -74,7 +81,7 @@ const UploadPanel: React.FC = () => {
             id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             name: file.name,
             size: file.size,
-            path: file.path || file.name,
+            path: file.name,
             preview: reader.result as string,
             uploadedAt: new Date(),
           };
@@ -129,6 +136,26 @@ const UploadPanel: React.FC = () => {
    */
   const handleClearAll = () => {
     dispatch(clearFiles());
+    setRawFiles([]);
+  };
+
+  /**
+   * Handle uploading files to server
+   */
+  const handleUploadToServer = async () => {
+    if (rawFiles.length === 0) {
+      dispatch(setUploadError('No files to upload'));
+      return;
+    }
+
+    try {
+      await dispatch(uploadImagesThunk(rawFiles)).unwrap();
+      // Success - jobId is stored in Redux state
+      console.log('[Upload] Files uploaded successfully');
+    } catch (error: any) {
+      console.error('[Upload] Upload failed:', error);
+      // Error is already set in Redux state
+    }
   };
 
   return (
@@ -194,6 +221,33 @@ const UploadPanel: React.FC = () => {
           Supported formats: JPG, PNG, BMP, TIFF (Max: 50MB)
         </Typography>
       </Box>
+
+      {/* Upload to Server Button */}
+      {files.length > 0 && !jobId && (
+        <Button
+          variant="contained"
+          color="primary"
+          fullWidth
+          disabled={isUploading}
+          onClick={handleUploadToServer}
+          startIcon={isUploading ? <CircularProgress size={20} /> : <CloudUploadIcon />}
+          sx={{ mb: 2 }}
+        >
+          {isUploading ? 'Uploading...' : 'Upload to Server'}
+        </Button>
+      )}
+
+      {/* Upload Success Message */}
+      {jobId && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CloudDoneIcon />
+            <Typography variant="body2">
+              Files uploaded successfully! Job ID: {jobId.slice(0, 8)}...
+            </Typography>
+          </Box>
+        </Alert>
+      )}
 
       {/* File List */}
       {files.length > 0 && (

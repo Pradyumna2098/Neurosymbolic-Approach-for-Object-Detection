@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { DetectionResult } from '../../types';
+import { fetchResultsThunk, fetchVisualizationsThunk } from './resultsThunks';
 
 interface ResultsState {
   results: DetectionResult[];
@@ -123,6 +124,40 @@ const resultsSlice = createSlice({
     clearResults() {
       return initialState;
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      // Fetch results thunk
+      .addCase(fetchResultsThunk.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchResultsThunk.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.results = action.payload.results;
+        state.currentImageIndex = 0;
+        state.selectedDetectionIds = [];
+        state.error = null;
+      })
+      .addCase(fetchResultsThunk.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = (action.payload as string) || 'Failed to fetch results';
+      })
+      
+      // Fetch visualizations thunk
+      .addCase(fetchVisualizationsThunk.pending, (state) => {
+        // Don't set loading state for visualizations
+        // They're supplementary data
+      })
+      .addCase(fetchVisualizationsThunk.fulfilled, (state, action) => {
+        // Visualizations are fetched separately
+        // Store them in results if needed
+        // For now, they're handled by the component directly
+      })
+      .addCase(fetchVisualizationsThunk.rejected, (state, action) => {
+        // Don't fail the whole results view if visualizations fail
+        console.warn('[Results] Failed to fetch visualizations:', action.payload);
+      });
   },
 });
 

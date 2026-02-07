@@ -35,13 +35,14 @@ import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
+import type { AppDispatch } from '../store';
 import {
   updateConfig,
   loadPreset,
   savePreset,
   deletePreset,
 } from '../store/slices/configSlice';
-import { startDetection } from '../store/slices/detectionSlice';
+import { startDetectionThunk } from '../store/slices/detectionThunks';
 
 /**
  * Configuration Panel - Full implementation for detection parameter configuration
@@ -49,9 +50,10 @@ import { startDetection } from '../store/slices/detectionSlice';
  * Per frontend_ui_design.md specifications
  */
 const ConfigPanel: React.FC = () => {
-  const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch() as AppDispatch;
   const config = useAppSelector((state) => state.config);
   const uploadedFiles = useAppSelector((state) => state.upload.files);
+  const uploadJobId = useAppSelector((state) => state.upload.jobId);
   const jobStatus = useAppSelector((state) => state.detection.status);
 
   const [presetDialogOpen, setPresetDialogOpen] = useState(false);
@@ -113,17 +115,47 @@ const ConfigPanel: React.FC = () => {
   };
 
   // Handler for Run Detection button
-  const handleRunDetection = () => {
+  const handleRunDetection = async () => {
     if (uploadedFiles.length === 0) {
       alert('Please upload at least one image first.');
+      return;
+    }
+    if (!uploadJobId) {
+      alert('Please upload files to server first (click "Upload to Server" button).');
       return;
     }
     if (!config.modelPath) {
       alert('Please select a YOLO model file first.');
       return;
     }
-    const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    dispatch(startDetection(jobId));
+
+    try {
+      // Trigger detection via API
+      await dispatch(
+        startDetectionThunk({
+          jobId: uploadJobId,
+          config: {
+            modelPath: config.modelPath,
+            confidence: config.confidence,
+            iouThreshold: config.iouThreshold,
+            sliceHeight: config.sliceHeight,
+            sliceWidth: config.sliceWidth,
+            overlapHeight: config.overlapHeight,
+            overlapWidth: config.overlapWidth,
+            device: config.device,
+            batchSize: config.batchSize,
+            enableProlog: config.enableProlog,
+            prologRulesPath: config.prologRulesPath,
+            enableNMS: config.enableNMS,
+          },
+        })
+      ).unwrap();
+      
+      console.log('[Detection] Started successfully');
+    } catch (error: any) {
+      console.error('[Detection] Failed to start:', error);
+      alert(`Failed to start detection: ${error}`);
+    }
   };
 
   // Handler for saving preset
