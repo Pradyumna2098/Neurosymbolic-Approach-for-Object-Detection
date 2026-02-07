@@ -42,7 +42,6 @@ import {
   savePreset,
   deletePreset,
 } from '../store/slices/configSlice';
-import { startDetection } from '../store/slices/detectionSlice';
 import { startDetectionThunk } from '../store/slices/detectionThunks';
 
 /**

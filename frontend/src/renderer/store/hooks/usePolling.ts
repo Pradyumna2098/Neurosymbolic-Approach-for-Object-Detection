@@ -17,7 +17,7 @@ import { fetchResultsThunk } from '../slices/resultsThunks';
  * @param enabled - Whether polling is enabled
  * @param intervalMs - Polling interval in milliseconds (default: 2000ms)
  */
-export function useJobStatusPolling(enabled: boolean = true, intervalMs: number = 2000) {
+export function useJobStatusPolling(enabled = true, intervalMs = 2000) {
   const dispatch = useDispatch<AppDispatch>();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
