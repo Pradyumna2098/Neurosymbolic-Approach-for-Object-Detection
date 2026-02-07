@@ -3,6 +3,8 @@ import uploadReducer from './slices/uploadSlice';
 import configReducer from './slices/configSlice';
 import detectionReducer from './slices/detectionSlice';
 import resultsReducer from './slices/resultsSlice';
+import monitoringReducer from './slices/monitoringSlice';
+import { monitoringMiddleware } from './middleware/monitoringMiddleware';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +12,7 @@ export const store = configureStore({
     config: configReducer,
     detection: detectionReducer,
     results: resultsReducer,
+    monitoring: monitoringReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -21,6 +24,8 @@ export const store = configureStore({
           'detection/completeDetection',
           'detection/setDetectionError',
           'results/setResults',
+          'monitoring/addLog',
+          'monitoring/updateMetrics',
         ],
         // Ignore these field paths in all actions
         ignoredActionPaths: ['payload.uploadedAt', 'payload.timestamp'],
@@ -30,9 +35,11 @@ export const store = configureStore({
           'detection.startedAt',
           'detection.completedAt',
           'results.results',
+          'monitoring.logs',
+          'monitoring.metrics.lastUpdated',
         ],
       },
-    }),
+    }).concat(monitoringMiddleware),
   devTools: process.env.NODE_ENV !== 'production',
 });
 

@@ -19,7 +19,7 @@ import { getDarkTheme, getLightTheme } from '../theme/theme';
 import UploadPanel from './UploadPanel';
 import ConfigPanel from './ConfigPanel';
 import ResultsPanel from './ResultsPanel';
-import MonitoringPanel from './MonitoringPanel';
+import MonitoringDashboard from './Monitoring';
 
 /**
  * AppShell - Main application layout with theme provider
@@ -242,7 +242,7 @@ const AppShell: React.FC = () => {
 
             {/* Bottom Monitoring Panel */}
             <Panel defaultSize={25} minSize={10} maxSize={50}>
-              <MonitoringPanel />
+              <MonitoringDashboard />
             </Panel>
           </Group>
         </Box>
