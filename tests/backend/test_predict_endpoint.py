@@ -255,7 +255,9 @@ class TestPredictEndpoint:
         # Verify validation error
         assert response.status_code == 422  # Unprocessable Entity
         data = response.json()
-        assert "detail" in data
+        assert "error" in data
+        assert data["status"] == "error"
+        assert data["error"]["code"] == "VALIDATION_ERROR"
     
     def test_trigger_inference_invalid_iou_threshold(self, client, uploaded_job):
         """Test validation of IoU threshold."""
@@ -276,7 +278,9 @@ class TestPredictEndpoint:
         # Verify validation error
         assert response.status_code == 422
         data = response.json()
-        assert "detail" in data
+        assert "error" in data
+        assert data["status"] == "error"
+        assert data["error"]["code"] == "VALIDATION_ERROR"
     
     def test_trigger_inference_invalid_slice_dimensions(self, client, uploaded_job):
         """Test validation of SAHI slice dimensions."""
@@ -300,7 +304,9 @@ class TestPredictEndpoint:
         # Verify validation error
         assert response.status_code == 422
         data = response.json()
-        assert "detail" in data
+        assert "error" in data
+        assert data["status"] == "error"
+        assert data["error"]["code"] == "VALIDATION_ERROR"
     
     def test_trigger_inference_invalid_overlap_ratio(self, client, uploaded_job):
         """Test validation of SAHI overlap ratio."""
@@ -324,7 +330,9 @@ class TestPredictEndpoint:
         # Verify validation error
         assert response.status_code == 422
         data = response.json()
-        assert "detail" in data
+        assert "error" in data
+        assert data["status"] == "error"
+        assert data["error"]["code"] == "VALIDATION_ERROR"
     
     def test_background_thread_updates_job_status(self, client, uploaded_job, mock_inference_service):
         """Test that background thread starts and updates job status to processing.
@@ -390,7 +398,9 @@ class TestPredictEndpoint:
         # Verify validation error
         assert response.status_code == 422
         data = response.json()
-        assert "detail" in data
+        assert "error" in data
+        assert data["status"] == "error"
+        assert data["error"]["code"] == "VALIDATION_ERROR"
     
     def test_default_config_values(self, client, uploaded_job):
         """Test that config defaults are applied correctly."""
