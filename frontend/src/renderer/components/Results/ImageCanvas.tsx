@@ -3,8 +3,11 @@ import { Box, IconButton, Typography, ButtonGroup } from '@mui/material';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
+import { Stage, Layer, Image as KonvaImage } from 'react-konva';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { toggleDetectionSelection } from '../../store/slices/resultsSlice';
+import BoundingBox from './BoundingBox';
+import useImage from 'use-image';
 
 interface ImageCanvasProps {
   imageUrl: string;
@@ -14,11 +17,12 @@ interface ImageCanvasProps {
 }
 
 /**
- * ImageCanvas - Canvas for displaying images with detection overlays
+ * ImageCanvas - Konva-based canvas for displaying images with detection overlays
  * Features:
  * - Image display with zoom and pan
- * - Bounding box overlays
- * - Click to select detection
+ * - Interactive bounding box overlays with hover/click
+ * - Mouse wheel zoom
+ * - Click and drag to pan
  * - View mode dependent rendering
  */
 const ImageCanvas: React.FC<ImageCanvasProps> = ({
@@ -28,13 +32,12 @@ const ImageCanvas: React.FC<ImageCanvasProps> = ({
   showConfidence = true,
 }) => {
   const dispatch = useAppDispatch();
-  const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const stageRef = React.useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [zoom, setZoom] = React.useState(1);
-  const [pan, setPan] = React.useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = React.useState(false);
-  const [dragStart, setDragStart] = React.useState({ x: 0, y: 0 });
-  const [hasDragged, setHasDragged] = React.useState(false);
+  const [position, setPosition] = React.useState({ x: 0, y: 0 });
+  const [hoveredDetectionId, setHoveredDetectionId] = React.useState<string | null>(null);
+  const [stageDimensions, setStageDimensions] = React.useState({ width: 800, height: 600 });
 
   const results = useAppSelector((state) => state.results.results);
   const currentImageIndex = useAppSelector(
@@ -44,6 +47,9 @@ const ImageCanvas: React.FC<ImageCanvasProps> = ({
   const selectedDetectionIds = useAppSelector(
     (state) => state.results.selectedDetectionIds
   );
+
+  // Load image using use-image hook
+  const [image] = useImage(imageUrl, 'anonymous');
 
   // Get current detections
   const currentDetections = React.useMemo(() => {
@@ -70,152 +76,105 @@ const ImageCanvas: React.FC<ImageCanvasProps> = ({
     });
   }, [results, currentImageIndex, filters]);
 
-  // Load and draw image
+  // Update stage dimensions on container resize
   React.useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
-
-    const img = new Image();
-    img.onload = () => {
-      // Set canvas size
-      canvas.width = img.width;
-      canvas.height = img.height;
-
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Apply transform
-      ctx.save();
-      ctx.translate(pan.x, pan.y);
-      ctx.scale(zoom, zoom);
-
-      // Draw image
-      ctx.drawImage(img, 0, 0);
-
-      // Draw detections based on view mode
-      if (viewMode !== 'input') {
-        drawDetections(ctx, currentDetections);
+    const updateSize = () => {
+      if (containerRef.current) {
+        setStageDimensions({
+          width: containerRef.current.offsetWidth,
+          height: containerRef.current.offsetHeight,
+        });
       }
-
-      ctx.restore();
     };
 
-    img.src = imageUrl;
-  }, [imageUrl, zoom, pan, viewMode, currentDetections]);
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
 
-  const drawDetections = (
-    ctx: CanvasRenderingContext2D,
-    detections: typeof currentDetections
-  ) => {
-    detections.forEach((detection) => {
-      const { bbox, className, confidence, id } = detection;
-      const isSelected = selectedDetectionIds.includes(id);
-
-      // Draw bounding box
-      ctx.strokeStyle = isSelected ? '#ff0000' : '#00ff00';
-      ctx.lineWidth = isSelected ? 3 : 2;
-      ctx.strokeRect(bbox.x, bbox.y, bbox.width, bbox.height);
-
-      // Draw label background
-      if (showLabels || showConfidence) {
-        const label = showLabels
-          ? showConfidence
-            ? `${className} ${(confidence * 100).toFixed(1)}%`
-            : className
-          : showConfidence
-            ? `${(confidence * 100).toFixed(1)}%`
-            : '';
-
-        if (label) {
-          ctx.font = '14px Arial';
-          const textWidth = ctx.measureText(label).width;
-          const padding = 4;
-
-          ctx.fillStyle = isSelected ? '#ff0000' : '#00ff00';
-          ctx.fillRect(
-            bbox.x,
-            bbox.y - 20,
-            textWidth + padding * 2,
-            20
-          );
-
-          ctx.fillStyle = '#000000';
-          ctx.fillText(label, bbox.x + padding, bbox.y - 5);
-        }
-      }
-    });
-  };
+  // Center image when it loads
+  React.useEffect(() => {
+    if (image && containerRef.current) {
+      const scale = Math.min(
+        stageDimensions.width / image.width,
+        stageDimensions.height / image.height,
+        1
+      );
+      setZoom(scale);
+      setPosition({
+        x: (stageDimensions.width - image.width * scale) / 2,
+        y: (stageDimensions.height - image.height * scale) / 2,
+      });
+    }
+  }, [image, stageDimensions]);
 
   const handleZoomIn = () => {
-    setZoom((z) => Math.min(z + 0.25, 5));
+    setZoom((z) => Math.min(z * 1.25, 5));
   };
 
   const handleZoomOut = () => {
-    setZoom((z) => Math.max(z - 0.25, 0.25));
+    setZoom((z) => Math.max(z / 1.25, 0.1));
   };
 
   const handleZoomReset = () => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  };
-
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    setIsDragging(true);
-    setHasDragged(false);
-    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (isDragging) {
-      const newPan = {
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      };
-      // Track if we've moved more than 5 pixels (drag threshold)
-      const dragDistance = Math.sqrt(
-        Math.pow(newPan.x - pan.x, 2) + Math.pow(newPan.y - pan.y, 2)
+    if (image) {
+      const scale = Math.min(
+        stageDimensions.width / image.width,
+        stageDimensions.height / image.height,
+        1
       );
-      if (dragDistance > 5) {
-        setHasDragged(true);
-      }
-      setPan(newPan);
+      setZoom(scale);
+      setPosition({
+        x: (stageDimensions.width - image.width * scale) / 2,
+        y: (stageDimensions.height - image.height * scale) / 2,
+      });
     }
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
+  const handleWheel = (e: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    e.evt.preventDefault();
+
+    const scaleBy = 1.1;
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+
+    const mousePointTo = {
+      x: (pointer.x - stage.x()) / oldScale,
+      y: (pointer.y - stage.y()) / oldScale,
+    };
+
+    const newScale = e.evt.deltaY > 0 
+      ? Math.max(oldScale / scaleBy, 0.1) 
+      : Math.min(oldScale * scaleBy, 5);
+
+    setZoom(newScale);
+
+    const newPos = {
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    };
+    setPosition(newPos);
   };
 
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    // Don't select if we just dragged or in input mode
-    if (hasDragged || viewMode === 'input') return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left - pan.x) / zoom;
-    const y = (e.clientY - rect.top - pan.y) / zoom;
-
-    // Find clicked detection
-    const clicked = currentDetections.find((d) => {
-      const { bbox } = d;
-      return (
-        x >= bbox.x &&
-        x <= bbox.x + bbox.width &&
-        y >= bbox.y &&
-        y <= bbox.y + bbox.height
-      );
-    });
-
-    if (clicked) {
-      dispatch(toggleDetectionSelection(clicked.id));
+  const handleDetectionClick = (detectionId: string) => {
+    if (viewMode !== 'input') {
+      dispatch(toggleDetectionSelection(detectionId));
     }
+  };
+
+  const handleDetectionMouseEnter = (detectionId: string) => {
+    setHoveredDetectionId(detectionId);
+  };
+
+  const handleDetectionMouseLeave = () => {
+    setHoveredDetectionId(null);
   };
 
   return (
-    <Box ref={containerRef} sx={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
+    <Box ref={containerRef} sx={{ position: 'relative', height: '100%', overflow: 'hidden', bgcolor: '#f0f0f0' }}>
       {/* Zoom Controls */}
       <Box
         sx={{
@@ -253,20 +212,51 @@ const ImageCanvas: React.FC<ImageCanvasProps> = ({
         </Typography>
       </Box>
 
-      {/* Canvas */}
-      <canvas
-        ref={canvasRef}
-        onClick={handleCanvasClick}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        style={{
-          cursor: isDragging ? 'grabbing' : 'grab',
-          maxWidth: '100%',
-          maxHeight: '100%',
+      {/* Konva Stage */}
+      <Stage
+        ref={stageRef}
+        width={stageDimensions.width}
+        height={stageDimensions.height}
+        scaleX={zoom}
+        scaleY={zoom}
+        x={position.x}
+        y={position.y}
+        draggable
+        onWheel={handleWheel}
+        onDragEnd={(e) => {
+          setPosition({
+            x: e.target.x(),
+            y: e.target.y(),
+          });
         }}
-      />
+      >
+        <Layer>
+          {/* Image */}
+          {image && (
+            <KonvaImage
+              image={image}
+              width={image.width}
+              height={image.height}
+            />
+          )}
+
+          {/* Bounding Boxes (only if not in input mode) */}
+          {viewMode !== 'input' &&
+            currentDetections.map((detection) => (
+              <BoundingBox
+                key={detection.id}
+                detection={detection}
+                isSelected={selectedDetectionIds.includes(detection.id)}
+                isHovered={hoveredDetectionId === detection.id}
+                showLabels={showLabels}
+                showConfidence={showConfidence}
+                onClick={() => handleDetectionClick(detection.id)}
+                onMouseEnter={() => handleDetectionMouseEnter(detection.id)}
+                onMouseLeave={handleDetectionMouseLeave}
+              />
+            ))}
+        </Layer>
+      </Stage>
     </Box>
   );
 };
