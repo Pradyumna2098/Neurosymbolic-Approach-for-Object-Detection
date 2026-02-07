@@ -2945,7 +2945,7 @@ dist/
 - [x] Create Inno Setup script
 - [x] Configure shortcuts
 - [x] Create uninstaller
-- [x] Test on Windows 10/11
+- [ ] Test on Windows 10/11 (awaiting manual testing on clean VMs)
 
 **Implementation Details:**
 

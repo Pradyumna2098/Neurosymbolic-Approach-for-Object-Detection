@@ -15,9 +15,7 @@ Usage:
 """
 
 import argparse
-import os
 import platform
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -128,7 +126,7 @@ def build_backend(skip: bool = False) -> bool:
     
     try:
         # Run the build script
-        result = subprocess.run(
+        subprocess.run(
             [sys.executable, "build.py", "--spec", "backend_api.spec"],
             check=True
         )
@@ -229,18 +227,27 @@ def create_installer() -> bool:
     
     try:
         # Run Inno Setup compiler
-        result = subprocess.run(
+        subprocess.run(
             [str(iscc_path), "/Q", "installer.iss"],
             check=True,
             capture_output=True,
             text=True
         )
         
-        # Verify installer was created
-        installer_file = output_dir / "NeurosymbolicApp_Setup_v1.0.0.exe"
-        if not installer_file.exists():
-            print(f"✗ Installer file not created: {installer_file}")
+        # Verify installer was created (match any versioned installer)
+        installer_pattern = "NeurosymbolicApp_Setup_v*.exe"
+        matching_installers = sorted(output_dir.glob(installer_pattern))
+        if not matching_installers:
+            print(
+                f"✗ Installer file not created in {output_dir} "
+                f"matching pattern: {installer_pattern}"
+            )
             return False
+        
+        # Select the most recently modified installer file
+        installer_file = max(
+            matching_installers, key=lambda p: p.stat().st_mtime
+        )
         
         # Get file size
         size_mb = installer_file.stat().st_size / (1024 * 1024)

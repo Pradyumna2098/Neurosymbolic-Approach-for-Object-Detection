@@ -69,15 +69,15 @@ Source: "start_application.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "start_backend.bat"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-; Start Menu shortcuts
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\frontend\{#MyAppExeName}"; WorkingDir: "{app}"
-Name: "{autoprograms}\{#MyAppName} Backend Server"; Filename: "{app}\backend\{#MyBackendExeName}"; WorkingDir: "{app}\backend"
-Name: "{autoprograms}\{#MyAppName} Documentation"; Filename: "{app}\docs\WINDOWS_EXECUTABLE_USER_GUIDE.md"
-Name: "{autoprograms}\{#MyAppName} Uninstall"; Filename: "{uninstallexe}"
+; Start Menu shortcuts (grouped under app name)
+Name: "{group}\{#MyAppName}"; Filename: "{app}\start_application.bat"; WorkingDir: "{app}"
+Name: "{group}\{#MyAppName} Backend Server"; Filename: "{app}\backend\{#MyBackendExeName}"; WorkingDir: "{app}\backend"
+Name: "{group}\{#MyAppName} Documentation"; Filename: "{app}\docs\WINDOWS_EXECUTABLE_USER_GUIDE.md"
+Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
 ; Desktop shortcut
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\frontend\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\start_application.bat"; WorkingDir: "{app}"; Tasks: desktopicon
 ; Quick Launch shortcut
-Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Filename: "{app}\frontend\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: quicklaunchicon
+Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Filename: "{app}\start_application.bat"; WorkingDir: "{app}"; Tasks: quicklaunchicon
 
 [Dirs]
 ; Create directories for user data
@@ -90,8 +90,8 @@ Name: "{app}\models"; Permissions: users-full
 Name: "{app}\logs"; Permissions: users-full
 
 [Run]
-; Optional: Run the application after installation
-Filename: "{app}\frontend\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+; Optional: Run the application after installation (launches both backend and frontend)
+Filename: "{cmd}"; Parameters: '/C "{app}\start_application.bat"'; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 ; Optional: Open README after installation
 Filename: "{app}\EXECUTABLE_README.txt"; Description: "View README"; Flags: postinstall shellexec skipifsilent unchecked
 
@@ -100,7 +100,7 @@ Filename: "{app}\EXECUTABLE_README.txt"; Description: "View README"; Flags: post
 ; Users may want to keep their data even after uninstalling
 ; Type: filesandordirs; Name: "{app}\data"
 ; Type: filesandordirs; Name: "{app}\logs"
-Type: filesandordirs; Name: "{app}\models"
+; Type: filesandordirs; Name: "{app}\models"
 
 [Code]
 // Custom code to check for dependencies
@@ -158,6 +158,7 @@ end;
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   DataPath: String;
+  ModelsPath: String;
 begin
   if CurUninstallStep = usPostUninstall then
   begin
@@ -170,6 +171,18 @@ begin
                 mbConfirmation, MB_YESNO) = IDYES then
       begin
         DelTree(DataPath, True, True, True);
+      end;
+    end;
+    
+    ModelsPath := ExpandConstant('{app}\models');
+    if DirExists(ModelsPath) then
+    begin
+      if MsgBox('Do you want to remove downloaded model files?' + #13#10 +
+                'Location: ' + ModelsPath + #13#10#13#10 +
+                'Select "No" to keep your models for future installations.',
+                mbConfirmation, MB_YESNO) = IDYES then
+      begin
+        DelTree(ModelsPath, True, True, True);
       end;
     end;
   end;

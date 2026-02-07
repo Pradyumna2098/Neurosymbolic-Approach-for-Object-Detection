@@ -18,6 +18,28 @@ REM Store the root directory
 set "ROOT_DIR=%~dp0"
 cd /d "%ROOT_DIR%"
 
+REM Parse command-line arguments
+set "SKIP_BACKEND="
+set "SKIP_FRONTEND="
+
+:parse_args
+if "%~1"=="" goto args_done
+if /I "%~1"=="--skip-backend" (
+    set "SKIP_BACKEND=1"
+    shift
+    goto parse_args
+)
+if /I "%~1"=="--skip-frontend" (
+    set "SKIP_FRONTEND=1"
+    shift
+    goto parse_args
+)
+echo WARNING: Unknown argument "%~1" - ignoring
+shift
+goto parse_args
+
+:args_done
+
 REM =============================================================================
 REM Step 1: Check Prerequisites
 REM =============================================================================
@@ -95,7 +117,7 @@ echo [2/5] Building backend with PyInstaller...
 echo.
 
 REM Check if we should skip backend build
-if "%1"=="--skip-backend" (
+if defined SKIP_BACKEND (
     echo Skipping backend build (--skip-backend flag provided)
     if not exist "dist\neurosymbolic-backend" (
         echo ERROR: Backend build not found at dist\neurosymbolic-backend
@@ -140,7 +162,7 @@ echo [3/5] Building frontend with Electron Forge...
 echo.
 
 REM Check if we should skip frontend build
-if "%1"=="--skip-frontend" (
+if defined SKIP_FRONTEND (
     echo Skipping frontend build (--skip-frontend flag provided)
     if not exist "frontend\out" (
         echo ERROR: Frontend build not found at frontend\out
@@ -220,14 +242,21 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM Verify installer was created
-set "INSTALLER_FILE=installer_output\NeurosymbolicApp_Setup_v1.0.0.exe"
-if not exist "%INSTALLER_FILE%" (
+REM Verify installer was created (match any versioned installer)
+set "INSTALLER_FILE="
+for /f "delims=" %%F in ('dir /b /a:-d "installer_output\NeurosymbolicApp_Setup_v*.exe" 2^>nul') do (
+    set "INSTALLER_FILE=installer_output\%%F"
+    goto :found_installer
+)
+
+if not defined INSTALLER_FILE (
     echo ERROR: Installer file not created
-    echo Expected: %INSTALLER_FILE%
+    echo Expected a file matching: installer_output\NeurosymbolicApp_Setup_v*.exe
     pause
     exit /b 1
 )
+
+:found_installer
 
 echo.
 echo Installer created successfully.
