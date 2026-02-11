@@ -144,8 +144,8 @@ pip install -r requirements.txt
 # Install PyTorch with CUDA support first
 pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu118
 
-# Then install other requirements
-pip install -r requirements/common.txt
+# Then install other requirements (this will skip torch/torchvision since already installed)
+pip install -r requirements.txt
 ```
 
 **For GPU (CUDA 12.x):**
@@ -153,8 +153,8 @@ pip install -r requirements/common.txt
 # Install PyTorch with CUDA 12.x support first
 pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu121
 
-# Then install other requirements
-pip install -r requirements/common.txt
+# Then install other requirements (this will skip torch/torchvision since already installed)
+pip install -r requirements.txt
 ```
 
 ### Windows
@@ -206,8 +206,8 @@ pip install -r requirements.txt
 # Install PyTorch with CUDA support first
 pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu118
 
-# Then install other requirements
-pip install -r requirements/common.txt
+# Then install other requirements (this will skip torch/torchvision since already installed)
+pip install -r requirements.txt
 ```
 
 **For GPU (CUDA 12.x):**
@@ -215,8 +215,8 @@ pip install -r requirements/common.txt
 # Install PyTorch with CUDA 12.x support first
 pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu121
 
-# Then install other requirements
-pip install -r requirements/common.txt
+# Then install other requirements (this will skip torch/torchvision since already installed)
+pip install -r requirements.txt
 ```
 
 ---
@@ -301,24 +301,26 @@ cp backend/.env.example backend/.env
 nano backend/.env  # or use your preferred editor
 ```
 
-Example `.env` configuration:
+The `.env.example` file in the backend directory contains the authoritative list of configuration options. Key settings you may want to customize:
+
 ```env
-# API Configuration
-API_HOST=0.0.0.0
-API_PORT=8000
-API_RELOAD=true
+# Server Settings
+HOST=0.0.0.0
+PORT=8000
 
-# CORS Settings
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
+# CORS Settings (adjust for your frontend)
+CORS_ORIGINS=http://localhost:3000,http://localhost:8080,http://localhost:5173
 
-# Model Paths
-MODEL_PATH=/path/to/your/model.pt
-CONFIDENCE_THRESHOLD=0.25
-IOU_THRESHOLD=0.45
+# Storage Paths (relative to project root)
+DATA_ROOT=data
+UPLOADS_DIR=data/uploads
+RESULTS_DIR=data/results
 
-# Prolog Settings
-PROLOG_RULES_PATH=/path/to/pipeline/prolog/rules.pl
+# File Upload Settings
+MAX_UPLOAD_SIZE=10485760  # 10 MB in bytes
 ```
+
+See `backend/.env.example` for all available configuration options.
 
 #### Run Backend Server
 
@@ -328,7 +330,7 @@ source .venv/bin/activate  # Linux/macOS
 # OR
 .venv\Scripts\activate  # Windows
 
-# Start backend server
+# Start backend server (from project root)
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
@@ -414,6 +416,7 @@ print('Model downloaded successfully!')
 
 ### Example 3: Run Inference on a Sample Image
 
+**Linux/macOS:**
 ```bash
 # Create a test script
 cat > test_inference.py << 'EOF'
@@ -438,12 +441,17 @@ EOF
 python test_inference.py
 ```
 
+**Windows (create file manually):**
+```powershell
+# Create test_inference.py with the following content, then run:
+python test_inference.py
+```
+
 ### Example 4: Test Backend API
 
 ```bash
-# In one terminal, start the backend
-cd backend
-source ../.venv/bin/activate
+# In one terminal, start the backend (from project root)
+source .venv/bin/activate
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 
 # In another terminal, test the API
@@ -516,8 +524,9 @@ brew install swi-prolog swig
 
 **Alternative**: Skip PySwip if you don't need symbolic reasoning:
 ```bash
-# Install all packages except pyswip
-pip install -r requirements/common.txt
+# Install requirements without pyswip - it will fail during install but other packages will succeed
+pip install -r requirements.txt
+# Or manually install packages listed in requirements.txt except pyswip
 # Skip the symbolic reasoning stage in your pipeline
 ```
 
@@ -592,10 +601,10 @@ training:
 lsof -i :8000  # Linux/macOS
 netstat -ano | findstr :8000  # Windows
 
-# 2. Use a different port
-uvicorn backend.app.main:app --host 0.0.0.0 --port 8001
+# 2. Use a different port (from project root)
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8001
 
-# 3. Check backend logs for specific errors
+# 3. Check backend logs for specific errors (from project root)
 python -m uvicorn backend.app.main:app --reload --log-level debug
 ```
 
@@ -659,7 +668,7 @@ train_dir: /home/user/datasets/dota/train/images
 2. **Train a Model**
    - Edit `shared/configs/training_custom.yaml`
    - Run: `python pipeline/training/training.py --config shared/configs/training_custom.yaml`
-   - See [Training Documentation](../pipeline/training/README.md)
+   - See in-code documentation in `pipeline/training/training.py`
 
 3. **Run Inference**
    - Use SAHI for large images: `python pipeline/inference/sahi_yolo_prediction.py --config shared/configs/prediction_custom.yaml`
@@ -674,9 +683,8 @@ train_dir: /home/user/datasets/dota/train/images
 
 1. **Start the Full Stack**
    ```bash
-   # Terminal 1: Backend
+   # Terminal 1: Backend (from project root)
    source .venv/bin/activate
-   cd backend
    python -m uvicorn backend.app.main:app --reload
 
    # Terminal 2: Frontend
