@@ -5,6 +5,10 @@
 
 This mono-repository contains an end-to-end pipeline that combines YOLO-based neural detectors with symbolic reasoning and knowledge-graph construction for explainable object detection and spatial relationship extraction.
 
+## 🚀 New to This Repository?
+
+**[📚 Read the Getting Started Guide](docs/GETTING_STARTED.md)** - Complete setup instructions for Linux, macOS, and Windows with step-by-step installation, configuration, and quick start examples.
+
 ## Repository Structure
 
 This repository is organized as a mono-repository with three distinct subprojects and shared resources:
@@ -50,6 +54,7 @@ For detailed information about each subproject, see their respective README file
 - [Monitoring README](monitoring/README.md)
 
 **📖 Documentation:**
+- [**Getting Started Guide**](docs/GETTING_STARTED.md) - 🆕 Complete setup and installation guide for all platforms
 - [Repository Structure Guide](docs/STRUCTURE.md) - Detailed overview of the mono-repo organization
 - [Migration Guide](docs/MIGRATION.md) - Guide for transitioning from the old structure
 - [CI/CD Quick Start](docs/CI_QUICKSTART.md) - ⚡ Quick guide to using the CI/CD pipeline
