@@ -16,8 +16,8 @@ from PIL import Image
 # Add backend to path
 sys.path.append(str(Path(__file__).resolve().parents[2] / "backend"))
 
-from app.main import app
-from app.services import storage_service
+from backend.app.main import app
+from backend.app.services import storage_service
 
 
 def create_test_image(width: int = 640, height: int = 480, format: str = "PNG") -> bytes:
@@ -426,3 +426,6 @@ class TestFileServingEndpoints:
         assert "error" in data
         # Should be FILE_NOT_FOUND since file_id doesn't exist in job
         assert data["error"]["code"] == "FILE_NOT_FOUND"
+
+
+

@@ -17,8 +17,8 @@ from PIL import Image
 # Add backend to path
 sys.path.append(str(Path(__file__).resolve().parents[2] / "backend"))
 
-from app.main import app
-from app.services import storage_service
+from backend.app.main import app
+from backend.app.services import storage_service
 
 
 def create_test_image(width: int = 640, height: int = 480, format: str = "PNG") -> bytes:
@@ -75,7 +75,7 @@ def processing_job(uploaded_job, client):
     job_id = uploaded_job
     
     # Mock inference service to prevent actual inference
-    with patch('app.services.inference.inference_service.run_inference') as mock_inference:
+    with patch('backend.app.services.inference.inference_service.run_inference') as mock_inference:
         mock_inference.return_value = {
             'total_images': 1,
             'processed_images': 1,
@@ -367,3 +367,6 @@ class TestJobStatusEndpoint:
         assert "200" in get_spec["responses"]
         # Note: 404 responses from HTTPException are not auto-documented by FastAPI
         # They would need to be explicitly added with responses parameter in decorator
+
+
+

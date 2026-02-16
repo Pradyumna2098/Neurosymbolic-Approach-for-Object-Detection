@@ -38,10 +38,13 @@ const notificationSlice = createSlice({
      */
     enqueueNotification(state, action: PayloadAction<Omit<Notification, 'key'>>) {
       const key = new Date().getTime() + Math.random();
-      state.notifications.push({
-        ...action.payload,
-        key,
-      });
+      state.notifications = [
+        ...state.notifications,
+        {
+          ...action.payload,
+          key,
+        },
+      ];
     },
 
     /**
@@ -76,14 +79,17 @@ const notificationSlice = createSlice({
      */
     showSuccess(state, action: PayloadAction<string>) {
       const key = new Date().getTime() + Math.random();
-      state.notifications.push({
-        key,
-        message: action.payload,
-        type: 'success',
-        options: {
-          autoHideDuration: 4000,
+      state.notifications = [
+        ...state.notifications,
+        {
+          key,
+          message: action.payload,
+          type: 'success',
+          options: {
+            autoHideDuration: 4000,
+          },
         },
-      });
+      ];
     },
 
     /**
@@ -99,18 +105,21 @@ const notificationSlice = createSlice({
       }>
     ) {
       const key = new Date().getTime() + Math.random();
-      state.notifications.push({
-        key,
-        message: action.payload.message,
-        type: 'error',
-        errorCode: action.payload.errorCode,
-        canRetry: action.payload.canRetry,
-        retryAction: action.payload.retryAction,
-        options: {
-          autoHideDuration: action.payload.canRetry ? null : 6000, // Persist if can retry
-          persist: action.payload.canRetry,
+      state.notifications = [
+        ...state.notifications,
+        {
+          key,
+          message: action.payload.message,
+          type: 'error',
+          errorCode: action.payload.errorCode,
+          canRetry: action.payload.canRetry,
+          retryAction: action.payload.retryAction,
+          options: {
+            autoHideDuration: action.payload.canRetry ? null : 6000,
+            persist: action.payload.canRetry,
+          },
         },
-      });
+      ];
     },
 
     /**
@@ -118,14 +127,17 @@ const notificationSlice = createSlice({
      */
     showWarning(state, action: PayloadAction<string>) {
       const key = new Date().getTime() + Math.random();
-      state.notifications.push({
-        key,
-        message: action.payload,
-        type: 'warning',
-        options: {
-          autoHideDuration: 5000,
+      state.notifications = [
+        ...state.notifications,
+        {
+          key,
+          message: action.payload,
+          type: 'warning',
+          options: {
+            autoHideDuration: 5000,
+          },
         },
-      });
+      ];
     },
 
     /**
@@ -133,14 +145,17 @@ const notificationSlice = createSlice({
      */
     showInfo(state, action: PayloadAction<string>) {
       const key = new Date().getTime() + Math.random();
-      state.notifications.push({
-        key,
-        message: action.payload,
-        type: 'info',
-        options: {
-          autoHideDuration: 4000,
+      state.notifications = [
+        ...state.notifications,
+        {
+          key,
+          message: action.payload,
+          type: 'info',
+          options: {
+            autoHideDuration: 4000,
+          },
         },
-      });
+      ];
     },
   },
 });

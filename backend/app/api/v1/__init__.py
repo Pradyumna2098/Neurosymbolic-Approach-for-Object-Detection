@@ -17,3 +17,4 @@ api_router.include_router(upload_router, prefix="", tags=["upload"])
 api_router.include_router(predict_router, prefix="", tags=["inference"])
 api_router.include_router(jobs_router, prefix="", tags=["jobs"])
 api_router.include_router(files_router, prefix="", tags=["files"])
+

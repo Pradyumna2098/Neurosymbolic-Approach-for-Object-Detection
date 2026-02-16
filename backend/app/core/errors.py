@@ -158,3 +158,4 @@ def get_retry_delay(code: ErrorCode, attempt: int) -> int:
     # Exponential backoff: 5s, 15s, 45s
     base_delay = 5
     return base_delay * (3 ** (attempt - 1))
+

@@ -7,7 +7,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import apiService from '../../services/api';
 import { UploadedFile } from '../../types';
 import { parseApiError } from '../../utils/errorHandling';
-import { showError, showSuccess } from './notificationSlice';
+import { showError, showSuccess, showWarning } from './notificationSlice';
 
 /**
  * Upload images to backend API

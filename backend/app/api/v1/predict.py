@@ -12,8 +12,8 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.services import storage_service
-from app.services.inference import inference_service, InferenceError
+from backend.app.services import storage_service
+from backend.app.services.inference import inference_service, InferenceError
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -272,3 +272,4 @@ async def trigger_inference(request: PredictRequest) -> PredictResponse:
         job_id=job_id,
         job_status="processing"
     )
+

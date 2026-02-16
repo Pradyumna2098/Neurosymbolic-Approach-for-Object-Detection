@@ -188,3 +188,6 @@ class TestErrorCodeCategories:
         for code in resource_errors:
             message = get_error_message(code)
             assert any(word in message.lower() for word in ["memory", "storage", "gpu"])
+
+
+

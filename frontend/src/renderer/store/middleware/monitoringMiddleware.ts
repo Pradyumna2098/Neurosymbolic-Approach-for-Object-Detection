@@ -5,37 +5,40 @@ import { addLog, updateMetrics, clearMetrics } from '../slices/monitoringSlice';
  * Redux middleware that automatically logs detection events
  * and updates performance metrics based on state changes
  */
-export const monitoringMiddleware: Middleware = (store) => (next) => (action: UnknownAction) => {
+export const monitoringMiddleware: Middleware = (store) => (next) => (action) => {
+  const typedAction = action as UnknownAction;
   const result = next(action);
   const state = store.getState();
 
   // Log detection events
-  if (action.type.startsWith('detection/')) {
-    switch (action.type) {
+  if (typedAction.type.startsWith('detection/')) {
+    switch (typedAction.type) {
       case 'detection/startDetection':
         // Reset metrics for new detection run
         store.dispatch(clearMetrics());
         
         store.dispatch(addLog({
           level: 'info',
-          message: `Detection started for job: ${(action as any).payload}`,
+          message: `Detection started for job: ${(typedAction as any).payload}`,
           source: 'Detection',
         }));
         break;
 
       case 'detection/updateProgress':
-        if ((action as any).payload.message) {
+        if ((typedAction as any).payload.message) {
           store.dispatch(addLog({
             level: 'info',
-            message: (action as any).payload.message,
+            message: (typedAction as any).payload.message,
             source: 'Detection',
           }));
         }
         
         // Update metrics if we have progress data
-        if ((action as any).payload.progress !== undefined) {
+        if ((typedAction as any).payload.progress !== undefined) {
           const totalImages = state.upload.files.length;
-          const processed = Math.floor(((action as any).payload.progress / 100) * totalImages);
+          const processed = Math.floor(
+            ((typedAction as any).payload.progress / 100) * totalImages
+          );
           store.dispatch(updateMetrics({
             imagesProcessed: processed,
             totalImages: totalImages,
@@ -80,7 +83,7 @@ export const monitoringMiddleware: Middleware = (store) => (next) => (action: Un
       case 'detection/setDetectionError':
         store.dispatch(addLog({
           level: 'error',
-          message: `Detection failed: ${(action as any).payload}`,
+          message: `Detection failed: ${(typedAction as any).payload}`,
           source: 'Detection',
         }));
         break;
@@ -96,12 +99,12 @@ export const monitoringMiddleware: Middleware = (store) => (next) => (action: Un
   }
 
   // Log upload events
-  if (action.type.startsWith('upload/')) {
-    switch (action.type) {
+  if (typedAction.type.startsWith('upload/')) {
+    switch (typedAction.type) {
       case 'upload/addFiles':
         store.dispatch(addLog({
           level: 'info',
-          message: `${(action as any).payload.length} file(s) uploaded`,
+          message: `${(typedAction as any).payload.length} file(s) uploaded`,
           source: 'Upload',
         }));
         break;
@@ -125,10 +128,10 @@ export const monitoringMiddleware: Middleware = (store) => (next) => (action: Un
   }
 
   // Log results events
-  if (action.type.startsWith('results/')) {
-    switch (action.type) {
+  if (typedAction.type.startsWith('results/')) {
+    switch (typedAction.type) {
       case 'results/setResults':
-        const results = (action as any).payload;
+        const results = (typedAction as any).payload;
         if (results && results.length > 0) {
           const totalDetections = results.reduce(
             (sum: number, result: any) => sum + (result.detections?.length ?? 0),
@@ -165,8 +168,8 @@ export const monitoringMiddleware: Middleware = (store) => (next) => (action: Un
   }
 
   // Log config changes
-  if (action.type.startsWith('config/')) {
-    switch (action.type) {
+  if (typedAction.type.startsWith('config/')) {
+    switch (typedAction.type) {
       case 'config/updateConfig':
         store.dispatch(addLog({
           level: 'info',

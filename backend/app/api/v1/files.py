@@ -10,7 +10,7 @@ import logging
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
 
-from app.services import storage_service
+from backend.app.services import storage_service
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -146,3 +146,4 @@ async def get_annotated_image(job_id: str, file_id: str) -> FileResponse:
         media_type=media_type,
         filename=image_path.name
     )
+

@@ -17,8 +17,8 @@ from PIL import Image
 # Add backend to path
 sys.path.append(str(Path(__file__).resolve().parents[2] / "backend"))
 
-from app.main import app
-from app.services import storage_service
+from backend.app.main import app
+from backend.app.services import storage_service
 
 
 def create_test_image(width: int = 640, height: int = 480, format: str = "PNG") -> bytes:
@@ -47,7 +47,7 @@ def client():
 @pytest.fixture
 def mock_inference_service():
     """Mock inference service for tests that don't need real inference."""
-    with patch('app.services.inference.inference_service.run_inference') as mock_run:
+    with patch('backend.app.services.inference.inference_service.run_inference') as mock_run:
         # Mock successful inference - this gets called in background thread
         mock_run.return_value = {
             'total_images': 1,
@@ -435,3 +435,6 @@ class TestPredictEndpoint:
         assert config["sahi"]["overlap_ratio"] == 0.2
         assert config["symbolic_reasoning"]["enabled"] is True
         assert config["visualization"]["enabled"] is True
+
+
+

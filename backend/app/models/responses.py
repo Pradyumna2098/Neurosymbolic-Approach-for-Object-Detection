@@ -219,3 +219,4 @@ class Base64VisualizationResponse(BaseModel):
     
     status: str = Field(default="success", description="Response status")
     data: Base64VisualizationData = Field(..., description="Base64 visualization data")
+

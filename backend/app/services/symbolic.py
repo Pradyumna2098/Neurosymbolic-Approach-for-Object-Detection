@@ -11,8 +11,8 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from app.core import settings
-from app.core.resource_path import get_resource_path
+from backend.app.core import settings
+from backend.app.core.resource_path import get_resource_path
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -581,3 +581,4 @@ class SymbolicReasoningService:
 
 # Global symbolic reasoning service instance
 symbolic_reasoning_service = SymbolicReasoningService()
+

@@ -88,3 +88,6 @@ def test_apply_symbolic_modifiers_penalises_overlapping_objects() -> None:
     suppressed = next(obj for obj in refined if obj["id"] == "b")
     assert torch.isclose(torch.tensor(suppressed["confidence"]), torch.tensor(0.35))
     assert report and report[0]["action"] == "PENALTY"
+
+
+

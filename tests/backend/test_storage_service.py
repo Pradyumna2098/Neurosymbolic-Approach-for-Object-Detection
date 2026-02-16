@@ -11,7 +11,7 @@ from PIL import Image
 # Path structure: tests/backend/test_storage_service.py -> tests/ -> project root -> backend/
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend"))
 
-from app.services.storage import StorageService, FileValidationError
+from backend.app.services.storage import StorageService, FileValidationError
 
 
 def create_test_image(width: int, height: int, format: str = "PNG") -> bytes:
@@ -34,7 +34,7 @@ def create_test_image(width: int, height: int, format: str = "PNG") -> bytes:
 @pytest.fixture
 def storage_service(tmp_path, monkeypatch):
     """Create a storage service with temporary directories."""
-    from app.core import settings
+    from backend.app.core import settings
     
     # Mock settings to use temporary directories
     monkeypatch.setattr(settings, "data_root", tmp_path)
@@ -593,3 +593,6 @@ class TestJobJSONSchema:
         updated_at = datetime.fromisoformat(job["updated_at"])
         assert updated_at is not None
         assert updated_at >= created_at
+
+
+

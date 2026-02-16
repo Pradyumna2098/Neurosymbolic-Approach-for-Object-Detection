@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter
 
-from app.core import settings
-from app.models import HealthResponse
+from backend.app.core import settings
+from backend.app.models import HealthResponse
 
 router = APIRouter()
 
@@ -23,3 +23,4 @@ async def health_check() -> HealthResponse:
         version=settings.app_version,
         message="Service is healthy"
     )
+

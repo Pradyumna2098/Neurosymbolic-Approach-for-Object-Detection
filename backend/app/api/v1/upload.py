@@ -10,8 +10,8 @@ from typing import List
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
-from app.models import UploadedFileInfo, UploadResponse
-from app.services import storage_service, FileValidationError
+from backend.app.models import UploadedFileInfo, UploadResponse
+from backend.app.services import storage_service, FileValidationError
 
 # Constants
 MAX_FILES_PER_UPLOAD = 100
@@ -159,7 +159,7 @@ async def upload_images(
                 shutil.rmtree(job_upload_dir.parent)  # Remove entire job directory
             
             # Remove job JSON
-            from app.core import settings
+            from backend.app.core import settings
             job_file = settings.jobs_dir / f"{job_id}.json"
             if job_file.exists():
                 job_file.unlink()
@@ -181,7 +181,7 @@ async def upload_images(
     # Convert validation errors to warnings for partial success
     warnings = None
     if validation_errors:
-        from app.models import FileValidationWarning
+        from backend.app.models import FileValidationWarning
         warnings = [
             FileValidationWarning(filename=err["filename"], error=err["error"])
             for err in validation_errors
@@ -195,3 +195,4 @@ async def upload_images(
         files=successfully_uploaded,
         warnings=warnings
     )
+

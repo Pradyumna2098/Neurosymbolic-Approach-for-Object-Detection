@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from app.core import settings
+from backend.app.core import settings
 
 
 def _sanitize_filename(filename: str) -> str:
@@ -243,3 +243,4 @@ class LocalStorageService:
 
 # Global storage service instance
 storage = LocalStorageService()
+
