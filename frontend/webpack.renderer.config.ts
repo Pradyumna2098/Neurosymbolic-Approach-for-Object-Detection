@@ -19,4 +19,5 @@ export const rendererConfig: Configuration = {
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css'],
   },
+  target: 'electron-renderer',
 };
