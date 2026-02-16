@@ -111,9 +111,14 @@ Configured with:
 ### Webpack
 
 Separate configurations for:
-- **Main process**: Node.js environment
+- **Main process**: Node.js environment with Electron-specific settings
+  - `target: 'electron-main'` - Compiles for Electron's main process
+  - `node: { __dirname: false, __filename: false }` - Preserves Node.js globals (required for preload scripts)
 - **Renderer process**: Browser environment with React
+  - `target: 'electron-renderer'` - Compiles for Electron's renderer process
 - **Preload script**: Isolated context for IPC
+
+**Important**: The `node` configuration in `webpack.main.config.ts` is critical. Without it, webpack replaces `__dirname` and `__filename` with hardcoded values, breaking the preload script in Electron's sandboxed environment.
 
 ## 🔐 Security
 
@@ -218,6 +223,27 @@ Planned test coverage:
 1. Verify preload script is loaded
 2. Check `contextBridge` exposes the methods
 3. Ensure `contextIsolation: true` in main process
+
+### Blank/Empty Pages or "ReferenceError: __dirname is not defined"
+
+This was fixed in the webpack configuration. If you still see this error:
+
+1. Clear webpack cache: `rm -rf .webpack/`
+2. Verify `webpack.main.config.ts` has:
+   ```typescript
+   node: {
+     __dirname: false,
+     __filename: false,
+   },
+   target: 'electron-main',
+   ```
+3. Verify `webpack.renderer.config.ts` has:
+   ```typescript
+   target: 'electron-renderer',
+   ```
+4. Restart the development server: `npm run dev`
+
+These configurations prevent webpack from replacing Node.js globals (`__dirname`, `__filename`) which are required for Electron's preload scripts to function properly.
 
 ## 📚 Documentation
 
