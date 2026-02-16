@@ -13,8 +13,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
-from app.core.errors import ErrorCode, get_error_message
-from app.models.responses import ErrorDetail, ErrorResponse
+from backend.app.core.errors import ErrorCode, get_error_message
+from backend.app.models.responses import ErrorDetail, ErrorResponse
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -191,3 +191,4 @@ def create_http_exception(
             "details": details
         }
     )
+

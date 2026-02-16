@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 # Add backend to path
 sys.path.append(str(Path(__file__).resolve().parents[2] / "backend"))
 
-from app.main import app
+from backend.app.main import app
 
 
 @pytest.fixture
@@ -77,3 +77,6 @@ def test_cors_headers_present(client):
     # TestClient has limited CORS simulation, but we can verify credentials header
     assert "access-control-allow-credentials" in response.headers
     # Note: Full CORS testing requires integration tests with a real server
+
+
+

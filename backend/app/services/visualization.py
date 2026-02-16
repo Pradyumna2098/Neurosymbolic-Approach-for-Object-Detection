@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from PIL import Image, ImageDraw, ImageFont
 
-from app.core import settings
+from backend.app.core import settings
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -638,3 +638,4 @@ class VisualizationService:
 
 # Global visualization service instance
 visualization_service = VisualizationService()
+

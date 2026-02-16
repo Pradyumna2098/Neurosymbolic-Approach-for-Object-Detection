@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 import torch
 from PIL import Image
 
-from app.core import settings
+from backend.app.core import settings
 from pipeline.core.utils import (
     parse_predictions_for_nms,
     pre_filter_with_nms,
@@ -400,7 +400,7 @@ class InferenceService:
             if symbolic_config and symbolic_config.get('enabled', False):
                 logger.info(f"[Job {job_id}] Applying symbolic reasoning")
                 try:
-                    from app.services.symbolic import symbolic_reasoning_service
+                    from backend.app.services.symbolic import symbolic_reasoning_service
                     
                     # Get rules file from config or use default
                     rules_file = symbolic_config.get('rules_file')
@@ -453,7 +453,7 @@ class InferenceService:
                         }
                     )
                     
-                    from app.services.visualization import visualization_service
+                    from backend.app.services.visualization import visualization_service
                     
                     # Determine which stage to visualize
                     # Priority: refined > nms > raw
@@ -599,3 +599,4 @@ class InferenceService:
 
 # Global inference service instance
 inference_service = InferenceService()
+

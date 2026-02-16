@@ -14,7 +14,7 @@ import pytest
 # Add backend to path
 sys.path.append(str(Path(__file__).resolve().parents[2] / "backend"))
 
-from app.services.inference import InferenceError, InferenceService
+from backend.app.services.inference import InferenceError, InferenceService
 
 
 class TestInferenceService:
@@ -269,7 +269,7 @@ class TestInferenceService:
         test_image.write_bytes(b"fake image data")
         
         # Mock settings
-        with patch('app.services.inference.settings') as mock_settings:
+        with patch('backend.app.services.inference.settings') as mock_settings:
             mock_settings.uploads_dir = tmp_path / "uploads"
             mock_settings.results_dir = tmp_path / "results"
             
@@ -374,7 +374,7 @@ class TestInferenceService:
         )
         
         # Mock settings
-        with patch('app.services.inference.settings') as mock_settings:
+        with patch('backend.app.services.inference.settings') as mock_settings:
             mock_settings.results_dir = tmp_path / "results"
             
             # Run NMS
@@ -406,7 +406,7 @@ class TestInferenceService:
         """Test NMS with no raw predictions directory."""
         job_id = "test-job-789"
         
-        with patch('app.services.inference.settings') as mock_settings:
+        with patch('backend.app.services.inference.settings') as mock_settings:
             mock_settings.results_dir = tmp_path / "results"
             
             # Should raise error
@@ -425,7 +425,7 @@ class TestInferenceService:
         raw_dir = tmp_path / "results" / job_id / "raw"
         raw_dir.mkdir(parents=True)
         
-        with patch('app.services.inference.settings') as mock_settings:
+        with patch('backend.app.services.inference.settings') as mock_settings:
             mock_settings.results_dir = tmp_path / "results"
             
             # Run NMS
@@ -510,7 +510,7 @@ class TestInferenceService:
             "0 0.8 0.8 0.1 0.1 0.85\n"  # Different location, same class
         )
         
-        with patch('app.services.inference.settings') as mock_settings:
+        with patch('backend.app.services.inference.settings') as mock_settings:
             mock_settings.results_dir = tmp_path / "results"
             
             stats = service.apply_nms_post_processing(
@@ -539,7 +539,7 @@ class TestInferenceService:
             "2 0.52 0.52 0.18 0.18 0.85\n"  # Class 2, overlapping location
         )
         
-        with patch('app.services.inference.settings') as mock_settings:
+        with patch('backend.app.services.inference.settings') as mock_settings:
             mock_settings.results_dir = tmp_path / "results"
             
             stats = service.apply_nms_post_processing(
@@ -552,3 +552,6 @@ class TestInferenceService:
             assert stats['total_before'] == 3
             assert stats['total_after'] == 3
             assert stats['reduction_count'] == 0
+
+
+

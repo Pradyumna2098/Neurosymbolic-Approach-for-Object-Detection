@@ -16,7 +16,7 @@ from PIL import Image
 # Add backend to path
 sys.path.append(str(Path(__file__).resolve().parents[2] / "backend"))
 
-from app.main import app
+from backend.app.main import app
 
 
 def create_test_image(width: int, height: int, format: str = "PNG") -> bytes:
@@ -200,7 +200,7 @@ class TestUploadEndpoint:
             pytest.fail(f"job_id is not a valid UUID: {job_id}")
         
         # Verify job was created with correct status
-        from app.services import storage_service
+        from backend.app.services import storage_service
         job = storage_service.get_job(job_id)
         assert job is not None
         assert job["status"] == "uploaded"
@@ -330,3 +330,6 @@ class TestUploadEndpoint:
         assert data["warnings"] is not None
         assert len(data["warnings"]) == 1
         assert data["warnings"][0]["filename"] == "invalid.txt"
+
+
+

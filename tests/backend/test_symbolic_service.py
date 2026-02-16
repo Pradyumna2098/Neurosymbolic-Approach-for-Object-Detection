@@ -13,7 +13,7 @@ import pytest
 # Add backend to path
 sys.path.append(str(Path(__file__).resolve().parents[2] / "backend"))
 
-from app.services.symbolic import SymbolicReasoningError, SymbolicReasoningService
+from backend.app.services.symbolic import SymbolicReasoningError, SymbolicReasoningService
 
 
 class TestSymbolicReasoningService:
@@ -331,8 +331,8 @@ confidence_modifier(harbor, plane, 0.2).
         # No file should be created for empty report
         assert not report_file.exists()
     
-    @patch('app.services.symbolic.SymbolicReasoningService._load_prolog_engine')
-    @patch('app.services.symbolic.SymbolicReasoningService._load_modifier_map')
+    @patch('backend.app.services.symbolic.SymbolicReasoningService._load_prolog_engine')
+    @patch('backend.app.services.symbolic.SymbolicReasoningService._load_modifier_map')
     def test_apply_symbolic_reasoning_missing_rules(
         self,
         mock_load_modifiers,
@@ -356,8 +356,8 @@ confidence_modifier(harbor, plane, 0.2).
         assert result["skipped"] is True
         assert "not found" in result["reason"].lower()
     
-    @patch('app.services.symbolic.SymbolicReasoningService._load_prolog_engine')
-    @patch('app.services.symbolic.SymbolicReasoningService._load_modifier_map')
+    @patch('backend.app.services.symbolic.SymbolicReasoningService._load_prolog_engine')
+    @patch('backend.app.services.symbolic.SymbolicReasoningService._load_modifier_map')
     def test_apply_symbolic_reasoning_no_modifiers(
         self,
         mock_load_modifiers,
@@ -385,9 +385,9 @@ confidence_modifier(harbor, plane, 0.2).
         assert result["skipped"] is True
         assert "no modifier rules" in result["reason"].lower()
     
-    @patch('app.services.symbolic.settings')
-    @patch('app.services.symbolic.SymbolicReasoningService._load_prolog_engine')
-    @patch('app.services.symbolic.SymbolicReasoningService._load_modifier_map')
+    @patch('backend.app.services.symbolic.settings')
+    @patch('backend.app.services.symbolic.SymbolicReasoningService._load_prolog_engine')
+    @patch('backend.app.services.symbolic.SymbolicReasoningService._load_modifier_map')
     def test_apply_symbolic_reasoning_success(
         self,
         mock_load_modifiers,
@@ -481,3 +481,6 @@ confidence_modifier(bridge, ship, 0.1).
         assert len(modifier_map) > 0
         assert ("ship", "harbor") in modifier_map
         assert modifier_map[("ship", "harbor")] == 1.25
+
+
+

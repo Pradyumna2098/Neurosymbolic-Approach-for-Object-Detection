@@ -8,14 +8,14 @@ import pytest
 # Add backend to path
 sys.path.append(str(Path(__file__).resolve().parents[2] / "backend"))
 
-from app.storage import LocalStorageService
+from backend.app.storage import LocalStorageService
 
 
 @pytest.fixture
 def storage_service(tmp_path, monkeypatch):
     """Create a storage service with temporary directories."""
     # Mock settings for testing using monkeypatch to avoid mutating globals
-    from app.core import settings
+    from backend.app.core import settings
     
     monkeypatch.setattr(settings, "data_root", tmp_path)
     monkeypatch.setattr(settings, "uploads_dir", tmp_path / "uploads")
@@ -159,3 +159,6 @@ def test_save_visualization(storage_service):
     viz_path2 = storage_service.save_visualization(job_id, image_data, "_annotated")
     assert viz_path2.exists()
     assert "_annotated" in viz_path2.name
+
+
+

@@ -11,9 +11,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 
-from app.api.v1 import api_router
-from app.core import settings
-from app.core.exception_handlers import (
+from backend.app.api.v1 import api_router
+from backend.app.core import settings
+from backend.app.core.exception_handlers import (
     general_exception_handler,
     http_exception_handler,
     validation_exception_handler,
@@ -82,3 +82,4 @@ async def root():
         "docs": "/docs",
         "health": f"{settings.api_v1_prefix}/health",
     }
+

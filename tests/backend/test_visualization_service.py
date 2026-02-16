@@ -18,7 +18,7 @@ sys.path.insert(0, str(backend_path))
 
 @pytest.fixture(autouse=True)
 def mock_settings(tmp_path):
-    """Mock app.core.settings for all tests."""
+    """Mock backend.app.core.settings for all tests."""
     from unittest.mock import Mock
     
     mock_settings_obj = Mock()
@@ -31,14 +31,14 @@ def mock_settings(tmp_path):
     mock_settings_obj.uploads_dir.mkdir(parents=True, exist_ok=True)
     mock_settings_obj.visualizations_dir.mkdir(parents=True, exist_ok=True)
     
-    # Mock app.core module to avoid importing pydantic_settings
+    # Mock backend.app.core module to avoid importing pydantic_settings
     mock_core = Mock()
     mock_core.settings = mock_settings_obj
-    sys.modules['app.core'] = mock_core
+    sys.modules['backend.app.core'] = mock_core
     
     # Reload the visualization module to pick up the mocked settings
-    if 'app.services.visualization' in sys.modules:
-        viz_module = sys.modules['app.services.visualization']
+    if 'backend.app.services.visualization' in sys.modules:
+        viz_module = sys.modules['backend.app.services.visualization']
         # Update the settings reference in the already loaded module
         viz_module.settings = mock_settings_obj
     
@@ -47,11 +47,11 @@ def mock_settings(tmp_path):
 
 # Load visualization module directly to avoid importing heavy dependencies
 viz_spec = importlib.util.spec_from_file_location(
-    "app.services.visualization",
+    "backend.app.services.visualization",
     backend_path / "app" / "services" / "visualization.py"
 )
 viz_module = importlib.util.module_from_spec(viz_spec)
-sys.modules['app.services.visualization'] = viz_module
+sys.modules['backend.app.services.visualization'] = viz_module
 viz_spec.loader.exec_module(viz_module)
 
 # Import what we need from the loaded module
@@ -556,3 +556,6 @@ class TestVisualizationIntegration:
         for multi-image visualization is covered in the endpoint tests.
         """
         pass
+
+
+
