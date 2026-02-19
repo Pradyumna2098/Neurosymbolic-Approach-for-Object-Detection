@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from PIL import Image
 
-from backend.app.core import settings
+from app.core import settings
 
 
 def _sanitize_filename(filename: str) -> str:

@@ -10,7 +10,7 @@ import logging
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
 
-from backend.app.services import storage_service
+from app.services import storage_service
 
 # Logger
 logger = logging.getLogger(__name__)

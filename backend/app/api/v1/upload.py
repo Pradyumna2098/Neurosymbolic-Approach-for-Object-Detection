@@ -10,8 +10,8 @@ from typing import List
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
-from backend.app.models import UploadedFileInfo, UploadResponse
-from backend.app.services import storage_service, FileValidationError
+from app.models import UploadedFileInfo, UploadResponse
+from app.services import storage_service, FileValidationError
 
 # Constants
 MAX_FILES_PER_UPLOAD = 100

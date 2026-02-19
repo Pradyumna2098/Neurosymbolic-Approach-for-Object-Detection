@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from fastapi import APIRouter, HTTPException, Query, status
 
-from backend.app.models.responses import (
+from app.models.responses import (
     Base64VisualizationData,
     Base64VisualizationResponse,
     ClassSummary,

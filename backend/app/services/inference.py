@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 import torch
 from PIL import Image
 
-from backend.app.core import settings
+from app.core import settings
 from pipeline.core.utils import (
     parse_predictions_for_nms,
     pre_filter_with_nms,
