@@ -45,9 +45,21 @@ def client():
 
 
 @pytest.fixture
+def mock_model_file(tmp_path):
+    """Create a mock model file for testing."""
+    model_dir = tmp_path / "models"
+    model_dir.mkdir(parents=True, exist_ok=True)
+    model_path = model_dir / "test_model.pt"
+    # Create a fake model file with some content
+    model_path.write_bytes(b"fake YOLO model weights")
+    return str(model_path)
+
+
+@pytest.fixture
 def mock_inference_service():
     """Mock inference service for tests that don't need real inference."""
-    with patch('backend.app.services.inference.inference_service.run_inference') as mock_run:
+    # Patch the run_inference method on the actual inference_service instance
+    with patch('backend.app.api.v1.predict.inference_service.run_inference') as mock_run:
         # Mock successful inference - this gets called in background thread
         mock_run.return_value = {
             'total_images': 1,
@@ -88,7 +100,7 @@ def uploaded_job(client):
 class TestPredictEndpoint:
     """Tests for the /api/v1/predict endpoint."""
     
-    def test_trigger_inference_success(self, client, uploaded_job, mock_inference_service):
+    def test_trigger_inference_success(self, client, uploaded_job, mock_inference_service, mock_model_file):
         """Test successfully triggering inference on uploaded job."""
         job_id, _ = uploaded_job
         
@@ -98,7 +110,7 @@ class TestPredictEndpoint:
             json={
                 "job_id": job_id,
                 "config": {
-                    "model_path": "/path/to/model.pt",
+                    "model_path": mock_model_file,
                     "confidence_threshold": 0.25,
                     "iou_threshold": 0.45
                 }
@@ -121,9 +133,9 @@ class TestPredictEndpoint:
         job_data = storage_service.get_job(job_id)
         assert job_data["status"] == "processing"
         assert "config" in job_data
-        assert job_data["config"]["model_path"] == "/path/to/model.pt"
+        assert job_data["config"]["model_path"] == mock_model_file
     
-    def test_trigger_inference_with_full_config(self, client, uploaded_job):
+    def test_trigger_inference_with_full_config(self, client, uploaded_job, mock_model_file):
         """Test triggering inference with complete configuration."""
         job_id, _ = uploaded_job
         
@@ -133,7 +145,7 @@ class TestPredictEndpoint:
             json={
                 "job_id": job_id,
                 "config": {
-                    "model_path": "/path/to/model.pt",
+                    "model_path": mock_model_file,
                     "confidence_threshold": 0.3,
                     "iou_threshold": 0.5,
                     "sahi": {
@@ -190,7 +202,7 @@ class TestPredictEndpoint:
         assert data["error"]["code"] == "JOB_NOT_FOUND"
         assert fake_job_id in data["error"]["message"]
     
-    def test_trigger_inference_no_files(self, client):
+    def test_trigger_inference_no_files(self, client, mock_model_file):
         """Test triggering inference on job with no uploaded files."""
         # Create a job without files
         job_id = storage_service.create_job(status="uploaded")
@@ -200,7 +212,7 @@ class TestPredictEndpoint:
             json={
                 "job_id": job_id,
                 "config": {
-                    "model_path": "/path/to/model.pt"
+                    "model_path": mock_model_file
                 }
             }
         )
@@ -212,7 +224,7 @@ class TestPredictEndpoint:
         assert data["error"]["code"] == "NO_FILES"
         assert job_id in data["error"]["message"]
     
-    def test_trigger_inference_invalid_status(self, client, uploaded_job):
+    def test_trigger_inference_invalid_status(self, client, uploaded_job, mock_model_file):
         """Test triggering inference on job with invalid status."""
         job_id, _ = uploaded_job
         
@@ -224,7 +236,7 @@ class TestPredictEndpoint:
             json={
                 "job_id": job_id,
                 "config": {
-                    "model_path": "/path/to/model.pt"
+                    "model_path": mock_model_file
                 }
             }
         )
@@ -236,7 +248,7 @@ class TestPredictEndpoint:
         assert data["error"]["code"] == "INVALID_STATUS"
         assert "processing" in data["error"]["message"]
     
-    def test_trigger_inference_invalid_confidence_threshold(self, client, uploaded_job):
+    def test_trigger_inference_invalid_confidence_threshold(self, client, uploaded_job, mock_model_file):
         """Test validation of confidence threshold."""
         job_id, _ = uploaded_job
         
@@ -246,7 +258,7 @@ class TestPredictEndpoint:
             json={
                 "job_id": job_id,
                 "config": {
-                    "model_path": "/path/to/model.pt",
+                    "model_path": mock_model_file,
                     "confidence_threshold": 1.5  # Invalid: > 1.0
                 }
             }
@@ -259,7 +271,7 @@ class TestPredictEndpoint:
         assert data["status"] == "error"
         assert data["error"]["code"] == "VALIDATION_ERROR"
     
-    def test_trigger_inference_invalid_iou_threshold(self, client, uploaded_job):
+    def test_trigger_inference_invalid_iou_threshold(self, client, uploaded_job, mock_model_file):
         """Test validation of IoU threshold."""
         job_id, _ = uploaded_job
         
@@ -269,7 +281,7 @@ class TestPredictEndpoint:
             json={
                 "job_id": job_id,
                 "config": {
-                    "model_path": "/path/to/model.pt",
+                    "model_path": mock_model_file,
                     "iou_threshold": -0.1  # Invalid: < 0.0
                 }
             }
@@ -282,7 +294,7 @@ class TestPredictEndpoint:
         assert data["status"] == "error"
         assert data["error"]["code"] == "VALIDATION_ERROR"
     
-    def test_trigger_inference_invalid_slice_dimensions(self, client, uploaded_job):
+    def test_trigger_inference_invalid_slice_dimensions(self, client, uploaded_job, mock_model_file):
         """Test validation of SAHI slice dimensions."""
         job_id, _ = uploaded_job
         
@@ -292,7 +304,7 @@ class TestPredictEndpoint:
             json={
                 "job_id": job_id,
                 "config": {
-                    "model_path": "/path/to/model.pt",
+                    "model_path": mock_model_file,
                     "sahi": {
                         "enabled": True,
                         "slice_width": 100  # Invalid: < 256
@@ -308,7 +320,7 @@ class TestPredictEndpoint:
         assert data["status"] == "error"
         assert data["error"]["code"] == "VALIDATION_ERROR"
     
-    def test_trigger_inference_invalid_overlap_ratio(self, client, uploaded_job):
+    def test_trigger_inference_invalid_overlap_ratio(self, client, uploaded_job, mock_model_file):
         """Test validation of SAHI overlap ratio."""
         job_id, _ = uploaded_job
         
@@ -318,7 +330,7 @@ class TestPredictEndpoint:
             json={
                 "job_id": job_id,
                 "config": {
-                    "model_path": "/path/to/model.pt",
+                    "model_path": mock_model_file,
                     "sahi": {
                         "enabled": True,
                         "overlap_ratio": 0.8  # Invalid: > 0.5
@@ -334,7 +346,7 @@ class TestPredictEndpoint:
         assert data["status"] == "error"
         assert data["error"]["code"] == "VALIDATION_ERROR"
     
-    def test_background_thread_updates_job_status(self, client, uploaded_job, mock_inference_service):
+    def test_background_thread_updates_job_status(self, client, uploaded_job, mock_inference_service, mock_model_file):
         """Test that background thread starts and updates job status to processing.
         
         Note: This test verifies the background thread mechanism starts correctly.
@@ -348,7 +360,7 @@ class TestPredictEndpoint:
             json={
                 "job_id": job_id,
                 "config": {
-                    "model_path": "/path/to/model.pt"
+                    "model_path": mock_model_file
                 }
             }
         )
@@ -402,7 +414,7 @@ class TestPredictEndpoint:
         assert data["status"] == "error"
         assert data["error"]["code"] == "VALIDATION_ERROR"
     
-    def test_default_config_values(self, client, uploaded_job):
+    def test_default_config_values(self, client, uploaded_job, mock_model_file):
         """Test that config defaults are applied correctly."""
         job_id, _ = uploaded_job
         
@@ -412,7 +424,7 @@ class TestPredictEndpoint:
             json={
                 "job_id": job_id,
                 "config": {
-                    "model_path": "/path/to/model.pt"
+                    "model_path": mock_model_file
                     # All other fields should use defaults
                 }
             }
