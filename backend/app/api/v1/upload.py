@@ -159,7 +159,7 @@ async def upload_images(
                 shutil.rmtree(job_upload_dir.parent)  # Remove entire job directory
             
             # Remove job JSON
-            from backend.app.core import settings
+            from app.core import settings
             job_file = settings.jobs_dir / f"{job_id}.json"
             if job_file.exists():
                 job_file.unlink()
@@ -181,7 +181,7 @@ async def upload_images(
     # Convert validation errors to warnings for partial success
     warnings = None
     if validation_errors:
-        from backend.app.models import FileValidationWarning
+        from app.models import FileValidationWarning
         warnings = [
             FileValidationWarning(filename=err["filename"], error=err["error"])
             for err in validation_errors

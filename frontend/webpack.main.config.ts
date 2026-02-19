@@ -17,13 +17,10 @@ export const mainConfig: Configuration = {
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],
   },
-<<<<<<< Updated upstream
-=======
   node: {
     __dirname: false,
     __filename: false,
   },
   // Electron main process target
   target: 'electron-main',
->>>>>>> Stashed changes
 };

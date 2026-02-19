@@ -30,7 +30,7 @@ from app.models.responses import (
     VisualizationItem,
     VisualizationResponse,
 )
-from backend.app.services import storage_service
+from app.services import storage_service
 
 # Logger
 logger = logging.getLogger(__name__)
