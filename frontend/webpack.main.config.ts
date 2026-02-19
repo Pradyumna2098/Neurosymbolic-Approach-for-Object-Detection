@@ -17,11 +17,4 @@ export const mainConfig: Configuration = {
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],
   },
-  // Prevent webpack from replacing __dirname and __filename
-  // This is required for Electron main process and preload scripts
-  node: {
-    __dirname: false,
-    __filename: false,
-  }
-  target: 'electron-main',
 };
