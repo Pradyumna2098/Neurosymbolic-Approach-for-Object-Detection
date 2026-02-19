@@ -12,8 +12,8 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
-from backend.app.services import storage_service
-from backend.app.services.inference import inference_service, InferenceError
+from app.services import storage_service
+from app.services.inference import inference_service, InferenceError
 
 # Logger
 logger = logging.getLogger(__name__)

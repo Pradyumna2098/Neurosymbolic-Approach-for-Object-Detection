@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter
 
-from backend.app.core import settings
-from backend.app.models import HealthResponse
+from app.core import settings
+from app.models import HealthResponse
 
 router = APIRouter()
 

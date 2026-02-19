@@ -22,6 +22,6 @@ export const mainConfig: Configuration = {
   node: {
     __dirname: false,
     __filename: false,
-  },
+  }
   target: 'electron-main',
 };
