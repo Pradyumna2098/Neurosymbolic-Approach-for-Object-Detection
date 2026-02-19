@@ -34,15 +34,16 @@ def create_test_image(width: int, height: int, format: str = "PNG") -> bytes:
 @pytest.fixture
 def storage_service(tmp_path, monkeypatch):
     """Create a storage service with temporary directories."""
-    from backend.app.core import settings
-    
-    # Mock settings to use temporary directories
-    monkeypatch.setattr(settings, "data_root", tmp_path)
-    monkeypatch.setattr(settings, "uploads_dir", tmp_path / "uploads")
-    monkeypatch.setattr(settings, "jobs_dir", tmp_path / "jobs")
-    monkeypatch.setattr(settings, "results_dir", tmp_path / "results")
-    monkeypatch.setattr(settings, "visualizations_dir", tmp_path / "visualizations")
-    
+    import app.core as _app_core
+
+    # Patch the settings object that StorageService actually reads (app.core.settings),
+    # not the backend.app.core.settings duplicate created by dual sys.path entries.
+    monkeypatch.setattr(_app_core.settings, "data_root", tmp_path)
+    monkeypatch.setattr(_app_core.settings, "uploads_dir", tmp_path / "uploads")
+    monkeypatch.setattr(_app_core.settings, "jobs_dir", tmp_path / "jobs")
+    monkeypatch.setattr(_app_core.settings, "results_dir", tmp_path / "results")
+    monkeypatch.setattr(_app_core.settings, "visualizations_dir", tmp_path / "visualizations")
+
     service = StorageService()
     return service
 

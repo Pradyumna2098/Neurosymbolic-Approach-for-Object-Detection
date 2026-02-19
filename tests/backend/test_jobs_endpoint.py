@@ -74,8 +74,9 @@ def processing_job(uploaded_job, client):
     """
     job_id = uploaded_job
     
-    # Mock inference service to prevent actual inference
-    with patch('backend.app.services.inference.inference_service.run_inference') as mock_inference:
+    # Mock inference service to prevent actual inference.
+    # predict.py imports inference_service from app.services.inference, so patch there.
+    with patch('app.api.v1.predict.inference_service.run_inference') as mock_inference:
         mock_inference.return_value = {
             'total_images': 1,
             'processed_images': 1,
