@@ -13,11 +13,4 @@ export const preloadConfig: Configuration = {
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],
   },
-  // Preload script target - needs Node.js globals available during bundling
-  target: 'electron-preload',
-  // Ensure webpack doesn't replace Node.js globals
-  node: {
-    __dirname: false,
-    __filename: false,
-  },
 };
