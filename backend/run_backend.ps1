@@ -7,6 +7,6 @@ if (Test-Path $venvActivate) {
     Write-Warning "Virtual environment not found at $venvActivate"
 }
 
-$env:PYTHONPATH = $repoRoot
-Set-Location $repoRoot
-python -m uvicorn backend.app.main:app --reload
+$backendDir = Join-Path $repoRoot "backend"
+Set-Location $backendDir
+python -m uvicorn app.main:app --reload

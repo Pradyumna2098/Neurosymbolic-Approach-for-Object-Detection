@@ -38,8 +38,7 @@ const notificationSlice = createSlice({
      */
     enqueueNotification(state, action: PayloadAction<Omit<Notification, 'key'>>) {
       const key = new Date().getTime() + Math.random();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (state.notifications as any).push({
+      state.notifications.push({
         ...action.payload,
         key,
       });
@@ -77,8 +76,7 @@ const notificationSlice = createSlice({
      */
     showSuccess(state, action: PayloadAction<string>) {
       const key = new Date().getTime() + Math.random();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (state.notifications as any).push({
+      state.notifications.push({
         key,
         message: action.payload,
         type: 'success',
@@ -101,8 +99,7 @@ const notificationSlice = createSlice({
       }>
     ) {
       const key = new Date().getTime() + Math.random();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (state.notifications as any).push({
+      state.notifications.push({
         key,
         message: action.payload.message,
         type: 'error',
@@ -121,8 +118,7 @@ const notificationSlice = createSlice({
      */
     showWarning(state, action: PayloadAction<string>) {
       const key = new Date().getTime() + Math.random();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (state.notifications as any).push({
+      state.notifications.push({
         key,
         message: action.payload,
         type: 'warning',
@@ -137,8 +133,7 @@ const notificationSlice = createSlice({
      */
     showInfo(state, action: PayloadAction<string>) {
       const key = new Date().getTime() + Math.random();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (state.notifications as any).push({
+      state.notifications.push({
         key,
         message: action.payload,
         type: 'info',
