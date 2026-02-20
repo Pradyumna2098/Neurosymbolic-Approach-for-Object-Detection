@@ -33,10 +33,16 @@ const createWindow = (): void => {
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
-  // Remove always on top after 2 seconds
-  setTimeout(() => {
-    mainWindow.setAlwaysOnTop(false);
+  // Remove always on top after 2 seconds, if the window is still alive
+  const alwaysOnTopTimeout = setTimeout(() => {
+    if (!mainWindow.isDestroyed()) {
+      mainWindow.setAlwaysOnTop(false);
+    }
   }, 2000);
+
+  mainWindow.on('closed', () => {
+    clearTimeout(alwaysOnTopTimeout);
+  });
 
   // Open the DevTools in development mode.
   if (process.env.NODE_ENV === 'development') {

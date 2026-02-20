@@ -8,10 +8,15 @@ import { ErrorCode } from '../../utils/errorCodes';
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
 /**
- * Notification options type compatible with Immer (Redux Toolkit)
- * Using a Record type to avoid readonly property issues with notistack's OptionsObject
+ * Notification options type compatible with Immer (Redux Toolkit).
+ * A typed subset of notistack's OptionsObject to preserve type safety
+ * while avoiding readonly property conflicts in Immer drafts.
  */
-export type NotificationOptions = Record<string, unknown>;
+export type NotificationOptions = {
+  autoHideDuration?: number | null;
+  persist?: boolean;
+  variant?: NotificationType;
+};
 
 /**
  * Notification item in the queue

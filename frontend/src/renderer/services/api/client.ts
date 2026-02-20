@@ -6,11 +6,20 @@
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
-// Default API base URL - using window object for Electron or fallback
-const API_BASE_URL = (window as any).API_BASE_URL || 'http://localhost:8000/api/v1';
+// Default API base URL - prefer window override, then env, then localhost
+const API_BASE_URL =
+  (typeof window !== 'undefined' && (window as any).API_BASE_URL) ||
+  (typeof process !== 'undefined' && process.env && process.env.API_BASE_URL) ||
+  'http://localhost:8000/api/v1';
 
 // Check if we're in development mode
-const isDevelopment = (window as any).isDevelopment || false;
+const isDevelopment =
+  (typeof window !== 'undefined' &&
+    (window as any).isDevelopment !== undefined &&
+    Boolean((window as any).isDevelopment)) ||
+  (typeof process !== 'undefined' &&
+    process.env &&
+    process.env.NODE_ENV === 'development');
 
 // Create axios instance with default configuration
 const apiClient: AxiosInstance = axios.create({

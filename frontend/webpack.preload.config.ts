@@ -1,22 +1,9 @@
 import type { Configuration } from 'webpack';
-
-// Preload-specific rules — NO asset relocator loader
-const preloadRules = [
-  {
-    test: /\.tsx?$/,
-    exclude: /(node_modules|\.webpack)/,
-    use: {
-      loader: 'ts-loader',
-      options: {
-        transpileOnly: true,
-      },
-    },
-  },
-];
+import { tsRule } from './webpack.rules';
 
 export const preloadConfig: Configuration = {
   module: {
-    rules: preloadRules,
+    rules: [tsRule],
   },
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],

@@ -1,5 +1,17 @@
 import type { ModuleOptions } from 'webpack';
 
+// Shared TypeScript loader rule reused across main/preload/renderer configs
+export const tsRule: Required<ModuleOptions>['rules'][number] = {
+  test: /\.tsx?$/,
+  exclude: /(node_modules|\.webpack)/,
+  use: {
+    loader: 'ts-loader',
+    options: {
+      transpileOnly: true,
+    },
+  },
+};
+
 export const rules: Required<ModuleOptions>['rules'] = [
   // Add support for native node modules
   {
@@ -18,14 +30,5 @@ export const rules: Required<ModuleOptions>['rules'] = [
       },
     },
   },
-  {
-    test: /\.tsx?$/,
-    exclude: /(node_modules|\.webpack)/,
-    use: {
-      loader: 'ts-loader',
-      options: {
-        transpileOnly: true,
-      },
-    },
-  },
+  tsRule,
 ];
