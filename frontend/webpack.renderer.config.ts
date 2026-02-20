@@ -1,17 +1,9 @@
 import type { Configuration } from 'webpack';
 import { plugins } from './webpack.plugins';
+import { tsRule } from './webpack.rules';
 
 const rendererRules = [
-  {
-    test: /\.tsx?$/,
-    exclude: /(node_modules|\.webpack)/,
-    use: {
-      loader: 'ts-loader',
-      options: {
-        transpileOnly: true,
-      },
-    },
-  },
+  tsRule,
   {
     test: /\.css$/,
     use: [{ loader: 'style-loader' }, { loader: 'css-loader' }],
