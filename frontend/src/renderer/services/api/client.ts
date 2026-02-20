@@ -6,8 +6,20 @@
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
-// Default API base URL - can be overridden via environment variable
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000/api/v1';
+// Default API base URL - prefer window override, then env, then localhost
+const API_BASE_URL =
+  (typeof window !== 'undefined' && (window as any).API_BASE_URL) ||
+  (typeof process !== 'undefined' && process.env && process.env.API_BASE_URL) ||
+  'http://localhost:8000/api/v1';
+
+// Check if we're in development mode
+const isDevelopment =
+  (typeof window !== 'undefined' &&
+    (window as any).isDevelopment !== undefined &&
+    Boolean((window as any).isDevelopment)) ||
+  (typeof process !== 'undefined' &&
+    process.env &&
+    process.env.NODE_ENV === 'development');
 
 // Create axios instance with default configuration
 const apiClient: AxiosInstance = axios.create({
@@ -22,7 +34,7 @@ const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     // Log API requests in development mode
-    if (process.env.NODE_ENV === 'development') {
+    if (isDevelopment) {
       console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
         params: config.params,
         data: config.data,
@@ -47,7 +59,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => {
     // Log API responses in development mode
-    if (process.env.NODE_ENV === 'development') {
+    if (isDevelopment) {
       console.log(`[API Response] ${response.status} ${response.config.url}`, {
         data: response.data,
       });

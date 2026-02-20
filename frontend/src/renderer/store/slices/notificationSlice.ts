@@ -1,11 +1,22 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { OptionsObject, SnackbarKey } from 'notistack';
+import { SnackbarKey } from 'notistack';
 import { ErrorCode } from '../../utils/errorCodes';
 
 /**
  * Notification types
  */
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
+
+/**
+ * Notification options type compatible with Immer (Redux Toolkit).
+ * A typed subset of notistack's OptionsObject to preserve type safety
+ * while avoiding readonly property conflicts in Immer drafts.
+ */
+export type NotificationOptions = {
+  autoHideDuration?: number | null;
+  persist?: boolean;
+  variant?: NotificationType;
+};
 
 /**
  * Notification item in the queue
@@ -18,7 +29,7 @@ export interface Notification {
   errorCode?: ErrorCode;
   canRetry?: boolean;
   retryAction?: () => void;
-  options?: OptionsObject;
+  options?: NotificationOptions;
 }
 
 interface NotificationState {

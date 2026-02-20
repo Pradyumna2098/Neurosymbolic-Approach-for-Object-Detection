@@ -18,6 +18,10 @@ const createWindow = (): void => {
     width: 1400,
     minHeight: 900,
     minWidth: 1400,
+    x: 100, // Position from left
+    y: 100, // Position from top
+    show: true, // Show immediately
+    alwaysOnTop: true, // Keep on top temporarily
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       contextIsolation: true,
@@ -28,6 +32,17 @@ const createWindow = (): void => {
 
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
+
+  // Remove always on top after 2 seconds, if the window is still alive
+  const alwaysOnTopTimeout = setTimeout(() => {
+    if (!mainWindow.isDestroyed()) {
+      mainWindow.setAlwaysOnTop(false);
+    }
+  }, 2000);
+
+  mainWindow.on('closed', () => {
+    clearTimeout(alwaysOnTopTimeout);
+  });
 
   // Open the DevTools in development mode.
   if (process.env.NODE_ENV === 'development') {

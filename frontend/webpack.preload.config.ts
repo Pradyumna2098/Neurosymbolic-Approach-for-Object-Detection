@@ -1,16 +1,16 @@
 import type { Configuration } from 'webpack';
-
-import { rules } from './webpack.rules';
+import { tsRule } from './webpack.rules';
 
 export const preloadConfig: Configuration = {
-  /**
-   * This is the preload script for the Electron app, it's the bridge between
-   * the main process and the renderer process.
-   */
   module: {
-    rules,
+    rules: [tsRule],
   },
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],
+  },
+  target: 'electron-preload',
+  node: {
+    __dirname: false,
+    __filename: false,
   },
 };
