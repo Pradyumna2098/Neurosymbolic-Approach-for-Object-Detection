@@ -1,27 +1,19 @@
 import type { Configuration } from 'webpack';
-
 import { rules } from './webpack.rules';
 import { plugins } from './webpack.plugins';
 
 export const mainConfig: Configuration = {
-  /**
-   * This is the main entry point for your application, it's the first file
-   * that runs in the main process.
-   */
   entry: './src/main/main.ts',
-  // Put your normal webpack config below here
   module: {
-    rules,
+    rules,   // ← Asset relocator is FINE here (main process only)
   },
   plugins,
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],
   },
-  // Prevent webpack from replacing __dirname and __filename
-  // This is required for Electron main process and preload scripts
+  target: 'electron-main',   // ← Important: explicitly set target
   node: {
-    __dirname: false,
+    __dirname: false,        // ← Preserve real __dirname
     __filename: false,
-  }
-  target: 'electron-main',
+  },
 };

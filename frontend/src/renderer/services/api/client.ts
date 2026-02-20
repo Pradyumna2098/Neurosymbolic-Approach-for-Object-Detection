@@ -6,8 +6,11 @@
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
-// Default API base URL - can be overridden via environment variable
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000/api/v1';
+// Default API base URL - using window object for Electron or fallback
+const API_BASE_URL = (window as any).API_BASE_URL || 'http://localhost:8000/api/v1';
+
+// Check if we're in development mode
+const isDevelopment = (window as any).isDevelopment || false;
 
 // Create axios instance with default configuration
 const apiClient: AxiosInstance = axios.create({
@@ -22,7 +25,7 @@ const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     // Log API requests in development mode
-    if (process.env.NODE_ENV === 'development') {
+    if (isDevelopment) {
       console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
         params: config.params,
         data: config.data,
@@ -47,7 +50,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => {
     // Log API responses in development mode
-    if (process.env.NODE_ENV === 'development') {
+    if (isDevelopment) {
       console.log(`[API Response] ${response.status} ${response.config.url}`, {
         data: response.data,
       });

@@ -1,21 +1,27 @@
 import type { Configuration } from 'webpack';
 
-import { rules } from './webpack.rules';
+// Preload-specific rules — NO asset relocator loader
+const preloadRules = [
+  {
+    test: /\.tsx?$/,
+    exclude: /(node_modules|\.webpack)/,
+    use: {
+      loader: 'ts-loader',
+      options: {
+        transpileOnly: true,
+      },
+    },
+  },
+];
 
 export const preloadConfig: Configuration = {
-  /**
-   * This is the preload script for the Electron app, it's the bridge between
-   * the main process and the renderer process.
-   */
   module: {
-    rules,
+    rules: preloadRules,
   },
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],
   },
-  // Preload script target - needs Node.js globals available during bundling
   target: 'electron-preload',
-  // Ensure webpack doesn't replace Node.js globals
   node: {
     __dirname: false,
     __filename: false,
